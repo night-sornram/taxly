@@ -1,6 +1,8 @@
 export interface Account {
   id: string;
   name: string;
+  /** Holdings-only account: buys/sells never move its cash. */
+  track_cash: boolean;
 }
 export interface Instrument {
   id: string;
@@ -70,6 +72,7 @@ export interface InstrumentSearchResult {
   name: string;
   exchange: string;
   kind: string;
+  currency: string;
 }
 export interface WealthData {
   revision: number;

@@ -11,10 +11,12 @@ test("wealth is available before tax onboarding and accepts account opening cash
   await expect(page.getByRole("combobox", { name: "ปีภาษี", exact: true })).toHaveCount(0);
   await page.getByRole("button", { name: "สร้างบัญชีลงทุนแรก" }).click();
   await page.getByLabel("ชื่อบัญชี", { exact: true }).fill("บัญชีต่างประเทศ");
+  await page.getByText("ติดตามเงินสดในบัญชีนี้").click();
   await page.getByRole("button", { name: "บันทึก", exact: true }).click();
   await expect(page.getByRole("dialog")).toHaveCount(0);
   expect((await lastCall(page, "save_wealth_account"))?.account).toMatchObject({
     name: "บัญชีต่างประเทศ",
+    track_cash: true,
   });
   await page.getByRole("button", { name: "เริ่มจากยอดปัจจุบัน" }).click();
   await page.getByLabel("วันตั้งต้น (ค.ศ.)", { exact: true }).fill("2026-01-01");
@@ -106,9 +108,8 @@ test("market refresh is optional and partial failures keep the cached price tabl
   await installWealthIpc(page);
   await openWealth(page);
   await page.getByRole("button", { name: "ราคาและอัตราแลกเปลี่ยน", exact: true }).click();
-  await expect(page.getByRole("button", { name: "รีเฟรชราคาและ FX", exact: true })).toBeDisabled();
-  await page.getByRole("button", { name: "เปิดการดึงข้อมูลตลาด", exact: true }).click();
-  await page.getByRole("button", { name: "รีเฟรชราคาและ FX", exact: true }).click();
+  // Refreshing while market data is off enables it in the same action.
+  await page.getByRole("button", { name: "เปิดและรีเฟรชราคา", exact: true }).click();
   await expect(page.getByText("Yahoo Finance จำกัดจำนวนคำขอ โปรดลองภายหลัง")).toBeVisible();
   await expect(page.getByRole("table", { name: "ราคาที่เก็บในเครื่อง" })).toBeVisible();
   expect((await lastCall(page, "save_wealth_preferences"))?.preferences).toEqual({
@@ -186,6 +187,7 @@ test("instrument search autofills fields and totals derive the buy price", async
   await page.getByRole("button", { name: "ค้นหาจาก Yahoo Finance" }).click();
   await page.getByRole("option", { name: /ปตท\./ }).click();
   await expect(page.getByLabel("ชื่อหลักทรัพย์")).toHaveValue("ปตท. (PTT PCL)");
+  await expect(page.getByLabel("สกุลเงิน")).toHaveValue("THB");
   await page.getByRole("button", { name: "บันทึก", exact: true }).click();
   await expect(page.getByRole("dialog")).toHaveCount(0);
   expect((await lastCall(page, "save_wealth_instrument"))?.instrument).toMatchObject({
@@ -207,10 +209,21 @@ test("instrument search autofills fields and totals derive the buy price", async
   await editor.getByLabel("หลักทรัพย์").selectOption({ label: "PTT · ปตท. (PTT PCL) (THB)" });
   await editor.getByLabel("จำนวนหน่วย").fill("100");
   await expect(page.getByText("ยังไม่มีราคาล่าสุดของหลักทรัพย์นี้ในระบบ")).toBeVisible();
-  await editor.getByLabel("เงินสดสุทธิ (ถ้ามี)").fill("10100");
+  await editor.getByLabel("เงินสดสุทธิ").fill("10100");
   await expect(page.getByText(/จะใช้ราคาต่อหน่วย 101\.00/)).toBeVisible();
+  // Holdings-only account: the buy is recorded directly with zero cash,
+  // while cash records remain available on the same account.
+  await expect(editor.getByRole("option", { name: "ฝากเงิน" })).toHaveCount(1);
   await page.getByRole("button", { name: "บันทึก", exact: true }).click();
   await expect(page.getByRole("dialog")).toHaveCount(0);
+  const calls = await page.evaluate(() =>
+    (
+      window as unknown as { __TAXLY_TEST_CALLS__: { name: string; args: unknown }[] }
+    ).__TAXLY_TEST_CALLS__.filter((call) => call.name === "save_wealth_activity"),
+  );
+  expect(calls.map((call) => (call.args as { activity: { kind: string } }).activity.kind)).toEqual([
+    "buy",
+  ]);
   expect((await lastCall(page, "save_wealth_activity"))?.activity).toMatchObject({
     unit_price: "101.00",
     amount: null,

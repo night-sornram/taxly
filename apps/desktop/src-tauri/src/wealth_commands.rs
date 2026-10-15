@@ -37,10 +37,12 @@ pub async fn save_wealth_account(account: Account, state: State<'_, AppState>) -
 pub async fn save_wealth_instrument(
     instrument: Instrument,
     state: State<'_, AppState>,
-) -> AppResult<()> {
+) -> AppResult<usize> {
     wealth_storage::mutate(&state.pool, None, move |data| {
+        // Sync reads the stored currency, so it must run before the upsert.
+        let synced = wealth_storage::sync_instrument_currency(data, &instrument);
         upsert(&mut data.instruments, instrument, |x| &x.id);
-        Ok(())
+        Ok(synced)
     })
     .await
 }

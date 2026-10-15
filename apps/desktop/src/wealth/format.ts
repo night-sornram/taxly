@@ -1,12 +1,24 @@
-/** Display decimal strings without passing financial values through floating point. */
+/** Display decimal strings without passing financial values through floating
+ *  point. Money rounds half-up to the requested places (2 by default);
+ *  quantities (digits 0) keep their real fractional units. */
 export function decimal(value: string | null | undefined, digits = 2): string {
   if (value == null) return "—";
   const match = /^(-?)(\d+)(?:\.(\d+))?$/.exec(value);
   if (!match) return "—";
   const [, sign, whole, fraction = ""] = match;
-  const grouped = whole.replace(/\B(?=(\d{3})+(?!\d))/g, ",");
-  const places = Math.max(digits, Math.min(fraction.replace(/0+$/, "").length, 8));
-  return `${sign}${grouped}${places ? `.${fraction.padEnd(places, "0").slice(0, places)}` : ""}`;
+  const grouped = (units: string) => units.replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+  if (digits === 0) {
+    const places = Math.min(fraction.replace(/0+$/, "").length, 8);
+    return `${sign}${grouped(whole)}${places ? `.${fraction.slice(0, places)}` : ""}`;
+  }
+  const scale = 10n ** BigInt(digits);
+  const kept = BigInt((fraction + "0".repeat(digits)).slice(0, digits) || "0");
+  let units = BigInt(whole) * scale + kept;
+  if (fraction.length > digits && fraction[digits] >= "5") {
+    units += 1n;
+  }
+  const fractionText = (units % scale).toString().padStart(digits, "0");
+  return `${sign}${grouped((units / scale).toString())}.${fractionText}`;
 }
 export function percentage(value: string | null | undefined): string {
   if (value == null) return "—";
@@ -149,4 +161,42 @@ export function tradePreview(
     percent = `${negative ? "-" : ""}${hundredths / 100n}.${(hundredths % 100n).toString().padStart(2, "0")}`;
   }
   return { currentValue: moneyOf(currentValue), gain: moneyOf(gain), percent };
+}
+
+/** Currencies offered in the pickers; the reporting currency may add more. */
+export const CURRENCIES = [
+  "THB",
+  "USD",
+  "EUR",
+  "GBP",
+  "JPY",
+  "SGD",
+  "HKD",
+  "AUD",
+  "CNY",
+  "CHF",
+  "CAD",
+  "MYR",
+] as const;
+
+/** Net cash a trade moves: quantity × price ± charges, exact BigInt math. */
+export function netCashForTrade(
+  kind: "buy" | "sell",
+  quantity: string | null,
+  unitPrice: string | null,
+  fee: string | null,
+  tax: string | null,
+): string | null {
+  const quantityMatch = /^(\d+)(?:\.(\d{1,12}))?$/.exec((quantity ?? "").trim().replace(/,/g, ""));
+  const priceSatang = satangOf(unitPrice);
+  if (!quantityMatch || priceSatang === null || priceSatang <= 0n) return null;
+  const [, quantityWhole, quantityFraction = ""] = quantityMatch;
+  const scale = 10n ** BigInt(quantityFraction.length);
+  const quantityUnits = BigInt(quantityWhole) * scale + BigInt(quantityFraction || "0");
+  if (quantityUnits <= 0n) return null;
+  const traded = (quantityUnits * priceSatang + scale / 2n) / scale;
+  const charges = (satangOf(fee) ?? 0n) + (satangOf(tax) ?? 0n);
+  const total = kind === "buy" ? traded + charges : traded - charges;
+  if (total <= 0n) return null;
+  return moneyOf(total);
 }

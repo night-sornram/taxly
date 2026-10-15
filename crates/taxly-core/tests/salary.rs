@@ -294,10 +294,11 @@ fn other_income_is_included_in_full_without_expense_deduction() {
     assert_eq!(out.gross_income, m("400000"));
     // Expense stays computed from the 40(1) salary alone (cap reached).
     assert_eq!(out.expenses, m("100000"));
-    assert!(out
-        .scope_issues
-        .iter()
-        .any(|issue| issue.contains("รายได้อื่นถูกนำรวมเต็มจำนวน")));
+    assert!(
+        out.scope_issues
+            .iter()
+            .any(|issue| issue.contains("รายได้อื่นถูกนำรวมเต็มจำนวน"))
+    );
 }
 
 #[test]

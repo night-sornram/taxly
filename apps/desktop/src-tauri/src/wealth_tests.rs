@@ -13,6 +13,7 @@ async fn database() -> (tempfile::TempDir, sqlx::SqlitePool, Catalog) {
 fn synthetic_wealth() -> WealthData {
     let mut data = WealthData::default();
     data.accounts.push(Account {
+        track_cash: true,
         id: "account-thb".into(),
         name: "พอร์ตหุ้นไทย".into(),
     });
@@ -124,6 +125,7 @@ async fn csv_review_and_saved_mapping_commit_atomically_against_real_sqlite() {
     let (_dir, pool, _catalog) = database().await;
     wealth_storage::mutate(&pool, None, |data| {
         data.accounts.push(Account {
+            track_cash: true,
             id: "broker".into(),
             name: "Overseas".into(),
         });
@@ -301,8 +303,9 @@ async fn wealth_restore_failure_rolls_back_tax_and_wealth_together() {
 async fn wealth_mutation_failure_does_not_partially_commit() {
     let (_dir, pool, _catalog) = database().await;
     let before = wealth_storage::load(&pool).await.unwrap();
-    let result = wealth_storage::mutate(&pool, None, |data| {
+    let result: crate::error::AppResult<()> = wealth_storage::mutate(&pool, None, |data| {
         data.accounts.push(Account {
+            track_cash: true,
             id: "new".into(),
             name: "new".into(),
         });
@@ -429,5 +432,76 @@ async fn prepare_native_wealth_smoke_when_requested() {
     })
     .await
     .unwrap();
+    pool.close().await;
+}
+
+#[tokio::test]
+async fn changing_instrument_currency_syncs_its_activities_and_openings() {
+    let (_dir, pool, _catalog) = database().await;
+    wealth_storage::mutate(&pool, None, |data| {
+        data.accounts.push(Account {
+            track_cash: false,
+            id: "acc".into(),
+            name: "acc".into(),
+        });
+        data.instruments.push(Instrument {
+            id: "schg".into(),
+            symbol: "SCHG".into(),
+            name: "Schwab US Growth ETF".into(),
+            kind: "etf".into(),
+            currency: "THB".into(),
+            exchange: "NYSE Arca".into(),
+            provider_symbol: "SCHG".into(),
+        });
+        data.activities.push(Activity {
+            id: "buy1".into(),
+            account_id: "acc".into(),
+            date: "2026-01-02".into(),
+            kind: "buy".into(),
+            instrument_id: Some("schg".into()),
+            currency: "THB".into(),
+            quantity: Some("10".into()),
+            unit_price: Some("35".into()),
+            amount: Some("350".into()),
+            fee: "0".into(),
+            tax: "0".into(),
+            related_account_id: None,
+            counter_currency: None,
+            counter_amount: None,
+            sequence: 0,
+            note: "".into(),
+        });
+        data.opening_positions.push(OpeningPosition {
+            id: "op1".into(),
+            account_id: "acc".into(),
+            date: "2026-01-01".into(),
+            instrument_id: Some("schg".into()),
+            currency: "THB".into(),
+            quantity: "5".into(),
+            cost_basis: None,
+            cost_basis_base: None,
+        });
+        Ok(())
+    })
+    .await
+    .unwrap();
+
+    let synced = wealth_storage::mutate(&pool, None, |data| {
+        let mut corrected = data.instruments[0].clone();
+        corrected.currency = "USD".into();
+        let synced = wealth_storage::sync_instrument_currency(data, &corrected);
+        data.instruments[0].currency = "USD".into();
+        Ok(synced)
+    })
+    .await
+    .unwrap();
+    assert_eq!(synced, 2);
+
+    let data = wealth_storage::load(&pool).await.unwrap();
+    assert!(data.activities.iter().all(|a| a.currency == "USD"));
+    assert!(data.opening_positions.iter().all(|o| o.currency == "USD"));
+    assert_eq!(data.instruments[0].currency, "USD");
+    // The whole graph still validates after the rewrite.
+    wealth_core::validate(&data).unwrap();
     pool.close().await;
 }

@@ -947,10 +947,12 @@ mod tests {
                 Account {
                     id: "a".into(),
                     name: "Broker".into(),
+                    track_cash: true,
                 },
                 Account {
                     id: "b".into(),
                     name: "Other".into(),
+                    track_cash: true,
                 },
             ],
             ..Default::default()

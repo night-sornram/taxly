@@ -11,7 +11,7 @@ use std::str::FromStr;
 pub enum WealthError {
     #[error("{0}")]
     Validation(String),
-    #[error("Decimal arithmetic overflow")]
+    #[error("ตัวเลขเกินขอบเขตที่รองรับ")]
     Overflow,
 }
 
@@ -54,10 +54,10 @@ fn combine(a: Option<Decimal>, b: Option<Decimal>) -> Result<Option<Decimal>> {
 }
 fn date(value: &str) -> Result<NaiveDate> {
     let parsed = NaiveDate::parse_from_str(value, "%Y-%m-%d")
-        .map_err(|_| invalid(format!("Invalid date: {value}")))?;
+        .map_err(|_| invalid(format!("รูปแบบวันที่ไม่ถูกต้อง: {value}")))?;
     if parsed.format("%Y-%m-%d").to_string() != value || !(1900..=2200).contains(&parsed.year()) {
         return Err(invalid(format!(
-            "Date must be YYYY-MM-DD between 1900 and 2200: {value}"
+            "วันที่ต้องอยู่ในรูปแบบ YYYY-MM-DD ระหว่างปี 1900–2200: {value}"
         )));
     }
     Ok(parsed)
@@ -78,38 +78,38 @@ fn decimal(value: &str) -> Result<Decimal> {
         || value.starts_with('.')
         || value.ends_with('.')
     {
-        return Err(invalid(format!("Invalid nonnegative decimal: {value}")));
+        return Err(invalid(format!(
+            "จำนวนไม่ถูกต้อง (ต้องเป็นตัวเลขไม่ติดลบ): {value}"
+        )));
     }
     let parsed =
-        Decimal::from_str(value).map_err(|_| invalid(format!("Invalid decimal: {value}")))?;
+        Decimal::from_str(value).map_err(|_| invalid(format!("จำนวนทศนิยมไม่ถูกต้อง: {value}")))?;
     if parsed.scale() > 12 || parsed > Decimal::from(1_000_000_000_000_000_000_u64) {
-        return Err(invalid(
-            "Decimals support at most 12 fractional digits and magnitude 10^18",
-        ));
+        return Err(invalid("รองรับทศนิยมไม่เกิน 12 ตำแหน่ง และค่าไม่เกิน 10^18"));
     }
     Ok(parsed)
 }
 fn positive(value: &str) -> Result<Decimal> {
     let n = decimal(value)?;
     if n <= Decimal::ZERO {
-        return Err(invalid("Value must be positive"));
+        return Err(invalid("ค่าต้องมากกว่าศูนย์"));
     }
     Ok(n)
 }
 fn text(value: &str, label: &str, max: usize) -> Result<()> {
     if value.trim().is_empty() || value.len() > max || value.chars().any(char::is_control) {
-        Err(invalid(format!("Invalid {label}")))
+        Err(invalid(format!("ข้อมูล{label}ไม่ถูกต้อง")))
     } else {
         Ok(())
     }
 }
 fn id(value: &str) -> Result<()> {
-    text(value, "id", 128)
+    text(value, "รหัส", 128)
 }
 fn currency(value: &str) -> Result<()> {
     if value.len() != 3 || !value.bytes().all(|c| c.is_ascii_uppercase()) {
         Err(invalid(format!(
-            "Currency must be three uppercase letters: {value}"
+            "สกุลเงินต้องเป็นตัวอักษรภาษาอังกฤษพิมพ์ใหญ่ 3 ตัว: {value}"
         )))
     } else {
         Ok(())
@@ -117,7 +117,7 @@ fn currency(value: &str) -> Result<()> {
 }
 fn timestamp(value: &str) -> Result<()> {
     if !value.is_empty() && chrono::DateTime::parse_from_rfc3339(value).is_err() {
-        Err(invalid("fetched_at must be RFC3339"))
+        Err(invalid("รูปแบบเวลาที่ดึงข้อมูลไม่ถูกต้อง"))
     } else {
         Ok(())
     }
@@ -127,7 +127,7 @@ fn unique<'a>(values: impl Iterator<Item = &'a str>, label: &str) -> Result<BTre
     for value in values {
         id(value)?;
         if !seen.insert(value.to_owned()) {
-            return Err(invalid(format!("Duplicate {label}: {value}")));
+            return Err(invalid(format!("{label}ซ้ำ: {value}")));
         }
     }
     Ok(seen)
@@ -162,35 +162,39 @@ struct Prepared<'a> {
     fx: BTreeMap<(String, String, NaiveDate), FxQuote>,
     instruments: BTreeMap<String, &'a Instrument>,
     splits: BTreeMap<Key, Vec<(NaiveDate, Decimal)>>,
+    untracked_cash: BTreeSet<String>,
 }
 impl<'a> Prepared<'a> {
     fn new(data: &'a WealthData) -> Result<Self> {
         if data.revision < 0 {
-            return Err(invalid("Revision cannot be negative"));
+            return Err(invalid("เลขรุ่นข้อมูลต้องไม่ติดลบ"));
         }
         currency(&data.preferences.reporting_currency)?;
-        let accounts = unique(data.accounts.iter().map(|r| r.id.as_str()), "account id")?;
-        let instrument_ids = unique(
-            data.instruments.iter().map(|r| r.id.as_str()),
-            "instrument id",
-        )?;
-        unique(data.activities.iter().map(|r| r.id.as_str()), "activity id")?;
+        let accounts = unique(data.accounts.iter().map(|r| r.id.as_str()), "รหัสบัญชี")?;
+        let untracked_cash = data
+            .accounts
+            .iter()
+            .filter(|a| !a.track_cash)
+            .map(|a| a.id.clone())
+            .collect::<BTreeSet<_>>();
+        let instrument_ids = unique(data.instruments.iter().map(|r| r.id.as_str()), "รหัสหลักทรัพย์")?;
+        unique(data.activities.iter().map(|r| r.id.as_str()), "รหัสรายการ")?;
         unique(
             data.opening_positions.iter().map(|r| r.id.as_str()),
-            "opening id",
+            "รหัสยอดตั้งต้น",
         )?;
         unique(
             data.import_mappings.iter().map(|r| r.id.as_str()),
             "mapping id",
         )?;
         for r in &data.accounts {
-            text(&r.name, "account name", 200)?;
+            text(&r.name, "ชื่อบัญชี", 200)?;
         }
         let mut instruments = BTreeMap::new();
         let mut instrument_keys = BTreeSet::new();
         for r in &data.instruments {
-            text(&r.symbol, "symbol", 64)?;
-            text(&r.name, "instrument name", 200)?;
+            text(&r.symbol, "สัญลักษณ์", 64)?;
+            text(&r.name, "ชื่อหลักทรัพย์", 200)?;
             currency(&r.currency)?;
             let canonical = (
                 r.symbol.trim().to_ascii_uppercase(),
@@ -198,15 +202,13 @@ impl<'a> Prepared<'a> {
                 r.currency.clone(),
             );
             if !instrument_keys.insert(canonical) {
-                return Err(invalid(
-                    "Duplicate instrument symbol, exchange and currency",
-                ));
+                return Err(invalid("มีหลักทรัพย์นี้ในทะเบียนแล้ว (สัญลักษณ์ ตลาด และสกุลเงินซ้ำ)"));
             }
             if !matches!(r.kind.as_str(), "stock" | "etf") {
-                return Err(invalid("Only stock and etf instruments are supported"));
+                return Err(invalid("รองรับเฉพาะหุ้นและ ETF"));
             }
             if r.exchange.len() > 100 || r.provider_symbol.len() > 100 {
-                return Err(invalid("Exchange or provider symbol too long"));
+                return Err(invalid("ชื่อตลาดหรือสัญลักษณ์ผู้ให้ข้อมูลยาวเกินไป"));
             }
             instruments.insert(r.id.clone(), r);
         }
@@ -215,7 +217,7 @@ impl<'a> Prepared<'a> {
         let mut openings = Vec::new();
         for r in &data.opening_positions {
             if !accounts.contains(&r.account_id) {
-                return Err(invalid("Opening references unknown account"));
+                return Err(invalid("ยอดตั้งต้นอ้างถึงบัญชีที่ยังไม่มีอยู่"));
             }
             let day = date(&r.date)?;
             currency(&r.currency)?;
@@ -232,22 +234,24 @@ impl<'a> Prepared<'a> {
             let cost = r.cost_basis.as_deref().map(decimal).transpose()?;
             let base = r.cost_basis_base.as_deref().map(decimal).transpose()?;
             if base.is_some() && cost.is_none() {
-                return Err(invalid("Base cost requires native cost basis"));
+                return Err(invalid(
+                    "ต้องกรอกต้นทุนในสกุลเงินของหลักทรัพย์ก่อนจะกรอกต้นทุนในสกุลรายงาน",
+                ));
             }
             if let Some(instrument) = &r.instrument_id {
                 let instrument = instruments
                     .get(instrument)
-                    .ok_or_else(|| invalid("Opening references unknown instrument"))?;
+                    .ok_or_else(|| invalid("ยอดตั้งต้นอ้างถึงหลักทรัพย์ที่ยังไม่มีอยู่"))?;
                 if instrument.currency != r.currency {
-                    return Err(invalid("Opening currency must match instrument"));
+                    return Err(invalid("สกุลเงินของยอดตั้งต้นต้องตรงกับหลักทรัพย์"));
                 }
             } else if cost.is_some() || base.is_some() {
-                return Err(invalid("Opening cash has no cost basis"));
+                return Err(invalid("ยอดตั้งต้นเงินสดไม่ต้องกรอกต้นทุน"));
             }
             if let Some(previous) = baselines.insert(r.account_id.clone(), day)
                 && previous != day
             {
-                return Err(invalid("All openings in an account must share one date"));
+                return Err(invalid("ยอดตั้งต้นทั้งหมดในบัญชีเดียวกันต้องใช้วันเดียวกัน"));
             }
             openings.push(ParsedOpening {
                 row: r,
@@ -261,32 +265,28 @@ impl<'a> Prepared<'a> {
         let tolerance = Decimal::new(1, 2);
         for r in &data.activities {
             if !accounts.contains(&r.account_id) {
-                return Err(invalid("Activity references unknown account"));
+                return Err(invalid("รายการอ้างถึงบัญชีที่ยังไม่มีอยู่"));
             }
             let day = date(&r.date)?;
             currency(&r.currency)?;
             if r.sequence < 0 || r.note.len() > 4000 {
-                return Err(invalid("Invalid activity sequence or note"));
+                return Err(invalid("ลำดับรายการหรือบันทึกช่วยจำไม่ถูกต้อง"));
             }
             if baselines
                 .get(&r.account_id)
                 .is_some_and(|baseline| day < *baseline)
             {
-                return Err(invalid(
-                    "Activity cannot precede its account opening baseline",
-                ));
+                return Err(invalid("รายการต้องไม่อยู่ก่อนวันตั้งต้นของบัญชี"));
             }
             if let Some(related) = &r.related_account_id {
                 if !accounts.contains(related) || related == &r.account_id {
-                    return Err(invalid(
-                        "Related account must be a different existing account",
-                    ));
+                    return Err(invalid("บัญชีปลายทางต้องเป็นบัญชีอื่นที่มีอยู่แล้ว"));
                 }
                 if baselines
                     .get(related)
                     .is_some_and(|baseline| day < *baseline)
                 {
-                    return Err(invalid("Transfer cannot precede destination baseline"));
+                    return Err(invalid("การโอนต้องไม่อยู่ก่อนวันตั้งต้นของบัญชีปลายทาง"));
                 }
             }
             let fee = decimal(&r.fee)?;
@@ -300,20 +300,22 @@ impl<'a> Prepared<'a> {
             }
             if let Some(i) = &r.instrument_id {
                 if !instrument_ids.contains(i) {
-                    return Err(invalid("Activity references unknown instrument"));
+                    return Err(invalid("รายการอ้างถึงหลักทรัพย์ที่ยังไม่มีอยู่"));
                 }
                 if instruments[i].currency != r.currency {
-                    return Err(invalid("Activity currency must match instrument"));
+                    return Err(invalid("สกุลเงินของรายการต้องตรงกับหลักทรัพย์"));
                 }
             }
             let amount = match r.kind.as_str() {
                 "buy" | "sell" => {
                     if r.instrument_id.is_none() {
-                        return Err(invalid("Trade requires an instrument"));
+                        return Err(invalid("การซื้อขายต้องเลือกหลักทรัพย์"));
                     }
                     let gross = mul(
-                        quantity.ok_or_else(|| invalid("Trade requires quantity"))?,
-                        unit.ok_or_else(|| invalid("Trade requires unit price"))?,
+                        quantity.ok_or_else(|| invalid("การซื้อขายต้องกรอกจำนวนหุ้น"))?,
+                        unit.ok_or_else(|| {
+                            invalid("การซื้อขายต้องกรอกราคาต่อหน่วย หรือกรอกยอดเงินเพื่อให้คำนวณราคาให้")
+                        })?,
                     )?;
                     let charges = add(fee, tax)?;
                     let expected = if r.kind == "buy" {
@@ -322,7 +324,7 @@ impl<'a> Prepared<'a> {
                         sub(gross, charges)?
                     };
                     if expected <= Decimal::ZERO {
-                        return Err(invalid("Trade net cash must be positive"));
+                        return Err(invalid("ยอดเงินสดสุทธิของการซื้อขายต้องมากกว่าศูนย์"));
                     }
                     if supplied.is_some_and(|value| {
                         sub(value, expected)
@@ -330,7 +332,7 @@ impl<'a> Prepared<'a> {
                             .unwrap_or(true)
                     }) {
                         return Err(invalid(
-                            "Final cash does not reconcile with quantity, price, fees and tax",
+                            "ยอดเงินสุทธิไม่ตรงกับ จำนวน × ราคา บวกลบค่าธรรมเนียมและภาษี",
                         ));
                     }
                     supplied.unwrap_or(expected)
@@ -355,7 +357,7 @@ impl<'a> Prepared<'a> {
                             "Transfer requires destination account and no instrument",
                         ));
                     }
-                    supplied.ok_or_else(|| invalid("Transfer requires final cash amount"))?
+                    supplied.ok_or_else(|| invalid("การโอนต้องกรอกยอดเงิน"))?
                 }
                 "fx" => {
                     if r.instrument_id.is_some()
@@ -368,15 +370,15 @@ impl<'a> Prepared<'a> {
                             "FX requires distinct currencies and both cash amounts",
                         ));
                     }
-                    supplied.ok_or_else(|| invalid("FX requires source amount"))?
+                    supplied.ok_or_else(|| invalid("การแลกสกุลเงินต้องกรอกยอดเงินต้นทาง"))?
                 }
                 "deposit" | "withdrawal" | "dividend" | "interest" | "fee" | "tax" => {
-                    supplied.ok_or_else(|| invalid("Activity requires final net cash amount"))?
+                    supplied.ok_or_else(|| invalid("รายการนี้ต้องกรอกยอดเงินสุทธิ"))?
                 }
-                _ => return Err(invalid(format!("Unsupported activity kind: {}", r.kind))),
+                _ => return Err(invalid(format!("ไม่รองรับประเภทรายการ: {}", r.kind))),
             };
             if r.kind != "fx" && (counter.is_some() || r.counter_currency.is_some()) {
-                return Err(invalid("Counter currency and amount are only valid for FX"));
+                return Err(invalid("สกุลเงินและยอดที่ได้รับ ใช้เฉพาะรายการแลกสกุลเงิน"));
             }
             if !matches!(r.kind.as_str(), "transfer" | "fx") && r.related_account_id.is_some() {
                 return Err(invalid(
@@ -398,17 +400,17 @@ impl<'a> Prepared<'a> {
         let mut prices = BTreeMap::new();
         for r in &data.prices {
             if !instrument_ids.contains(&r.instrument_id) {
-                return Err(invalid("Price references unknown instrument"));
+                return Err(invalid("ราคาอ้างถึงหลักทรัพย์ที่ยังไม่มีอยู่"));
             }
             let day = date(&r.date)?;
             let close = positive(&r.close)?;
-            text(&r.source, "price source", 100)?;
+            text(&r.source, "แหล่งราคา", 100)?;
             timestamp(&r.fetched_at)?;
             if prices
                 .insert((r.instrument_id.clone(), day), close)
                 .is_some()
             {
-                return Err(invalid("Duplicate instrument/date price"));
+                return Err(invalid("มีราคาของหลักทรัพย์และวันที่นี้อยู่แล้ว"));
             }
         }
         let mut fx = BTreeMap::new();
@@ -416,7 +418,7 @@ impl<'a> Prepared<'a> {
             currency(&r.from_currency)?;
             currency(&r.to_currency)?;
             if r.from_currency == r.to_currency {
-                return Err(invalid("FX currencies must differ"));
+                return Err(invalid("สกุลเงินต้นทางและปลายทางต้องไม่ซ้ำกัน"));
             }
             let day = date(&r.date)?;
             let rate = positive(&r.rate)?;
@@ -433,7 +435,7 @@ impl<'a> Prepared<'a> {
                 )
                 .is_some()
             {
-                return Err(invalid("Duplicate currency pair/date FX rate"));
+                return Err(invalid("มีอัตราแลกเปลี่ยนของคู่สกุลเงินและวันที่นี้อยู่แล้ว"));
             }
         }
         for r in &data.import_mappings {
@@ -453,7 +455,7 @@ impl<'a> Prepared<'a> {
                     | "DD/MM/YYYY"
                     | "MM/DD/YYYY"
             ) {
-                return Err(invalid("Unsupported import mode or date format"));
+                return Err(invalid("รูปแบบการนำเข้าหรือรูปแบบวันที่ไม่รองรับ"));
             }
             for (key, value) in &r.columns {
                 text(key, "mapping field", 100)?;
@@ -469,17 +471,19 @@ impl<'a> Prepared<'a> {
                         a.row
                             .instrument_id
                             .clone()
-                            .ok_or_else(|| invalid("Missing split instrument"))?,
+                            .ok_or_else(|| invalid("การแตกหุ้นต้องเลือกหลักทรัพย์"))?,
                     ))
                     .or_default()
                     .push((
                         a.date,
-                        a.quantity.ok_or_else(|| invalid("Missing split factor"))?,
+                        a.quantity
+                            .ok_or_else(|| invalid("การแตกหุ้นต้องกรอกอัตราส่วน"))?,
                     ));
             }
         }
         Ok(Self {
             data,
+            untracked_cash,
             activities,
             openings,
             prices,
@@ -582,7 +586,7 @@ impl Ledger {
         *entry = add(*entry, change)?;
         if *entry < Decimal::ZERO {
             return Err(invalid(format!(
-                "Insufficient {currency} cash in account {account}"
+                "เงินสด {currency} ในบัญชีไม่พอสำหรับรายการนี้ ให้ปิดการติดตามเงินสดในหน้าบัญชี บันทึกรายการฝากเงินก่อน หรือลดยอดรายการลง"
             )));
         }
         Ok(())
@@ -616,29 +620,42 @@ impl Ledger {
             r.account_id.clone(),
             r.instrument_id.clone().unwrap_or_default(),
         );
+        let tracked = !p.untracked_cash.contains(&r.account_id);
         match r.kind.as_str() {
-            "deposit" | "dividend" | "interest" => {
-                self.cash_change(&r.account_id, &r.currency, a.amount)?
+            // Cash records always update cash, even on holdings-only accounts:
+            // they are how the user records "how much money I have".
+            "deposit" => self.cash_change(&r.account_id, &r.currency, a.amount)?,
+            "withdrawal" => self.cash_change(&r.account_id, &r.currency, -a.amount)?,
+            // Holdings income/charges move cash only on tracked accounts; on
+            // holdings-only accounts the cash never leaves the wallet.
+            "dividend" | "interest" => {
+                if tracked {
+                    self.cash_change(&r.account_id, &r.currency, a.amount)?
+                }
             }
-            "withdrawal" | "fee" | "tax" => {
-                self.cash_change(&r.account_id, &r.currency, -a.amount)?
+            "fee" | "tax" => {
+                if tracked {
+                    self.cash_change(&r.account_id, &r.currency, -a.amount)?
+                }
             }
             "buy" => {
-                self.cash_change(&r.account_id, &r.currency, -a.amount)?;
+                if tracked {
+                    self.cash_change(&r.account_id, &r.currency, -a.amount)?;
+                }
                 self.lots.entry(key).or_default().push_back(Lot {
-                    quantity: a.quantity.ok_or_else(|| invalid("Missing quantity"))?,
+                    quantity: a.quantity.ok_or_else(|| invalid("ต้องกรอกจำนวนหุ้น"))?,
                     cost: Some(a.amount),
                     base: p.base(a.amount, &r.currency, a.date)?,
                 });
             }
             "sell" => {
-                let mut remaining = a.quantity.ok_or_else(|| invalid("Missing quantity"))?;
+                let mut remaining = a.quantity.ok_or_else(|| invalid("ต้องกรอกจำนวนหุ้น"))?;
                 let lots = self.lots.entry(key.clone()).or_default();
                 let mut removed = Some(Decimal::ZERO);
                 while remaining > Decimal::ZERO {
                     let lot = lots
                         .front_mut()
-                        .ok_or_else(|| invalid(format!("Insufficient shares for sale {}", r.id)))?;
+                        .ok_or_else(|| invalid("จำนวนหุ้นไม่พอสำหรับการขายนี้"))?;
                     let take = remaining.min(lot.quantity);
                     let ratio = div(take, lot.quantity)?;
                     let cost = lot.cost.map(|c| mul(c, ratio)).transpose()?;
@@ -661,20 +678,23 @@ impl Ledger {
                 let gain = removed.map(|cost| sub(a.amount, cost)).transpose()?;
                 let realized = self.realized.entry(key).or_insert(Some(Decimal::ZERO));
                 *realized = combine(*realized, gain)?;
-                self.cash_change(&r.account_id, &r.currency, a.amount)?;
+                if tracked {
+                    self.cash_change(&r.account_id, &r.currency, a.amount)?;
+                }
             }
             "split" => {
                 let lots = self
                     .lots
                     .get_mut(&key)
-                    .ok_or_else(|| invalid("Split requires an existing position"))?;
+                    .ok_or_else(|| invalid("การแตกหุ้นต้องมีหุ้นของหลักทรัพย์นี้ในพอร์ตก่อน"))?;
                 if lots.is_empty() {
-                    return Err(invalid("Split requires an existing position"));
+                    return Err(invalid("การแตกหุ้นต้องมีหุ้นของหลักทรัพย์นี้ในพอร์ตก่อน"));
                 }
                 for lot in lots {
                     lot.quantity = mul(
                         lot.quantity,
-                        a.quantity.ok_or_else(|| invalid("Missing split factor"))?,
+                        a.quantity
+                            .ok_or_else(|| invalid("การแตกหุ้นต้องกรอกอัตราส่วน"))?,
                     )?;
                 }
             }
@@ -683,7 +703,7 @@ impl Ledger {
                 self.cash_change(
                     r.related_account_id
                         .as_deref()
-                        .ok_or_else(|| invalid("Missing transfer account"))?,
+                        .ok_or_else(|| invalid("การโอนต้องเลือกบัญชีปลายทาง"))?,
                     &r.currency,
                     a.amount,
                 )?;
@@ -694,11 +714,11 @@ impl Ledger {
                     r.related_account_id.as_deref().unwrap_or(&r.account_id),
                     r.counter_currency
                         .as_deref()
-                        .ok_or_else(|| invalid("Missing counter currency"))?,
-                    a.counter.ok_or_else(|| invalid("Missing counter amount"))?,
+                        .ok_or_else(|| invalid("ต้องกรอกสกุลเงินที่ได้รับ"))?,
+                    a.counter.ok_or_else(|| invalid("ต้องกรอกยอดเงินที่ได้รับ"))?,
                 )?;
             }
-            _ => return Err(invalid("Unknown activity")),
+            _ => return Err(invalid("ไม่รู้จักประเภทรายการนี้")),
         }
         Ok(())
     }
@@ -896,6 +916,23 @@ fn activity_flow(
         .related_account_id
         .as_ref()
         .is_some_and(|a| selected.contains(a));
+    let tracked = !p.untracked_cash.contains(&r.account_id);
+    if !tracked && source {
+        match r.kind.as_str() {
+            // Money for the purchase came from outside the valued portfolio.
+            "buy" => {
+                flows.incoming(p.base(a.amount, &r.currency, a.date)?)?;
+                return Ok(());
+            }
+            // Holdings value left, or income was withdrawn: still return.
+            "sell" | "dividend" | "interest" | "fee" | "tax" => {
+                flows.outgoing(p.base(a.amount, &r.currency, a.date)?)?;
+                return Ok(());
+            }
+            // Cash records fall through to the shared cash-flow mapping.
+            _ => {}
+        }
+    }
     match r.kind.as_str() {
         "deposit" if source => flows.incoming(p.base(a.amount, &r.currency, a.date)?)?,
         "withdrawal" if source => flows.outgoing(p.base(a.amount, &r.currency, a.date)?)?,
@@ -910,10 +947,10 @@ fn activity_flow(
         }
         "fx" if r.related_account_id.is_some() && !source && destination => flows.incoming(
             p.base(
-                a.counter.ok_or_else(|| invalid("Missing FX amount"))?,
+                a.counter.ok_or_else(|| invalid("ต้องกรอกยอดเงินที่ได้รับ"))?,
                 r.counter_currency
                     .as_deref()
-                    .ok_or_else(|| invalid("Missing FX currency"))?,
+                    .ok_or_else(|| invalid("ต้องกรอกสกุลเงินที่ได้รับ"))?,
                 a.date,
             )?,
         )?,
@@ -934,7 +971,7 @@ pub fn portfolio(data: &WealthData, filter: &PortfolioFilter) -> Result<Portfoli
     } else {
         let chosen: BTreeSet<_> = filter.account_ids.iter().cloned().collect();
         if chosen.len() != filter.account_ids.len() || !chosen.is_subset(&account_ids) {
-            return Err(invalid("Unknown or duplicate account filter"));
+            return Err(invalid("ตัวกรองบัญชีไม่ถูกต้องหรือซ้ำกัน"));
         }
         chosen
     };
@@ -958,7 +995,7 @@ pub fn portfolio(data: &WealthData, filter: &PortfolioFilter) -> Result<Portfoli
         .min();
     let requested = filter.start_date.as_deref().map(date).transpose()?;
     if requested.is_some_and(|start| start > end) {
-        return Err(invalid("Start date must not follow end date"));
+        return Err(invalid("วันเริ่มต้นต้องไม่อยู่หลังวันสิ้นสุด"));
     }
     let start = match (requested, earliest) {
         (Some(s), Some(e)) => s.max(e),

@@ -1110,3 +1110,9 @@
 .wealth-price-hints {
   margin: 2px 0 6px;
 }
+.wealth-external-cash {
+  margin: 12px 0 4px;
+}
+.wealth-external-cash .wealth-help {
+  margin-top: 6px;
+}

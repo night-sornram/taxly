@@ -29,6 +29,7 @@ pub struct InstrumentSearchResult {
     pub name: String,
     pub exchange: String,
     pub kind: String,
+    pub currency: String,
 }
 
 const MAX_SEARCH_RESULTS: usize = 8;
@@ -67,6 +68,37 @@ impl YahooProvider {
             .build()
             .map_err(|_| market_error("เตรียมการเชื่อมต่อข้อมูลตลาดไม่สำเร็จ"))?;
         Ok(Self { client })
+    }
+
+    /// Reads only `meta.currency` from the chart endpoint, not the series.
+    async fn chart_currency(&self, symbol: &str) -> Option<String> {
+        let mut url = yahoo_chart_endpoint(symbol).ok()?;
+        let period = Utc::now().timestamp() - 86_400;
+        url.query_pairs_mut()
+            .append_pair("period1", &period.to_string())
+            .append_pair("period2", &(period + 86_400).to_string())
+            .append_pair("interval", "1d");
+        let response = self.client.get(url).send().await.ok()?;
+        if !response.status().is_success() {
+            return None;
+        }
+        let bytes = response.bytes().await.ok()?;
+        let json: Value = serde_json::from_slice(bytes.as_ref()).ok()?;
+        json.get("chart")?
+            .get("result")?
+            .as_array()?
+            .first()?
+            .get("meta")?
+            .get("currency")?
+            .as_str()
+            .map(|currency| {
+                let upper = currency.to_uppercase();
+                if upper.len() == 3 && upper.chars().all(|c| c.is_ascii_alphabetic()) {
+                    upper
+                } else {
+                    String::new()
+                }
+            })
     }
 }
 
@@ -177,7 +209,15 @@ impl MarketDataProvider for YahooProvider {
             }
             bytes.extend_from_slice(&chunk);
         }
-        parse_yahoo_search(&bytes)
+        let mut results = parse_yahoo_search(&bytes)?;
+        // Fill each suggestion with its real trading currency so the editor
+        // never has to guess (a wrong guess later breaks refresh matching).
+        for result in &mut results {
+            if let Some(currency) = self.chart_currency(&result.symbol).await {
+                result.currency = currency;
+            }
+        }
+        Ok(results)
     }
 }
 
@@ -502,6 +542,7 @@ fn parse_yahoo_search(bytes: &[u8]) -> AppResult<Vec<InstrumentSearchResult>> {
             name: name.chars().take(160).collect(),
             exchange,
             kind: kind.to_string(),
+            currency: String::new(),
         });
     }
     Ok(results)
@@ -547,7 +588,9 @@ fn currency_unit(provider_currency: &str, expected: &str) -> AppResult<Decimal> 
         other => (other, 1),
     };
     if !major.eq_ignore_ascii_case(expected) {
-        return Err(market_error("สกุลเงินราคาจากผู้ให้ข้อมูลไม่ตรงกับหลักทรัพย์"));
+        return Err(market_error(&format!(
+            "สกุลเงินราคาจากผู้ให้ข้อมูล ({provider_currency}) ไม่ตรงกับสกุลเงินของหลักทรัพย์ ({expected}) — แก้ไขสกุลเงินของหลักทรัพย์ให้ตรงกัน หรือลบแล้วค้นหาสร้างใหม่"
+        )));
     }
     Ok(Decimal::ONE / Decimal::from(divisor))
 }

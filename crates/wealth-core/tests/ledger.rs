@@ -2,6 +2,7 @@ use wealth_core::*;
 
 fn account(id: &str) -> Account {
     Account {
+        track_cash: true,
         id: id.into(),
         name: id.into(),
     }
@@ -88,6 +89,14 @@ fn opening(day: &str, quantity: &str) -> OpeningPosition {
         quantity: quantity.into(),
         cost_basis: None,
         cost_basis_base: None,
+    }
+}
+fn cash_opening(day: &str, amount: &str) -> OpeningPosition {
+    OpeningPosition {
+        id: "cash-opening".into(),
+        instrument_id: None,
+        quantity: amount.into(),
+        ..opening(day, "0")
     }
 }
 
@@ -510,7 +519,7 @@ fn canonical_instrument_identity_is_unique_before_storage() {
         validate(&d)
             .unwrap_err()
             .to_string()
-            .contains("Duplicate instrument")
+            .contains("สัญลักษณ์ ตลาด และสกุลเงินซ้ำ")
     );
     d.instruments[1].exchange = "SET".into();
     assert!(validate(&d).is_ok());
@@ -725,4 +734,60 @@ fn baseline_day_split_has_neutral_flow_return_for_fresh_and_carried_quotes() {
         assert_eq!(p.period_gain.as_deref(), Some("0"));
         assert_eq!(p.twr.as_deref(), Some("0"));
     }
+}
+
+#[test]
+fn untracked_accounts_record_buys_without_any_cash() {
+    let mut d = data();
+    d.accounts[0].track_cash = false;
+    d.activities = vec![trade("b1", "2024-01-02", "buy", "10", "100")];
+    d.prices = vec![price("2024-01-02", "100"), price("2024-01-03", "110")];
+    let result = portfolio(&d, &filter("2024-01-05")).unwrap();
+    // Holdings are valued; there is no cash to track and nothing was rejected.
+    assert_eq!(result.total_value.as_deref(), Some("1100"));
+    assert!(result.cash.is_empty());
+    // The buy is an external inflow, so TWR reflects price growth only.
+    assert_eq!(result.twr.as_deref(), Some("0.1"));
+    assert!(validate(&d).is_ok());
+    // Cash records still work on holdings-only accounts: they record how much
+    // money the user has, without the buy ever touching that balance.
+    d.activities
+        .push(activity("d1", "2024-01-04", "deposit", Some("500")));
+    let result = portfolio(&d, &filter("2024-01-05")).unwrap();
+    assert_eq!(result.cash[0].amount, "500");
+    // The deposit grows the portfolio without creating fake return: buy value
+    // 1000 + price growth 10% + cash 500 = 1600, TWR stays at 10%.
+    assert_eq!(result.total_value.as_deref(), Some("1600"));
+    assert_eq!(result.twr.as_deref(), Some("0.1"));
+}
+
+#[test]
+fn holdings_only_accounts_can_set_an_opening_cash_balance() {
+    let mut d = data();
+    d.accounts[0].track_cash = false;
+    d.opening_positions.push(cash_opening("2024-01-01", "300"));
+    d.activities = vec![trade("b1", "2024-01-02", "buy", "10", "100")];
+    d.prices = vec![price("2024-01-02", "100")];
+    assert!(validate(&d).is_ok());
+    let result = portfolio(&d, &filter("2024-01-02")).unwrap();
+    // Opening cash and the holding coexist; the buy did not consume the cash.
+    assert_eq!(result.cash[0].amount, "300");
+    assert_eq!(result.total_value.as_deref(), Some("1300"));
+}
+
+#[test]
+fn untracked_dividends_and_sells_leave_as_withdrawn_income() {
+    let mut d = data();
+    d.accounts[0].track_cash = false;
+    d.activities = vec![
+        trade("b1", "2024-01-02", "buy", "10", "100"),
+        trade("s1", "2024-01-04", "sell", "10", "120"),
+    ];
+    d.prices = vec![price("2024-01-02", "100"), price("2024-01-03", "100")];
+    let result = portfolio(&d, &filter("2024-01-05")).unwrap();
+    assert_eq!(result.cash_value.as_deref(), Some("0"));
+    // Selling everything withdraws the value; the realized gain is recorded.
+    assert!(
+        result.holdings.is_empty() || result.holdings.iter().all(|h| h.realized_gain.is_some())
+    );
 }

@@ -2,12 +2,13 @@ import { useState } from "react";
 import type { FormEvent, ReactNode } from "react";
 import { Search } from "lucide-react";
 import { command, errorMessage } from "../api";
-import { Button, ErrorNotice, Field, Modal, Notice } from "../components";
-import { AccountsOptions, InstrumentsOptions, Select } from "./ui";
+import { Button, Checkbox, ErrorNotice, Field, Modal, Notice } from "../components";
+import { AccountsOptions, CurrencySelect, InstrumentsOptions, Select } from "./ui";
 import {
   activityLabels,
   dateLabel,
   decimal,
+  netCashForTrade,
   today,
   tradePreview,
   unitPriceFromTotal,
@@ -122,6 +123,7 @@ const moneyProps = {
 const currencyProps = { pattern: "[A-Za-z]{3}", maxLength: 3, placeholder: "THB", required: true };
 function AccountForm({ entry, wrap, save }: FormProps & { entry?: Account }) {
   const [name, setName] = useState(entry?.name ?? "");
+  const [trackCash, setTrackCash] = useState(entry?.track_cash ?? false);
   return wrap(
     <>
       <Field
@@ -132,14 +134,26 @@ function AccountForm({ entry, wrap, save }: FormProps & { entry?: Account }) {
         onChange={(e) => setName(e.target.value)}
         autoFocus
       />
-      <p className="wealth-help">
-        ตั้งชื่อให้จำง่าย เช่น บัญชีหุ้นไทย หรือบัญชีต่างประเทศ · เงินสดแยกตามสกุลเงินอัตโนมัติ
-      </p>
+      <div className="wealth-external-cash">
+        <Checkbox checked={trackCash} onChange={setTrackCash}>
+          ติดตามเงินสดในบัญชีนี้
+        </Checkbox>
+        <p className="wealth-help">
+          {trackCash
+            ? "การซื้อขายจะหักและเพิ่มยอดเงินสดตามรายการจริง"
+            : "แยกเงินสดกับการลงทุน: บันทึกการซื้อขายได้อิสระโดยไม่ผูกกับยอดเงินสด"}
+        </p>
+      </div>
+      <p className="wealth-help">ตั้งชื่อให้จำง่าย เช่น บัญชีหุ้นไทย หรือบัญชีต่างประเทศ</p>
     </>,
     (e) => {
       e.preventDefault();
       void save("save_wealth_account", {
-        account: { id: entry?.id ?? crypto.randomUUID(), name: name.trim() },
+        account: {
+          id: entry?.id ?? crypto.randomUUID(),
+          name: name.trim(),
+          track_cash: trackCash,
+        },
       });
     },
   );
@@ -198,7 +212,8 @@ function InstrumentForm({
       name: found.name,
       exchange,
       kind: found.kind === "etf" ? "etf" : "stock",
-      currency: thaiListed ? "THB" : form.currency,
+      // The provider's real trading currency, e.g. USD for SCHF/SCHG.
+      currency: found.currency || (thaiListed ? "THB" : form.currency),
       provider_symbol: found.symbol,
     });
     setResults(null);
@@ -259,12 +274,22 @@ function InstrumentForm({
           <option value="stock">หุ้น</option>
           <option value="etf">ETF</option>
         </Select>
-        {field("currency", "สกุลเงิน")}
+        <CurrencySelect
+          label="สกุลเงิน"
+          value={form.currency}
+          onChange={(currency) => setForm({ ...form, currency })}
+        />
       </div>
       {field(
         "provider_symbol",
         "สัญลักษณ์ Yahoo Finance",
         "หุ้นไทยใช้ .BK เช่น PTT.BK; เว้นว่างเพื่อใช้สัญลักษณ์ด้านบน",
+      )}
+      {entry && entry.currency !== form.currency && (
+        <Notice>
+          การเปลี่ยนสกุลเงินจะอัปเดตรายการและยอดตั้งต้นที่ผูกกับหลักทรัพย์นี้ทั้งหมด
+          ให้ใช้สกุลเงินใหม่ตามโดยอัตโนมัติ
+        </Notice>
       )}
     </>,
     (e) => {
@@ -303,6 +328,7 @@ function ActivityForm({
   );
   const instrument = data.instruments.find((i) => i.id === form.instrument_id);
   const trade = form.kind === "buy" || form.kind === "sell";
+  const [amountManual, setAmountManual] = useState(entry?.amount != null);
   // When only the total cash amount is known, derive the unit price in the UI
   // (exact BigInt math) and let the backend re-derive the amount from it, so
   // supplied amounts always reconcile after rounding.
@@ -322,6 +348,17 @@ function ActivityForm({
         .sort((a, b) => b.date.localeCompare(a.date))[0]
     : undefined;
   const effectivePrice = form.unit_price ?? derivedPrice;
+  // Live net cash from quantity × price ± charges; shown in the field until
+  // the user types their own amount.
+  const computedAmount = trade
+    ? netCashForTrade(
+        form.kind as "buy" | "sell",
+        form.quantity,
+        form.unit_price,
+        form.fee,
+        form.tax,
+      )
+    : null;
   const preview =
     trade && latestPrice && effectivePrice
       ? tradePreview(
@@ -390,12 +427,11 @@ function ActivityForm({
             </option>
           ))}
         </Select>
-        <Field
-          {...currencyProps}
+        <CurrencySelect
           label="สกุลเงิน"
           value={form.currency}
-          readOnly={Boolean(instrument)}
-          onChange={(e) => setForm({ ...form, currency: e.target.value.toUpperCase() })}
+          disabled={Boolean(instrument)}
+          onChange={(currency) => setForm({ ...form, currency })}
         />
       </div>
       {withInstrument && (
@@ -474,14 +510,24 @@ function ActivityForm({
         </>
       ) : (
         <>
-          {amountField(
-            "amount",
-            trade ? "เงินสดสุทธิ (ถ้ามี)" : "จำนวนเงิน",
-            !trade,
-            trade
-              ? "กรอกยอดรวมที่จ่ายจริงได้เลย ระบบจะคำนวณราคาต่อหน่วยให้ · หรือเว้นว่างเพื่อคำนวณจาก จำนวน × ราคา"
-              : undefined,
-          )}
+          <Field
+            {...moneyProps}
+            label={trade ? "เงินสดสุทธิ" : "จำนวนเงิน"}
+            required={!trade}
+            hint={
+              trade
+                ? computedAmount && !amountManual
+                  ? "คำนวณอัตโนมัติจาก จำนวน × ราคา บวกลบค่าธรรมเนียมและภาษี · พิมพ์ทับได้ถ้ายอดจริงต่างออกไป หรือกรอกยอดก่อนเพื่อให้คำนวณราคาต่อหน่วยแทน"
+                  : "กรอกยอดรวมที่จ่ายจริง ระบบจะคำนวณราคาต่อหน่วยให้"
+                : undefined
+            }
+            value={amountManual ? (form.amount ?? "") : (form.amount ?? computedAmount ?? "")}
+            onChange={(e) => {
+              const value = e.target.value;
+              setAmountManual(value !== "");
+              setForm({ ...form, amount: value || null });
+            }}
+          />
           {(trade || form.kind === "dividend" || form.kind === "interest") && (
             <div className="form-grid">
               {amountField("fee", "ค่าธรรมเนียม")}
@@ -603,12 +649,11 @@ function OpeningForm({
         ))}
       </Select>
       <div className="form-grid">
-        <Field
-          {...currencyProps}
+        <CurrencySelect
           label="สกุลเงิน"
-          readOnly={Boolean(form.instrument_id)}
           value={form.currency}
-          onChange={(e) => setForm({ ...form, currency: e.target.value.toUpperCase() })}
+          disabled={Boolean(form.instrument_id)}
+          onChange={(currency) => setForm({ ...form, currency })}
         />
         <Field
           {...moneyProps}
@@ -707,17 +752,15 @@ function FxForm({ entry, wrap, save }: FormProps & { entry?: FxRate }) {
   return wrap(
     <>
       <div className="form-grid">
-        <Field
-          {...currencyProps}
+        <CurrencySelect
           label="จากสกุลเงิน"
           value={form.from_currency}
-          onChange={(e) => setForm({ ...form, from_currency: e.target.value.toUpperCase() })}
+          onChange={(from_currency) => setForm({ ...form, from_currency })}
         />
-        <Field
-          {...currencyProps}
+        <CurrencySelect
           label="เป็นสกุลเงิน"
           value={form.to_currency}
-          onChange={(e) => setForm({ ...form, to_currency: e.target.value.toUpperCase() })}
+          onChange={(to_currency) => setForm({ ...form, to_currency })}
         />
       </div>
       <div className="form-grid">

@@ -68,8 +68,20 @@ export async function installWealthIpc(page: Page, empty = false) {
             if (!current.data.preferences.market_data_enabled)
               throw { message: "เปิดใช้ข้อมูลตลาดในตั้งค่าการลงทุนก่อนค้นหา" };
             const catalog = [
-              { symbol: "PTT.BK", name: "ปตท. (PTT PCL)", exchange: "SET", kind: "stock" },
-              { symbol: "VOO", name: "Vanguard S&P 500 ETF", exchange: "SNP", kind: "etf" },
+              {
+                symbol: "PTT.BK",
+                name: "ปตท. (PTT PCL)",
+                exchange: "SET",
+                kind: "stock",
+                currency: "THB",
+              },
+              {
+                symbol: "VOO",
+                name: "Vanguard S&P 500 ETF",
+                exchange: "SNP",
+                kind: "etf",
+                currency: "USD",
+              },
             ];
             return catalog.filter((item) => item.symbol.toLowerCase().includes(query));
           }

@@ -294,13 +294,13 @@
   ],
   "history": [
     {
-      "created_at": "2026-10-15T05:21:24.433Z",
+      "created_at": "2026-10-15T10:48:56.491Z",
       "data_revision": 1,
       "engine_version": "0.1.0",
-      "id": "7d7ca538-707f-4ee1-9a1b-bd7642f483e7",
+      "id": "6f9df47e-34d6-402b-80b0-ad7cf189d303",
       "input_hash": "bc4b5339f2214fd6a329097540e68ae08134aa8947db82b0223ec1e6d561ae24",
       "input_json": "{\"year\":2025,\"facts\":{\"single\":true,\"under_65\":true,\"domestic_salary_only\":true,\"no_special_cases\":true,\"no_other_deductions\":true,\"social_security_confirmed\":true},\"income\":[{\"category\":\"section40_1\",\"amount\":\"30000\",\"withholding\":\"250\",\"basis\":\"actual\"},{\"category\":\"section40_1\",\"amount\":\"30000\",\"withholding\":\"250\",\"basis\":\"actual\"},{\"category\":\"section40_1\",\"amount\":\"30000\",\"withholding\":\"250\",\"basis\":\"actual\"},{\"category\":\"section40_1\",\"amount\":\"30000\",\"withholding\":\"250\",\"basis\":\"actual\"},{\"category\":\"section40_1\",\"amount\":\"30000\",\"withholding\":\"250\",\"basis\":\"actual\"},{\"category\":\"section40_1\",\"amount\":\"30000\",\"withholding\":\"250\",\"basis\":\"actual\"},{\"category\":\"section40_1\",\"amount\":\"30000\",\"withholding\":\"250\",\"basis\":\"actual\"},{\"category\":\"section40_1\",\"amount\":\"30000\",\"withholding\":\"250\",\"basis\":\"actual\"},{\"category\":\"section40_1\",\"amount\":\"30000\",\"withholding\":\"250\",\"basis\":\"actual\"},{\"category\":\"section40_1\",\"amount\":\"30000\",\"withholding\":\"250\",\"basis\":\"actual\"},{\"category\":\"section40_1\",\"amount\":\"30000\",\"withholding\":\"250\",\"basis\":\"actual\"},{\"category\":\"section40_1\",\"amount\":\"30000\",\"withholding\":\"250\",\"basis\":\"actual\"}],\"social_security\":[{\"month\":1,\"amount\":\"750\",\"basis\":\"actual\"},{\"month\":2,\"amount\":\"750\",\"basis\":\"actual\"},{\"month\":3,\"amount\":\"750\",\"basis\":\"actual\"},{\"month\":4,\"amount\":\"750\",\"basis\":\"actual\"},{\"month\":5,\"amount\":\"750\",\"basis\":\"actual\"},{\"month\":6,\"amount\":\"750\",\"basis\":\"actual\"},{\"month\":7,\"amount\":\"750\",\"basis\":\"actual\"},{\"month\":8,\"amount\":\"750\",\"basis\":\"actual\"},{\"month\":9,\"amount\":\"750\",\"basis\":\"actual\"},{\"month\":10,\"amount\":\"750\",\"basis\":\"actual\"},{\"month\":11,\"amount\":\"750\",\"basis\":\"actual\"},{\"month\":12,\"amount\":\"750\",\"basis\":\"actual\"}],\"income_complete\":true}",
-      "result_json": "{\"year\":2025,\"rule_set_id\":\"th-salary-2025-v1\",\"rules_status\":\"verified_scope\",\"rounding_verified\":false,\"gross_income\":\"360000\",\"actual_income\":\"360000\",\"forecast_income\":\"0\",\"expenses\":\"100000\",\"personal_allowance\":\"60000\",\"social_security\":\"9000\",\"social_security_savings\":\"450\",\"taxable_income\":\"191000\",\"annual_tax\":\"2050\",\"known_withholding\":\"3000\",\"actual_withholding\":\"3000\",\"remaining_after_actual_withholding\":\"0\",\"forecast_withholding\":\"0\",\"unknown_withholding_count\":0,\"filing\":\"required\",\"data_complete\":true,\"scope_issues\":[],\"warnings\":[\"ใช้ประมาณการสำหรับผู้โสดอายุต่ำกว่า 65 ปี เฉพาะเงินเดือนในประเทศ สิทธิ์ส่วนตัวและประกันสังคม ม.33\",\"ยังไม่เปิดสรุปยอดชำระหรือคืน: ต้องยืนยันวิธีปัดเศษระหว่างขั้นและยอดคืนกับกรมสรรพากร\",\"ประกันสังคมใช้ยอดจ่ายจริงที่เข้าเงื่อนไข ต้องตรวจกรณีลดอัตรา ส่งเกิน หรือได้รับคืนเงินสมทบ\"],\"difference_preview\":{\"kind\":\"overpaid\",\"amount\":\"950\"},\"settlement\":null,\"bands\":[{\"lower\":\"0\",\"upper\":\"150000\",\"rate\":\"0\",\"statutory_rate\":\"0.05\",\"exempt_amount\":\"150000\",\"taxable_amount\":\"150000\",\"tax\":\"0\"},{\"lower\":\"150000\",\"upper\":\"300000\",\"rate\":\"0.05\",\"statutory_rate\":\"0.05\",\"exempt_amount\":\"0\",\"taxable_amount\":\"41000\",\"tax\":\"2050\"},{\"lower\":\"300000\",\"upper\":\"500000\",\"rate\":\"0.10\",\"statutory_rate\":\"0.10\",\"exempt_amount\":\"0\",\"taxable_amount\":\"0\",\"tax\":\"0\"},{\"lower\":\"500000\",\"upper\":\"750000\",\"rate\":\"0.15\",\"statutory_rate\":\"0.15\",\"exempt_amount\":\"0\",\"taxable_amount\":\"0\",\"tax\":\"0\"},{\"lower\":\"750000\",\"upper\":\"1000000\",\"rate\":\"0.20\",\"statutory_rate\":\"0.20\",\"exempt_amount\":\"0\",\"taxable_amount\":\"0\",\"tax\":\"0\"},{\"lower\":\"1000000\",\"upper\":\"2000000\",\"rate\":\"0.25\",\"statutory_rate\":\"0.25\",\"exempt_amount\":\"0\",\"taxable_amount\":\"0\",\"tax\":\"0\"},{\"lower\":\"2000000\",\"upper\":\"5000000\",\"rate\":\"0.30\",\"statutory_rate\":\"0.30\",\"exempt_amount\":\"0\",\"taxable_amount\":\"0\",\"tax\":\"0\"},{\"lower\":\"5000000\",\"upper\":null,\"rate\":\"0.35\",\"statutory_rate\":\"0.35\",\"exempt_amount\":\"0\",\"taxable_amount\":\"0\",\"tax\":\"0\"}],\"steps\":[{\"rule_id\":\"salary_gross\",\"label\":\"รวมรายได้ก่อนหักจากทุกนายจ้าง\",\"formula\":\"เงินเดือน + โบนัส (ยอดจริงและคาดการณ์)\",\"amount\":\"360000\",\"source_ids\":[\"rd91\"]},{\"rule_id\":\"salary_expense\",\"label\":\"หักค่าใช้จ่ายตามกฎหมาย\",\"formula\":\"รายได้ × 0.50 ไม่เกิน 100000 บาท รวมทุกนายจ้าง\",\"amount\":\"100000\",\"source_ids\":[\"rd_expense\"]},{\"rule_id\":\"personal_allowance\",\"label\":\"หักลดหย่อนส่วนตัว\",\"formula\":\"ใช้สิทธิ์ครั้งเดียวต่อปี\",\"amount\":\"60000\",\"source_ids\":[\"rd_code\"]},{\"rule_id\":\"social_security\",\"label\":\"หักประกันสังคมที่บันทึก\",\"formula\":\"ยอดจ่ายที่เข้าเงื่อนไข ภายใต้กรอบของปีภาษี\",\"amount\":\"9000\",\"source_ids\":[\"rd91\",\"sso\"]},{\"rule_id\":\"taxable_income\",\"label\":\"เงินได้สุทธิที่ใช้คำนวณ\",\"formula\":\"รายได้ − ค่าใช้จ่าย − ส่วนตัว − ประกันสังคม (ขั้นต่ำ 0)\",\"amount\":\"191000\",\"source_ids\":[\"rd91\"]},{\"rule_id\":\"first_net_income_exemption\",\"label\":\"ยกเว้นเงินได้สุทธิช่วงแรก\",\"formula\":\"เงินได้สุทธิส่วนแรกไม่เกิน 150000 บาทได้รับยกเว้นภาษี แยกจากอัตราตามกฎหมาย\",\"amount\":\"150000\",\"source_ids\":[\"rd_exemption\"]},{\"rule_id\":\"progressive_tax\",\"label\":\"ภาษีตามขั้นบันได\",\"formula\":\"รวมภาษีของเงินได้แต่ละช่วง ไม่ใช่อัตราสูงสุดคูณรายได้ทั้งหมด\",\"amount\":\"2050\",\"source_ids\":[\"rd_rates\",\"rd91\",\"rd_rounding\"]},{\"rule_id\":\"withholding_credit\",\"label\":\"ภาษีที่หักไว้และที่คาดว่าจะถูกหัก\",\"formula\":\"เป็นเครดิตหลังคำนวณภาษี ไม่ใช่ค่าลดหย่อน\",\"amount\":\"3000\",\"source_ids\":[\"rd_code\"]}]}",
+      "result_json": "{\"year\":2025,\"rule_set_id\":\"th-salary-2025-v1\",\"rules_status\":\"verified_scope\",\"rounding_verified\":false,\"gross_income\":\"360000\",\"actual_income\":\"360000\",\"forecast_income\":\"0\",\"expenses\":\"100000\",\"personal_allowance\":\"60000\",\"social_security\":\"9000\",\"social_security_savings\":\"450\",\"taxable_income\":\"191000\",\"annual_tax\":\"2050\",\"known_withholding\":\"3000\",\"actual_withholding\":\"3000\",\"remaining_after_actual_withholding\":\"0\",\"forecast_withholding\":\"0\",\"unknown_withholding_count\":0,\"filing\":\"required\",\"data_complete\":true,\"scope_issues\":[],\"warnings\":[\"ใช้ประมาณการสำหรับผู้โสดอายุต่ำกว่า 65 ปี เฉพาะเงินเดือนในประเทศ สิทธิ์ส่วนตัวและประกันสังคม ม.33\",\"ยังไม่เปิดสรุปยอดชำระหรือคืน: ต้องยืนยันวิธีปัดเศษระหว่างขั้นและยอดคืนกับกรมสรรพากร\",\"ประกันสังคมใช้ยอดจ่ายจริงที่เข้าเงื่อนไข ต้องตรวจกรณีลดอัตรา ส่งเกิน หรือได้รับคืนเงินสมทบ\"],\"difference_preview\":{\"kind\":\"overpaid\",\"amount\":\"950\"},\"settlement\":null,\"bands\":[{\"lower\":\"0\",\"upper\":\"150000\",\"rate\":\"0\",\"statutory_rate\":\"0.05\",\"exempt_amount\":\"150000\",\"taxable_amount\":\"150000\",\"tax\":\"0\"},{\"lower\":\"150000\",\"upper\":\"300000\",\"rate\":\"0.05\",\"statutory_rate\":\"0.05\",\"exempt_amount\":\"0\",\"taxable_amount\":\"41000\",\"tax\":\"2050\"},{\"lower\":\"300000\",\"upper\":\"500000\",\"rate\":\"0.10\",\"statutory_rate\":\"0.10\",\"exempt_amount\":\"0\",\"taxable_amount\":\"0\",\"tax\":\"0\"},{\"lower\":\"500000\",\"upper\":\"750000\",\"rate\":\"0.15\",\"statutory_rate\":\"0.15\",\"exempt_amount\":\"0\",\"taxable_amount\":\"0\",\"tax\":\"0\"},{\"lower\":\"750000\",\"upper\":\"1000000\",\"rate\":\"0.20\",\"statutory_rate\":\"0.20\",\"exempt_amount\":\"0\",\"taxable_amount\":\"0\",\"tax\":\"0\"},{\"lower\":\"1000000\",\"upper\":\"2000000\",\"rate\":\"0.25\",\"statutory_rate\":\"0.25\",\"exempt_amount\":\"0\",\"taxable_amount\":\"0\",\"tax\":\"0\"},{\"lower\":\"2000000\",\"upper\":\"5000000\",\"rate\":\"0.30\",\"statutory_rate\":\"0.30\",\"exempt_amount\":\"0\",\"taxable_amount\":\"0\",\"tax\":\"0\"},{\"lower\":\"5000000\",\"upper\":null,\"rate\":\"0.35\",\"statutory_rate\":\"0.35\",\"exempt_amount\":\"0\",\"taxable_amount\":\"0\",\"tax\":\"0\"}],\"steps\":[{\"rule_id\":\"salary_gross\",\"label\":\"รวมรายได้ก่อนหักจากทุกแหล่ง\",\"formula\":\"เงินเดือน + โบนัส + รายได้อื่น (ยอดจริงและคาดการณ์)\",\"amount\":\"360000\",\"source_ids\":[\"rd91\"]},{\"rule_id\":\"salary_expense\",\"label\":\"หักค่าใช้จ่ายตามกฎหมาย\",\"formula\":\"รายได้เงินเดือน × 0.50 ไม่เกิน 100000 บาท (รายได้อื่นยังไม่หักค่าใช้จ่าย)\",\"amount\":\"100000\",\"source_ids\":[\"rd_expense\"]},{\"rule_id\":\"personal_allowance\",\"label\":\"หักลดหย่อนส่วนตัว\",\"formula\":\"ใช้สิทธิ์ครั้งเดียวต่อปี\",\"amount\":\"60000\",\"source_ids\":[\"rd_code\"]},{\"rule_id\":\"social_security\",\"label\":\"หักประกันสังคมที่บันทึก\",\"formula\":\"ยอดจ่ายที่เข้าเงื่อนไข ภายใต้กรอบของปีภาษี\",\"amount\":\"9000\",\"source_ids\":[\"rd91\",\"sso\"]},{\"rule_id\":\"taxable_income\",\"label\":\"เงินได้สุทธิที่ใช้คำนวณ\",\"formula\":\"รายได้ − ค่าใช้จ่าย − ส่วนตัว − ประกันสังคม (ขั้นต่ำ 0)\",\"amount\":\"191000\",\"source_ids\":[\"rd91\"]},{\"rule_id\":\"first_net_income_exemption\",\"label\":\"ยกเว้นเงินได้สุทธิช่วงแรก\",\"formula\":\"เงินได้สุทธิส่วนแรกไม่เกิน 150000 บาทได้รับยกเว้นภาษี แยกจากอัตราตามกฎหมาย\",\"amount\":\"150000\",\"source_ids\":[\"rd_exemption\"]},{\"rule_id\":\"progressive_tax\",\"label\":\"ภาษีตามขั้นบันได\",\"formula\":\"รวมภาษีของเงินได้แต่ละช่วง ไม่ใช่อัตราสูงสุดคูณรายได้ทั้งหมด\",\"amount\":\"2050\",\"source_ids\":[\"rd_rates\",\"rd91\",\"rd_rounding\"]},{\"rule_id\":\"withholding_credit\",\"label\":\"ภาษีที่หักไว้และที่คาดว่าจะถูกหัก\",\"formula\":\"เป็นเครดิตหลังคำนวณภาษี ไม่ใช่ค่าลดหย่อน\",\"amount\":\"3000\",\"source_ids\":[\"rd_code\"]}]}",
       "rule_set_id": "th-salary-2025-v1",
       "tax_year": 2025
     }
@@ -384,7 +384,7 @@
       {
         "amount": "750",
         "basis": "actual",
-        "id": "78fb0033-546c-4a0c-84d1-eb311d76aaab",
+        "id": "095737b9-82b3-4ea2-a0b5-d44a8cec27c6",
         "month": 1,
         "rule_code": "sso_33",
         "tax_year": 2025
@@ -392,7 +392,7 @@
       {
         "amount": "750",
         "basis": "actual",
-        "id": "51ea2bbd-98b3-4fc8-b555-0510abd76ad5",
+        "id": "560827ad-25c1-4fe3-80df-b6a0b240ee5e",
         "month": 2,
         "rule_code": "sso_33",
         "tax_year": 2025
@@ -400,7 +400,7 @@
       {
         "amount": "750",
         "basis": "actual",
-        "id": "7f758b58-0cde-4598-bc38-6238d5100823",
+        "id": "2b3252e8-b5ba-474e-b093-adb2bc5cc634",
         "month": 3,
         "rule_code": "sso_33",
         "tax_year": 2025
@@ -408,7 +408,7 @@
       {
         "amount": "750",
         "basis": "actual",
-        "id": "ba152dd5-c27d-4a39-8cca-f533583e5f67",
+        "id": "610d2c6e-8cd4-4e31-90c3-f010c6775054",
         "month": 4,
         "rule_code": "sso_33",
         "tax_year": 2025
@@ -416,7 +416,7 @@
       {
         "amount": "750",
         "basis": "actual",
-        "id": "a027935c-97f1-44b6-9f49-cc42562a2fa8",
+        "id": "f3cae594-25f9-4625-8b73-262cff4f2a71",
         "month": 5,
         "rule_code": "sso_33",
         "tax_year": 2025
@@ -424,7 +424,7 @@
       {
         "amount": "750",
         "basis": "actual",
-        "id": "88e3609a-fae3-4a92-ba5d-c9379e3c3409",
+        "id": "42d20217-8fa1-462b-88bc-0e638b4933b1",
         "month": 6,
         "rule_code": "sso_33",
         "tax_year": 2025
@@ -432,7 +432,7 @@
       {
         "amount": "750",
         "basis": "actual",
-        "id": "08c44b6c-d5a1-4052-aeec-b1fae9ae8c0e",
+        "id": "4293860c-f2b0-4e2e-9f9f-b51c45123c4b",
         "month": 7,
         "rule_code": "sso_33",
         "tax_year": 2025
@@ -440,7 +440,7 @@
       {
         "amount": "750",
         "basis": "actual",
-        "id": "ac8cca3d-28c2-436e-8ba2-0454e6bbabe2",
+        "id": "b77b5001-2892-4982-9337-80368591c83c",
         "month": 8,
         "rule_code": "sso_33",
         "tax_year": 2025
@@ -448,7 +448,7 @@
       {
         "amount": "750",
         "basis": "actual",
-        "id": "d06d6bb2-0f50-40bf-bd75-fb3d245cf5de",
+        "id": "0b2e7e57-e5eb-4b21-a195-a4f0cc0eec15",
         "month": 9,
         "rule_code": "sso_33",
         "tax_year": 2025
@@ -456,7 +456,7 @@
       {
         "amount": "750",
         "basis": "actual",
-        "id": "2f5c1d48-9031-45b0-a0c3-4750f9e1faf9",
+        "id": "c8b34843-4796-4239-bb15-b66a8039e3f8",
         "month": 10,
         "rule_code": "sso_33",
         "tax_year": 2025
@@ -464,7 +464,7 @@
       {
         "amount": "750",
         "basis": "actual",
-        "id": "cc660d4f-0e28-48c2-b5ce-1b678dd2b05c",
+        "id": "b8a217c7-1049-4a78-9371-5d9d85abea77",
         "month": 11,
         "rule_code": "sso_33",
         "tax_year": 2025
@@ -472,7 +472,7 @@
       {
         "amount": "750",
         "basis": "actual",
-        "id": "9acff10a-b921-4213-8b1e-e5d71dcfe400",
+        "id": "45f1ee05-63d0-4187-9455-c9e8f3b920cd",
         "month": 12,
         "rule_code": "sso_33",
         "tax_year": 2025
@@ -483,134 +483,134 @@
       {
         "basis": "actual",
         "gross": "30000",
-        "id": "49593a08-b0ee-4a4b-8ad6-542d92c972b8",
+        "id": "eb636047-294d-4864-a8b3-f2f6f2fccfa3",
         "kind": "salary",
         "month": 1,
-        "source_id": "dc4c5269-87a1-4257-a680-57850978db22",
+        "note": "",
+        "source_id": "60a28c1c-94a0-4202-ab42-124754227172",
         "tax_year": 2025,
-        "withholding": "250",
-        "note": ""
+        "withholding": "250"
       },
       {
         "basis": "actual",
         "gross": "30000",
-        "id": "bbdc9751-7515-41b4-8eee-46354816ad33",
+        "id": "b87cd464-054a-4e64-ab16-70b0e8ef0004",
         "kind": "salary",
         "month": 2,
-        "source_id": "dc4c5269-87a1-4257-a680-57850978db22",
+        "note": "",
+        "source_id": "60a28c1c-94a0-4202-ab42-124754227172",
         "tax_year": 2025,
-        "withholding": "250",
-        "note": ""
+        "withholding": "250"
       },
       {
         "basis": "actual",
         "gross": "30000",
-        "id": "de9b1f00-75f4-40e9-a332-2cadccf6c5c8",
+        "id": "1f539dc0-b275-4397-ac1b-594844542238",
         "kind": "salary",
         "month": 3,
-        "source_id": "dc4c5269-87a1-4257-a680-57850978db22",
+        "note": "",
+        "source_id": "60a28c1c-94a0-4202-ab42-124754227172",
         "tax_year": 2025,
-        "withholding": "250",
-        "note": ""
+        "withholding": "250"
       },
       {
         "basis": "actual",
         "gross": "30000",
-        "id": "2b54700d-7c43-47cd-b134-a7c6af7b1877",
+        "id": "f340fff4-31af-403e-91b2-6b0f69e12311",
         "kind": "salary",
         "month": 4,
-        "source_id": "dc4c5269-87a1-4257-a680-57850978db22",
+        "note": "",
+        "source_id": "60a28c1c-94a0-4202-ab42-124754227172",
         "tax_year": 2025,
-        "withholding": "250",
-        "note": ""
+        "withholding": "250"
       },
       {
         "basis": "actual",
         "gross": "30000",
-        "id": "50d7dfc8-111c-455f-9bb8-533f66b9419c",
+        "id": "e880f545-8579-40a9-96ab-39f1e4c893ec",
         "kind": "salary",
         "month": 5,
-        "source_id": "dc4c5269-87a1-4257-a680-57850978db22",
+        "note": "",
+        "source_id": "60a28c1c-94a0-4202-ab42-124754227172",
         "tax_year": 2025,
-        "withholding": "250",
-        "note": ""
+        "withholding": "250"
       },
       {
         "basis": "actual",
         "gross": "30000",
-        "id": "c32ec526-bd65-44db-9658-eb41fafc9c29",
+        "id": "270fb209-e49c-4dc4-ac4c-5aeea613440f",
         "kind": "salary",
         "month": 6,
-        "source_id": "dc4c5269-87a1-4257-a680-57850978db22",
+        "note": "",
+        "source_id": "60a28c1c-94a0-4202-ab42-124754227172",
         "tax_year": 2025,
-        "withholding": "250",
-        "note": ""
+        "withholding": "250"
       },
       {
         "basis": "actual",
         "gross": "30000",
-        "id": "b51b184c-098c-4cad-bade-35065aba7f85",
+        "id": "c7ab33b3-d659-4ae0-8c37-b7aaf4348239",
         "kind": "salary",
         "month": 7,
-        "source_id": "dc4c5269-87a1-4257-a680-57850978db22",
+        "note": "",
+        "source_id": "60a28c1c-94a0-4202-ab42-124754227172",
         "tax_year": 2025,
-        "withholding": "250",
-        "note": "ตัวเลขชั่วคราว รอสลิปใหม่"
+        "withholding": "250"
       },
       {
         "basis": "actual",
         "gross": "30000",
-        "id": "ad49f36e-e3e6-414d-b32c-2d559a8241ff",
+        "id": "a93896cc-7aaf-4036-a98f-c0ca2dd8fb38",
         "kind": "salary",
         "month": 8,
-        "source_id": "dc4c5269-87a1-4257-a680-57850978db22",
+        "note": "",
+        "source_id": "60a28c1c-94a0-4202-ab42-124754227172",
         "tax_year": 2025,
-        "withholding": "250",
-        "note": ""
+        "withholding": "250"
       },
       {
         "basis": "actual",
         "gross": "30000",
-        "id": "5a9a4359-3896-4a85-a127-37d409c89dd6",
+        "id": "7a67732a-67dd-40ae-a1c5-12fa1f14aeec",
         "kind": "salary",
         "month": 9,
-        "source_id": "dc4c5269-87a1-4257-a680-57850978db22",
+        "note": "",
+        "source_id": "60a28c1c-94a0-4202-ab42-124754227172",
         "tax_year": 2025,
-        "withholding": "250",
-        "note": ""
+        "withholding": "250"
       },
       {
         "basis": "actual",
         "gross": "30000",
-        "id": "a2298320-5b09-4a20-b813-2cdadd1d6725",
+        "id": "0057e88d-3d5f-4bc2-8ada-bf4531906640",
         "kind": "salary",
         "month": 10,
-        "source_id": "dc4c5269-87a1-4257-a680-57850978db22",
+        "note": "",
+        "source_id": "60a28c1c-94a0-4202-ab42-124754227172",
         "tax_year": 2025,
-        "withholding": "250",
-        "note": ""
+        "withholding": "250"
       },
       {
         "basis": "actual",
         "gross": "30000",
-        "id": "40b44c3a-9246-4d32-8196-0d61d2a8e6ea",
+        "id": "9cee989e-01f5-488d-80b4-e50cc34dd87d",
         "kind": "salary",
         "month": 11,
-        "source_id": "dc4c5269-87a1-4257-a680-57850978db22",
+        "note": "",
+        "source_id": "60a28c1c-94a0-4202-ab42-124754227172",
         "tax_year": 2025,
-        "withholding": "250",
-        "note": ""
+        "withholding": "250"
       },
       {
         "basis": "actual",
         "gross": "30000",
-        "id": "05fe55eb-415f-4d45-8660-35f0a1824aa2",
+        "id": "9c91aea6-fbae-4d5a-8ae9-64a40e1be9b1",
         "kind": "salary",
         "month": 12,
-        "source_id": "dc4c5269-87a1-4257-a680-57850978db22",
+        "note": "",
+        "source_id": "60a28c1c-94a0-4202-ab42-124754227172",
         "tax_year": 2025,
-        "withholding": "250",
-        "note": ""
+        "withholding": "250"
       }
     ],
     "profile": {
@@ -628,7 +628,7 @@
     },
     "sources": [
       {
-        "id": "dc4c5269-87a1-4257-a680-57850978db22",
+        "id": "60a28c1c-94a0-4202-ab42-124754227172",
         "label": "งานประจำของฉัน",
         "tax_year": 2025
       }

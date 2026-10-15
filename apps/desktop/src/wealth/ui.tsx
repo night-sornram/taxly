@@ -3,7 +3,7 @@ import type { ReactNode, SelectHTMLAttributes } from "react";
 import { ArrowUpRight, Plus } from "lucide-react";
 import { Button } from "../components";
 import type { WealthData } from "./types";
-import { decimal } from "./format";
+import { CURRENCIES, decimal } from "./format";
 
 export function Select({
   label,
@@ -113,6 +113,42 @@ export function Table({ children, caption }: { children: ReactNode; caption: str
         <caption className="sr-only">{caption}</caption>
         {children}
       </table>
+    </div>
+  );
+}
+
+export function CurrencySelect({
+  label,
+  value,
+  onChange,
+  disabled,
+  extra,
+}: {
+  label: string;
+  value: string;
+  onChange: (currency: string) => void;
+  disabled?: boolean;
+  extra?: readonly string[];
+}) {
+  const options = [...CURRENCIES, ...(extra ?? [])].filter(
+    (currency, index, all) => all.indexOf(currency) === index,
+  );
+  if (!options.includes(value) && value) options.push(value);
+  return (
+    <div className="field">
+      <label>{label}</label>
+      <select
+        value={value}
+        disabled={disabled}
+        onChange={(e) => onChange(e.target.value)}
+        aria-label={label}
+      >
+        {options.map((currency) => (
+          <option key={currency} value={currency}>
+            {currency}
+          </option>
+        ))}
+      </select>
     </div>
   );
 }

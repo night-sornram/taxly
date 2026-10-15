@@ -96,15 +96,17 @@ export default function Overview({
               <h2 className={signedClass(p.twr)}>{percentage(p.twr)}</h2>
               <small>Time-weighted return (TWR)</small>
             </section>
-            <section className="wealth-metric">
-              <span>เงินสดในบัญชี</span>
-              <h2>
-                <Value value={p.cash_value} currency={p.reporting_currency} />
-              </h2>
-              <small>
-                {p.cash.length} รายการเงินสด · {data.accounts.length} บัญชี
-              </small>
-            </section>
+            {(p.cash.length > 0 || data.accounts.some((a) => a.track_cash)) && (
+              <section className="wealth-metric">
+                <span>เงินสดในบัญชี</span>
+                <h2>
+                  <Value value={p.cash_value} currency={p.reporting_currency} />
+                </h2>
+                <small>
+                  {p.cash.length} รายการเงินสด · {data.accounts.length} บัญชี
+                </small>
+              </section>
+            )}
           </div>
           {!data.activities.length && !data.opening_positions.length && (
             <div className="wealth-start-options">
@@ -115,7 +117,7 @@ export default function Overview({
               <button onClick={onActivity}>
                 <ArrowUpRight size={20} />
                 <strong>เริ่มจากรายการแรก</strong>
-                <span>บันทึกเงินฝากและการซื้อขาย</span>
+                <span>บันทึกการซื้อครั้งแรกของคุณ</span>
               </button>
               <button onClick={onOpening}>
                 <Wallet size={20} />

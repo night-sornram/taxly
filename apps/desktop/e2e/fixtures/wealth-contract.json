@@ -44,7 +44,8 @@
       "accounts": [
         {
           "id": "account-thb",
-          "name": "พอร์ตหุ้นไทย"
+          "name": "พอร์ตหุ้นไทย",
+          "track_cash": true
         }
       ],
       "activities": [

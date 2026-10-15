@@ -173,6 +173,13 @@ export default function ImportPage({
               <option value="buddhist">DD/MM/YYYY (พ.ศ.)</option>
             </Select>
           </div>
+          {!data.accounts.find((a) => a.id === request.account_id)?.track_cash &&
+            request.mode === "activities" && (
+              <p className="wealth-help">
+                บัญชีที่เลือกไม่ได้ติดตามเงินสด รายการฝาก ถอน โอน
+                และแลกสกุลเงินในไฟล์จะไม่ผ่านการตรวจ
+              </p>
+            )}
           <div className="wealth-actions">
             <Button onClick={() => void preview()} disabled={busy}>
               <Upload size={16} />

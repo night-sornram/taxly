@@ -3,7 +3,7 @@ import { ArrowRightLeft, Download, Pencil, Plus, RefreshCw, Search, Trash2 } fro
 import { command, errorMessage } from "../api";
 import { Button, ErrorNotice, Field, Modal, Notice } from "../components";
 import { activityLabels, dateLabel, signedClass, today } from "./format";
-import { Empty, PageTitle, Select, Table, Value } from "./ui";
+import { CurrencySelect, Empty, PageTitle, Select, Table, Value } from "./ui";
 import type { Editor } from "./Editors";
 import type { RefreshResult, WealthWorkspace } from "./types";
 type PageProps = { workspace: WealthWorkspace; edit: (editor: Editor) => void };
@@ -69,7 +69,12 @@ export function AccountsPage({
                         </div>
                       ))
                   ) : (
-                    <p className="wealth-help">ยังไม่มีเงินสด ณ วันที่เลือก</p>
+                    <p className="wealth-help">ยังไม่ได้บันทึกยอดเงินสด</p>
+                  )}
+                  {!a.track_cash && (
+                    <p className="wealth-help">
+                      การซื้อขายของบัญชีนี้จะไม่หักหรือเพิ่มยอดเงินสดโดยอัตโนมัติ
+                    </p>
                   )}
                   <Button
                     variant="secondary"
@@ -465,6 +470,14 @@ export function MarketPage({
     setError("");
     setResult(null);
     try {
+      if (!data.preferences.market_data_enabled) {
+        await command("save_wealth_preferences", {
+          preferences: {
+            reporting_currency: data.preferences.reporting_currency,
+            market_data_enabled: true,
+          },
+        });
+      }
       const next = await command<RefreshResult>("refresh_wealth_market_data", {
         startDate,
         endDate,
@@ -511,14 +524,7 @@ export function MarketPage({
             void savePreferences();
           }}
         >
-          <Field
-            label="รหัสสกุลเงิน 3 ตัว"
-            required
-            pattern="[A-Z]{3}"
-            maxLength={3}
-            value={currency}
-            onChange={(e) => setCurrency(e.target.value.toUpperCase())}
-          />
+          <CurrencySelect label="สกุลเงินรายงาน" value={currency} onChange={setCurrency} />
           <Button type="submit" disabled={busy || currency === data.preferences.reporting_currency}>
             บันทึกสกุลเงิน
           </Button>
@@ -579,9 +585,13 @@ export function MarketPage({
             max={today()}
             onChange={(e) => setEndDate(e.target.value)}
           />
-          <Button type="submit" disabled={busy || !data.preferences.market_data_enabled}>
+          <Button type="submit" disabled={busy}>
             <RefreshCw size={15} className={busy ? "spin" : ""} />
-            {busy ? "กำลังอัปเดต…" : "รีเฟรชราคาและ FX"}
+            {busy
+              ? "กำลังอัปเดต…"
+              : data.preferences.market_data_enabled
+                ? "รีเฟรชราคาและ FX"
+                : "เปิดและรีเฟรชราคา"}
           </Button>
         </form>
         {result && (

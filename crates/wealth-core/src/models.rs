@@ -6,6 +6,11 @@ use std::collections::BTreeMap;
 pub struct Account {
     pub id: String,
     pub name: String,
+    /// When false the account only records holdings: buys/sells never move
+    /// its cash and cash-activities are rejected. Data without the flag is
+    /// holdings-only too, matching how the app is meant to be used.
+    #[serde(default)]
+    pub track_cash: bool,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]

@@ -77,13 +77,11 @@ pub fn calculate(input: &AnnualTaxInput, rules: &TaxRuleSet) -> Result<TaxCalcul
         months[usize::from(item.month - 1)] = true;
     }
     let gross = sum(input.income.iter().map(|item| item.amount))?;
-    let salary_gross = sum(
-        input
-            .income
-            .iter()
-            .filter(|item| item.category == IncomeCategory::Section40_1)
-            .map(|item| item.amount),
-    )?;
+    let salary_gross = sum(input
+        .income
+        .iter()
+        .filter(|item| item.category == IncomeCategory::Section40_1)
+        .map(|item| item.amount))?;
     let has_other_income = input
         .income
         .iter()

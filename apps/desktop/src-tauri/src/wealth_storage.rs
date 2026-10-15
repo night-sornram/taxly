@@ -131,13 +131,45 @@ pub async fn replace_in(conn: &mut SqliteConnection, data: &WealthData) -> AppRe
     Ok(())
 }
 
-pub async fn mutate<F>(
+/// When an instrument's currency changes, every activity and opening tied to
+/// it was entered under the old (wrong) currency and must follow along.
+pub fn sync_instrument_currency(data: &mut WealthData, instrument: &Instrument) -> usize {
+    let Some(previous) = data
+        .instruments
+        .iter()
+        .find(|row| row.id == instrument.id)
+        .map(|row| row.currency.clone())
+    else {
+        return 0;
+    };
+    if previous == instrument.currency {
+        return 0;
+    }
+    let id = instrument.id.as_str();
+    let currency = instrument.currency.clone();
+    let mut synced = 0;
+    for activity in &mut data.activities {
+        if activity.instrument_id.as_deref() == Some(id) && activity.currency == previous {
+            activity.currency = currency.clone();
+            synced += 1;
+        }
+    }
+    for opening in &mut data.opening_positions {
+        if opening.instrument_id.as_deref() == Some(id) && opening.currency == previous {
+            opening.currency = currency.clone();
+            synced += 1;
+        }
+    }
+    synced
+}
+
+pub async fn mutate<T, F>(
     pool: &SqlitePool,
     expected_revision: Option<i64>,
     change: F,
-) -> AppResult<()>
+) -> AppResult<T>
 where
-    F: FnOnce(&mut WealthData) -> AppResult<()>,
+    F: FnOnce(&mut WealthData) -> AppResult<T>,
 {
     let mut tx = pool.begin_with("BEGIN IMMEDIATE").await?;
     let mut data = load_in(&mut tx).await?;
@@ -147,12 +179,12 @@ where
             message: "ข้อมูลเปลี่ยนหลังการตรวจ กรุณาตรวจรายการอีกครั้ง".into(),
         });
     }
-    change(&mut data)?;
+    let result = change(&mut data)?;
     data.revision = data
         .revision
         .checked_add(1)
         .ok_or_else(|| AppError::invalid("รุ่นข้อมูลเกินขอบเขตที่รองรับ"))?;
     replace_in(&mut tx, &data).await?;
     tx.commit().await?;
-    Ok(())
+    Ok(result)
 }
