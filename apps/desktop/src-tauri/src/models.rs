@@ -29,6 +29,9 @@ pub struct IncomeEntry {
     pub basis: AmountBasis,
     pub gross: Money,
     pub withholding: Option<Money>,
+    /// Free-form reminder; empty when never set. `default` keeps older backups restorable.
+    #[serde(default)]
+    pub note: String,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -122,6 +125,7 @@ pub struct IncomeRequest {
     pub basis: AmountBasis,
     pub gross: Money,
     pub withholding: Option<Money>,
+    pub note: Option<String>,
 }
 
 #[derive(Debug, Deserialize)]

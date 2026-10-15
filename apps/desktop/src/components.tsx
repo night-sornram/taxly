@@ -268,7 +268,14 @@ export function Modal({
   useEffect(() => {
     ref.current?.showModal();
     const element = ref.current;
-    return () => element?.close();
+    // Native dialogs in this WebView still let the page behind scroll; lock it
+    // so only the modal body scrolls while open.
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      element?.close();
+      document.body.style.overflow = previousOverflow;
+    };
   }, []);
   return (
     <dialog

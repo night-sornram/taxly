@@ -38,6 +38,7 @@ fn main() {
             "cancel_wealth_import",
             "save_wealth_template",
             "refresh_wealth_market_data",
+            "search_wealth_instruments",
         ]),
     ))
     .expect("failed to build Taxly platform configuration");

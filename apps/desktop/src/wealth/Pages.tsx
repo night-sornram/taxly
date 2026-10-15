@@ -16,7 +16,6 @@ export function AccountsPage({
   return (
     <>
       <PageTitle
-        eyebrow="A PLACE FOR EVERY GOAL"
         title="บัญชีลงทุน"
         actions={
           <Button onClick={() => edit({ kind: "account" })}>
@@ -25,11 +24,11 @@ export function AccountsPage({
           </Button>
         }
       >
-        แยกบัญชีให้เห็นชัด พร้อมเงินสดทุกสกุลเงิน
+        แยกพอร์ตตามโบรกเกอร์หรือเป้าหมาย เงินสดแยกตามสกุลเงิน
       </PageTitle>
       {!data.accounts.length ? (
         <Empty
-          title="บ้านหลังแรกของการลงทุน"
+          title="ยังไม่มีบัญชีลงทุน"
           action="เพิ่มบัญชี"
           onAction={() => edit({ kind: "account" })}
         >
@@ -59,7 +58,7 @@ export function AccountsPage({
                       currency={portfolio.reporting_currency}
                     />
                   </div>
-                  <span className="wealth-eyebrow">เงินสดตามสกุลเงิน</span>
+                  <span className="wealth-eyebrow">เงินสดแยกตามสกุลเงิน</span>
                   {portfolio.cash.filter((c) => c.account_id === a.id).length ? (
                     portfolio.cash
                       .filter((c) => c.account_id === a.id)
@@ -86,7 +85,7 @@ export function AccountsPage({
             <div className="wealth-section-heading">
               <div>
                 <h2>ยอดตั้งต้นของแต่ละบัญชี</h2>
-                <p>ต้นทุนที่เว้นว่างจะไม่ถูกสมมติเป็นศูนย์</p>
+                <p>ช่องต้นทุนที่เว้นว่างจะไม่ถูกนับเป็น 0</p>
               </div>
             </div>
             {data.opening_positions.length ? (
@@ -140,7 +139,8 @@ export function AccountsPage({
               </Table>
             ) : (
               <p className="wealth-inline-empty">
-                หากมีประวัติครบถ้วน ให้เริ่มจากรายการฝากเงินและซื้อขายได้เลย
+                มีประวัติการลงทุนครบอยู่แล้ว ไม่จำเป็นต้องใช้ยอดตั้งต้น
+                เริ่มบันทึกจากเงินฝากและการซื้อขายได้เลย
               </p>
             )}
           </section>
@@ -160,7 +160,6 @@ export function HoldingsPage({ workspace: { data, portfolio }, edit }: PageProps
   return (
     <>
       <PageTitle
-        eyebrow="KNOW WHAT YOU OWN"
         title="หลักทรัพย์ในพอร์ต"
         actions={
           <Button onClick={() => edit({ kind: "instrument" })}>
@@ -169,7 +168,7 @@ export function HoldingsPage({ workspace: { data, portfolio }, edit }: PageProps
           </Button>
         }
       >
-        ติดตามจำนวน มูลค่า และต้นทุน FIFO ของหุ้นและ ETF
+        ดูจำนวนหุ้น มูลค่า และต้นทุนแบบ FIFO ของหุ้นและ ETF ที่ถืออยู่
       </PageTitle>
       <div className="wealth-search">
         <Search size={17} />
@@ -191,8 +190,8 @@ export function HoldingsPage({ workspace: { data, portfolio }, edit }: PageProps
                 <th className="numeric">ราคา</th>
                 <th className="numeric">ต้นทุนรวม</th>
                 <th className="numeric">มูลค่า</th>
-                <th className="numeric">กำไรยังไม่ขาย</th>
-                <th className="numeric">กำไรขายแล้ว</th>
+                <th className="numeric">กำไร/ขาดทุน ที่ยังถืออยู่</th>
+                <th className="numeric">กำไร/ขาดทุน ที่ขายไปแล้ว</th>
                 <th className="numeric">มูลค่า ({portfolio.reporting_currency})</th>
               </tr>
             </thead>
@@ -237,13 +236,13 @@ export function HoldingsPage({ workspace: { data, portfolio }, edit }: PageProps
           <Empty title={query ? "ไม่พบหลักทรัพย์ที่ค้นหา" : "ยังไม่มีหลักทรัพย์ในพอร์ต"}>
             {query
               ? "ลองค้นหาด้วยชื่อหรือสัญลักษณ์อื่น"
-              : "เพิ่มหลักทรัพย์ แล้วบันทึกการซื้อหรือยอดตั้งต้น ตัวเลขจะแสดงจากรายการจริงของคุณ"}
+              : "เพิ่มหุ้นหรือ ETF แล้วบันทึกการซื้อ หรือใส่ยอดตั้งต้น ตัวเลขทั้งหมดคำนวณจากรายการจริงของคุณ"}
           </Empty>
         )}
       </section>
       <p className="wealth-help">
-        ราคา ต้นทุน มูลค่า และกำไรแสดงในสกุลเงินของหลักทรัพย์ ยกเว้นคอลัมน์ที่ระบุสกุลรายงาน —
-        หมายถึงข้อมูลไม่ครบ
+        ตัวเลขแสดงในสกุลเงินของหลักทรัพย์ ยกเว้นคอลัมน์ที่ระบุสกุลรายงานไว้ · เครื่องหมาย —
+        หมายถึงไม่มีข้อมูล
       </p>
       {data.instruments.length > 0 && (
         <details className="card wealth-instrument-list">
@@ -317,7 +316,6 @@ export function ActivityPage({
   return (
     <>
       <PageTitle
-        eyebrow="THE STORY BEHIND YOUR PORTFOLIO"
         title="รายการลงทุน"
         actions={
           <>
@@ -333,7 +331,7 @@ export function ActivityPage({
           </>
         }
       >
-        ทุกการเคลื่อนไหวของหุ้นและเงินสด คำนวณจากรายการในเครื่อง
+        ประวัติการซื้อขายและเงินสดทั้งหมด คำนวณในเครื่องของคุณ
       </PageTitle>
       <div className="wealth-list-filters">
         <div className="wealth-search">
@@ -482,8 +480,7 @@ export function MarketPage({
   return (
     <>
       <PageTitle
-        eyebrow="YOUR DATA, YOUR CHOICE"
-        title="ราคาและสกุลเงิน"
+        title="ราคาและอัตราแลกเปลี่ยน"
         actions={
           <>
             <Button variant="secondary" onClick={() => edit({ kind: "fx" })}>
@@ -497,7 +494,7 @@ export function MarketPage({
           </>
         }
       >
-        เลือกราคาที่คุณใช้ และเห็นวันที่ของข้อมูลเสมอ
+        ใช้ราคาที่คุณกำหนดเอง และเห็นวันที่ของข้อมูลทุกครั้ง
       </PageTitle>
       {error && <ErrorNotice message={error} onClose={() => setError("")} />}
       <section className="card">
@@ -527,8 +524,8 @@ export function MarketPage({
           </Button>
         </form>
         <p className="wealth-help">
-          เมื่อเปลี่ยนสกุลรายงาน ต้นทุนตั้งต้นที่แปลงไว้เดิมจะถูกล้างเพื่อไม่ให้ใช้ผิดสกุล
-          คุณเติมต้นทุนในสกุลใหม่ได้ที่ยอดตั้งต้น
+          เมื่อเปลี่ยนสกุลรายงาน ต้นทุนตั้งต้นที่แปลงสกุลไว้เดิมจะถูกล้าง
+          เพื่อไม่ให้ใช้ข้อมูลผิดสกุล แล้วค่อยกรอกต้นทุนในสกุลใหม่ที่หน้ายอดตั้งต้น
         </p>
       </section>
       <section className="card">
@@ -542,9 +539,9 @@ export function MarketPage({
           </span>
         </div>
         <p className="wealth-help">
-          เมื่อเปิดและกดรีเฟรช แอปจะส่งสัญลักษณ์หลักทรัพย์ คู่สกุลเงิน
-          และช่วงวันที่ไปยังผู้ให้บริการผ่านอินเทอร์เน็ต ข้อมูลพอร์ตและรายการซื้อขายยังอยู่ในเครื่อง
-          ราคาที่ดาวน์โหลดอาจล่าช้าหรือไม่ครบ
+          เมื่อเปิดและกดรีเฟรช แอปจะส่งสัญลักษณ์หลักทรัพย์ คู่สกุลเงิน และช่วงวันที่ไปยัง Yahoo
+          Finance ผ่านอินเทอร์เน็ต ข้อมูลพอร์ตและรายการซื้อขายยังอยู่ในเครื่องเสมอ
+          ราคาที่ได้อาจล่าช้าหรือไม่ครบ
         </p>
         <Button
           variant="secondary"
@@ -606,7 +603,7 @@ export function MarketPage({
         <div className="wealth-section-heading">
           <div>
             <h2>ราคาที่เก็บในเครื่อง</h2>
-            <p>ราคาบันทึกเองมีลำดับก่อนข้อมูลดาวน์โหลดในวันเดียวกัน</p>
+            <p>ราคาที่บันทึกเองจะถูกใช้ก่อนราคาที่ดึงมา ในวันเดียวกัน</p>
           </div>
           <Download size={19} />
         </div>
@@ -655,7 +652,7 @@ export function MarketPage({
           </Table>
         ) : (
           <p className="wealth-inline-empty">
-            ยังไม่มีราคา บันทึกเองเพื่อใช้ออฟไลน์ หรือเปิดข้อมูลตลาดเพื่อรีเฟรช
+            ยังไม่มีราคา บันทึกเองเพื่อใช้แบบออฟไลน์ หรือเปิดข้อมูลตลาดแล้วกดรีเฟรช
           </p>
         )}
         {data.prices.length > 500 && (
@@ -715,7 +712,7 @@ export function MarketPage({
           </Table>
         ) : (
           <p className="wealth-inline-empty">
-            เมื่อใช้สินทรัพย์ต่างสกุล ต้องมีอัตราย้อนหลังสำหรับวันที่ประเมินมูลค่าและต้นทุน
+            มีหลักทรัพย์ต่างสกุลเมื่อไร ต้องมีอัตราแลกเปลี่ยนของวันที่จะประเมินมูลค่าหรือต้นทุนด้วย
           </p>
         )}
       </section>
@@ -754,10 +751,10 @@ export function DeleteConfirmation({
         if (!busy) onClose();
       }}
     >
-      <p>ระบบจะคำนวณพอร์ตใหม่จากข้อมูลที่เหลือ หากทำให้ยอดในภายหลังไม่ถูกต้อง การลบจะถูกยกเลิก</p>
+      <p>พอร์ตจะถูกคำนวณใหม่จากรายการที่เหลือ หากการลบทำให้ยอดก่อนหน้าไม่สอดคล้อง ระบบจะไม่ให้ลบ</p>
       <div className="modal-actions">
         <Button variant="secondary" disabled={busy} onClick={onClose}>
-          เก็บรายการไว้
+          ไม่ลบ
         </Button>
         <Button variant="danger" disabled={busy} onClick={onDelete}>
           {busy ? "กำลังลบ…" : "ยืนยันลบรายการ"}

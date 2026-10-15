@@ -112,7 +112,6 @@ export default function Privacy({
     <>
       <div className="page-heading">
         <div>
-          <span className="eyebrow">PRIVATE BY NATURE</span>
           <h1 tabIndex={-1}>ข้อมูลของคุณ อยู่กับคุณ</h1>
           <p>ไม่ต้องมีบัญชี ไม่มีคลาวด์อัตโนมัติ และไม่มีการเก็บสถิติการใช้งาน</p>
         </div>

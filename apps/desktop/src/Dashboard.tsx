@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 import type { Calculation, Workspace } from "./types";
 import { Button, MoneyValue, Notice, TextLink } from "./components";
+import { incomeKindLabel } from "./Income";
 import { formatMoney, proportion, shortMonths } from "./money";
 
 export default function Dashboard({
@@ -76,7 +77,6 @@ export default function Dashboard({
     <>
       <div className="page-heading">
         <div>
-          <div className="eyebrow">YOUR TAX, A LITTLE CLEARER</div>
           <h1 tabIndex={-1}>
             เห็นภาพภาษี <span>สบายใจขึ้นอีกนิด</span>
           </h1>
@@ -204,7 +204,6 @@ export default function Dashboard({
         <section className="card monthly-card">
           <div className="section-heading">
             <div>
-              <span className="eyebrow">A YEAR AT A GLANCE</span>
               <h2>รายได้ของคุณในแต่ละเดือน</h2>
             </div>
             <div className="chart-legend">
@@ -217,6 +216,9 @@ export default function Dashboard({
               <span>
                 <i className="legend-dot bonus" /> โบนัส
               </span>
+              <span>
+                <i className="legend-dot other" /> รายได้อื่น
+              </span>
             </div>
           </div>
           <div className="monthly-chart" role="group" aria-label="รายการรายได้แยกตามเดือน">
@@ -227,7 +229,7 @@ export default function Dashboard({
               const display = rows
                 .map(
                   (item) =>
-                    `${item.kind === "salary" ? "เงินเดือน" : "โบนัส"} ${formatMoney(item.gross)} บาท (${item.basis === "actual" ? "ยอดจริง" : "คาดการณ์"})`,
+                    `${incomeKindLabel(item.kind)} ${formatMoney(item.gross)} บาท (${item.basis === "actual" ? "ยอดจริง" : "คาดการณ์"})`,
                 )
                 .join(", ");
               // Each entry is a segment scaled against annual gross. No tax or monetary totals are calculated here.
@@ -244,7 +246,7 @@ export default function Dashboard({
                       {forecast.map((item) => (
                         <span
                           key={item.id}
-                          className={`forecast ${item.kind === "bonus" ? "bonus" : ""}`}
+                          className={`forecast ${item.kind === "salary" ? "" : item.kind}`}
                           style={{
                             height: `${Math.max(3, Math.min(125, proportion(item.gross, data.gross_income) * 9))}px`,
                           }}
@@ -253,7 +255,7 @@ export default function Dashboard({
                       {actual.map((item) => (
                         <span
                           key={item.id}
-                          className={`actual ${item.kind === "bonus" ? "bonus" : ""}`}
+                          className={`actual ${item.kind === "salary" ? "" : item.kind}`}
                           style={{
                             height: `${Math.max(3, Math.min(125, proportion(item.gross, data.gross_income) * 9))}px`,
                           }}
@@ -275,7 +277,6 @@ export default function Dashboard({
         <section className="card next-steps">
           <div className="section-heading">
             <div>
-              <span className="eyebrow">ONE STEP AT A TIME</span>
               <h2>ค่อย ๆ เติมให้ครบ</h2>
             </div>
             <span className="count-badge">{tasks.length}</span>
@@ -334,7 +335,7 @@ export default function Dashboard({
               {data.filing === "required"
                 ? "รายได้เงินเดือนจริงเกินเกณฑ์ 120,000 บาทแล้ว"
                 : data.filing === "not_required"
-                  ? "ถ้ามีภาษีถูกหักไว้ อาจยื่นเพื่อขอคืนได้"
+                  ? "ถ้าถูกหักภาษีไว้ ณ ที่จ่าย อาจยื่นขอคืนได้"
                   : "รอข้อมูลจริงครบปี และตรวจกรณีที่ยังไม่รองรับ"}
             </p>
             <TextLink onClick={() => onNavigate("explanation")}>เข้าใจเรื่องการยื่นแบบ</TextLink>

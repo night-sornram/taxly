@@ -1,0 +1,1 @@
+ALTER TABLE income_entries ADD COLUMN note TEXT NOT NULL DEFAULT '';

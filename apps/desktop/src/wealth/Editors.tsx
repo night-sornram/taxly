@@ -1,14 +1,23 @@
 import { useState } from "react";
 import type { FormEvent, ReactNode } from "react";
+import { Search } from "lucide-react";
 import { command, errorMessage } from "../api";
 import { Button, ErrorNotice, Field, Modal, Notice } from "../components";
 import { AccountsOptions, InstrumentsOptions, Select } from "./ui";
-import { activityLabels, today } from "./format";
+import {
+  activityLabels,
+  dateLabel,
+  decimal,
+  today,
+  tradePreview,
+  unitPriceFromTotal,
+} from "./format";
 import type {
   Account,
   Activity,
   FxRate,
   Instrument,
+  InstrumentSearchResult,
   OpeningPosition,
   Price,
   WealthData,
@@ -80,7 +89,7 @@ export default function EditorModal({
     >
       {editor.kind === "account" && <AccountForm entry={editor.value} wrap={wrap} save={save} />}
       {editor.kind === "instrument" && (
-        <InstrumentForm entry={editor.value} wrap={wrap} save={save} />
+        <InstrumentForm entry={editor.value} data={data} wrap={wrap} save={save} />
       )}
       {editor.kind === "activity" && (
         <ActivityForm entry={editor.value} data={data} wrap={wrap} save={save} />
@@ -124,7 +133,7 @@ function AccountForm({ entry, wrap, save }: FormProps & { entry?: Account }) {
         autoFocus
       />
       <p className="wealth-help">
-        ใช้ชื่อที่คุณจำได้ เช่น บัญชีหุ้นไทย หรือบัญชีต่างประเทศ เงินสดแยกตามสกุลเงินในแต่ละบัญชี
+        ตั้งชื่อให้จำง่าย เช่น บัญชีหุ้นไทย หรือบัญชีต่างประเทศ · เงินสดแยกตามสกุลเงินอัตโนมัติ
       </p>
     </>,
     (e) => {
@@ -135,7 +144,19 @@ function AccountForm({ entry, wrap, save }: FormProps & { entry?: Account }) {
     },
   );
 }
-function InstrumentForm({ entry, wrap, save }: FormProps & { entry?: Instrument }) {
+const EXCHANGE_ALIASES: Record<string, string> = {
+  SNP: "NASDAQ",
+  NMS: "NASDAQ",
+  NYQ: "NYSE",
+  NYS: "NYSE",
+  BKK: "SET",
+};
+function InstrumentForm({
+  entry,
+  data,
+  wrap,
+  save,
+}: FormProps & { entry?: Instrument; data: WealthData }) {
   const [form, setForm] = useState<Instrument>(
     entry ?? {
       id: crypto.randomUUID(),
@@ -147,6 +168,41 @@ function InstrumentForm({ entry, wrap, save }: FormProps & { entry?: Instrument 
       provider_symbol: "",
     },
   );
+  const [results, setResults] = useState<InstrumentSearchResult[] | null>(null);
+  const [searching, setSearching] = useState(false);
+  const [searchError, setSearchError] = useState("");
+  const marketEnabled = data.preferences.market_data_enabled;
+  const search = async () => {
+    const query = form.symbol.trim() || form.name.trim();
+    if (!query || searching) return;
+    setSearching(true);
+    setSearchError("");
+    try {
+      const found = await command<InstrumentSearchResult[]>("search_wealth_instruments", {
+        query,
+      });
+      setResults(found);
+      if (!found.length) setSearchError("ไม่พบหุ้นหรือ ETF ที่ตรงกับคำค้นนี้");
+    } catch (e) {
+      setSearchError(errorMessage(e));
+    } finally {
+      setSearching(false);
+    }
+  };
+  const pick = (found: InstrumentSearchResult) => {
+    const exchange = EXCHANGE_ALIASES[found.exchange] ?? found.exchange;
+    const thaiListed = found.symbol.endsWith(".BK");
+    setForm({
+      ...form,
+      symbol: thaiListed ? found.symbol.replace(/\.BK$/, "") : found.symbol,
+      name: found.name,
+      exchange,
+      kind: found.kind === "etf" ? "etf" : "stock",
+      currency: thaiListed ? "THB" : form.currency,
+      provider_symbol: found.symbol,
+    });
+    setResults(null);
+  };
   const field = (key: keyof Instrument, label: string, hint?: string) => (
     <Field
       label={label}
@@ -165,6 +221,34 @@ function InstrumentForm({ entry, wrap, save }: FormProps & { entry?: Instrument 
         {field("symbol", "สัญลักษณ์", "เช่น PTT หรือ VOO")}
         {field("exchange", "ตลาด", "เช่น SET, NASDAQ หรือ NYSE")}
       </div>
+      <div className="wealth-search-actions">
+        <Button
+          variant="secondary"
+          type="button"
+          disabled={!marketEnabled || searching || !(form.symbol.trim() || form.name.trim())}
+          onClick={() => void search()}
+        >
+          <Search size={15} className={searching ? "spin" : ""} />
+          {searching ? "กำลังค้นหา…" : "ค้นหาจาก Yahoo Finance"}
+        </Button>
+        {!marketEnabled && (
+          <span className="wealth-help">เปิดข้อมูลตลาดที่หน้าราคาก่อน จึงจะค้นหาอัตโนมัติได้</span>
+        )}
+      </div>
+      {searchError && <p className="wealth-help">{searchError}</p>}
+      {results && results.length > 0 && (
+        <div className="wealth-search-results" role="listbox" aria-label="ผลการค้นหาหลักทรัพย์">
+          {results.map((found) => (
+            <button type="button" role="option" key={found.symbol} onClick={() => pick(found)}>
+              <strong>{found.symbol}</strong>
+              <span>{found.name}</span>
+              <small>
+                {found.exchange} · {found.kind === "etf" ? "ETF" : "หุ้น"}
+              </small>
+            </button>
+          ))}
+        </div>
+      )}
       {field("name", "ชื่อหลักทรัพย์")}
       <div className="form-grid">
         <Select
@@ -219,6 +303,36 @@ function ActivityForm({
   );
   const instrument = data.instruments.find((i) => i.id === form.instrument_id);
   const trade = form.kind === "buy" || form.kind === "sell";
+  // When only the total cash amount is known, derive the unit price in the UI
+  // (exact BigInt math) and let the backend re-derive the amount from it, so
+  // supplied amounts always reconcile after rounding.
+  const derivedPrice =
+    trade && !form.unit_price
+      ? unitPriceFromTotal(
+          form.kind as "buy" | "sell",
+          form.quantity,
+          form.amount,
+          form.fee,
+          form.tax,
+        )
+      : null;
+  const latestPrice = form.instrument_id
+    ? [...data.prices]
+        .filter((price) => price.instrument_id === form.instrument_id)
+        .sort((a, b) => b.date.localeCompare(a.date))[0]
+    : undefined;
+  const effectivePrice = form.unit_price ?? derivedPrice;
+  const preview =
+    trade && latestPrice && effectivePrice
+      ? tradePreview(
+          form.kind as "buy" | "sell",
+          form.quantity,
+          effectivePrice,
+          form.fee,
+          form.tax,
+          latestPrice.close,
+        )
+      : null;
   const withInstrument = trade || form.kind === "split" || form.kind === "dividend";
   const amountField = (
     key: "quantity" | "unit_price" | "amount" | "fee" | "tax" | "counter_amount",
@@ -302,10 +416,52 @@ function ActivityForm({
         </Select>
       )}
       {trade && (
-        <div className="form-grid">
-          {amountField("quantity", "จำนวนหน่วย")}
-          {amountField("unit_price", "ราคาต่อหน่วย")}
-        </div>
+        <>
+          <div className="form-grid">
+            {amountField("quantity", "จำนวนหน่วย")}
+            {amountField(
+              "unit_price",
+              "ราคาต่อหน่วย",
+              false,
+              "เว้นว่างได้ถ้ากรอกยอดเงินสุทธิแทน ระบบจะคำนวณราคาให้",
+            )}
+          </div>
+          {trade && form.instrument_id && !latestPrice && (
+            <p className="wealth-help">
+              ยังไม่มีราคาล่าสุดของหลักทรัพย์นี้ในระบบ บันทึกราคาหรือรีเฟรชเพื่อดูกำไรขาดทุนล่วงหน้า
+            </p>
+          )}
+          {(latestPrice || derivedPrice) && (
+            <div className="wealth-price-hints">
+              {latestPrice && (
+                <p className="wealth-help">
+                  ราคาล่าสุดในระบบ ({dateLabel(latestPrice.date)}): {decimal(latestPrice.close)}{" "}
+                  <button
+                    type="button"
+                    className="text-button"
+                    onClick={() => setForm({ ...form, unit_price: latestPrice.close })}
+                  >
+                    ใช้ราคานี้
+                  </button>
+                </p>
+              )}
+              {derivedPrice && (
+                <p className="wealth-help">
+                  จะใช้ราคาต่อหน่วย {derivedPrice} ซึ่งคำนวณจากยอดเงินและจำนวนหุ้นที่กรอก
+                </p>
+              )}
+              {preview && latestPrice && (
+                <p
+                  className={`wealth-help ${preview.gain.startsWith("-") ? "wealth-negative" : "wealth-positive"}`}
+                >
+                  ขายที่ราคาปัจจุบัน {decimal(latestPrice.close)} ({dateLabel(latestPrice.date)}):
+                  มูลค่า {preview.currentValue} {form.currency} · กำไร/ขาดทุน {preview.gain} (
+                  {preview.percent}%)
+                </p>
+              )}
+            </div>
+          )}
+        </>
       )}
       {form.kind === "split" ? (
         <>
@@ -323,7 +479,7 @@ function ActivityForm({
             trade ? "เงินสดสุทธิ (ถ้ามี)" : "จำนวนเงิน",
             !trade,
             trade
-              ? "เว้นว่างเพื่อคำนวณจากจำนวน × ราคา รวมค่าธรรมเนียมและภาษี ยอดสุทธิที่ระบุรวมค่าใช้จ่ายแล้ว"
+              ? "กรอกยอดรวมที่จ่ายจริงได้เลย ระบบจะคำนวณราคาต่อหน่วยให้ · หรือเว้นว่างเพื่อคำนวณจาก จำนวน × ราคา"
               : undefined,
           )}
           {(trade || form.kind === "dividend" || form.kind === "interest") && (
@@ -363,13 +519,22 @@ function ActivityForm({
         onChange={(e) => setForm({ ...form, note: e.target.value })}
       />
       <Notice>
-        รายการย้อนหลังจะคำนวณยอดที่ตามมาใหม่ ระบบจะไม่บันทึกรายการที่ทำให้เงินสดหรือจำนวนหน่วยติดลบ
+        การบันทึกย้อนหลังจะคำนวณยอดหลังจากนั้นใหม่ทั้งหมด และระบบจะไม่บันทึก
+        ถ้าทำให้เงินสดหรือจำนวนหุ้นติดลบ
       </Notice>
     </>,
     (e) => {
       e.preventDefault();
       void save("save_wealth_activity", {
-        activity: { ...form, fee: form.fee || "0", tax: form.tax || "0" },
+        activity: {
+          ...form,
+          unit_price: form.unit_price ?? derivedPrice,
+          // When the price was derived from the total, drop the total so the
+          // backend re-derives it and the ledger always reconciles exactly.
+          amount: form.unit_price || !derivedPrice ? form.amount : null,
+          fee: form.fee || "0",
+          tax: form.tax || "0",
+        },
       });
     },
   );
@@ -471,7 +636,7 @@ function OpeningForm({
         </div>
       )}
       <p className="wealth-help">
-        หากไม่ทราบต้นทุน จะยังดูมูลค่าได้ แต่กำไรที่ต้องใช้ต้นทุนจะแสดงเป็นข้อมูลไม่ครบ
+        ถ้าไม่ทราบต้นทุน ยังดูมูลค่าได้ตามปกติ แต่กำไร/ขาดทุนจะแสดงเป็น — (ไม่มีข้อมูล)
       </p>
     </>,
     (e) => {
@@ -517,7 +682,7 @@ function PriceForm({ entry, data, wrap, save }: FormProps & { entry?: Price; dat
         />
       </div>
       <p className="wealth-help">
-        ราคาที่บันทึกเองมีลำดับก่อนราคาที่ดาวน์โหลดในวันเดียวกัน การรีเฟรชจะเก็บค่านี้ไว้
+        ราคาที่บันทึกเองจะถูกใช้ก่อนราคาที่ดึงมาในวันเดียวกัน และจะไม่ถูกทับเมื่อรีเฟรช
       </p>
     </>,
     (e) => {

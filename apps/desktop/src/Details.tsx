@@ -152,7 +152,6 @@ export function DeductionsPage({
     <>
       <div className="page-heading">
         <div>
-          <span className="eyebrow">WHAT YOU ALREADY HAVE</span>
           <h1 tabIndex={-1}>สิทธิ์ที่อาจเป็นของคุณ</h1>
           <p>เริ่มจากสิ่งที่จ่ายไปแล้ว ตรวจให้ชัดก่อนใช้สิทธิ์ ไม่จำเป็นต้องซื้ออะไรเพิ่ม</p>
         </div>
@@ -184,7 +183,7 @@ export function DeductionsPage({
                   ? "รวมให้แล้ว"
                   : card.status === "not_included"
                     ? "ยังไม่รวมในรุ่นนี้"
-                    : "ตรวจยอดตามจริง"}
+                    : "ตรวจยอดเอง"}
               </span>
             </div>
             <h2>{card.title}</h2>
@@ -222,7 +221,6 @@ export function DeductionsPage({
       <section className="card table-card">
         <div className="section-heading padded">
           <div>
-            <span className="eyebrow">SOCIAL SECURITY RECORDS</span>
             <h2>ประกันสังคมรายเดือน</h2>
           </div>
           <Button variant="secondary" onClick={() => onEdit(null)}>
@@ -316,12 +314,11 @@ export function Explanation({
     <>
       <div className="page-heading">
         <div>
-          <span className="eyebrow">NO MYSTERY NUMBERS</span>
           <h1 tabIndex={-1}>ทำไมได้ตัวเลขนี้?</h1>
           <p>
             {archived
               ? "ผลที่เคยบันทึกไว้ ข้อมูลปัจจุบันอาจเปลี่ยนแล้ว"
-              : "ตามดูวิธีคิดทีละขั้น ทุกจำนวนมีที่มา"}
+              : "ดูวิธีคิดทีละขั้น ทุกตัวเลขมีที่มา"}
           </p>
         </div>
         <span className="badge neutral">ปีภาษี {data.year + 543}</span>
@@ -424,7 +421,6 @@ export function Explanation({
       <section className="card sources-card">
         <div className="section-heading">
           <div>
-            <span className="eyebrow">FROM THE SOURCE</span>
             <h2>ชุดกฎและแหล่งอ้างอิง</h2>
           </div>
           <span className="badge neutral">{data.rule_set_id}</span>
@@ -478,7 +474,6 @@ export function HistoryPage({
     <>
       <div className="page-heading">
         <div>
-          <span className="eyebrow">YOUR TAX JOURNAL</span>
           <h1 tabIndex={-1}>ผลสรุปที่เคยบันทึก</h1>
           <p>เก็บข้อมูล กฎ และผลในเวลานั้นไว้ การคำนวณใหม่ไม่เขียนทับประวัติ</p>
         </div>

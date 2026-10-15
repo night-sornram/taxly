@@ -94,7 +94,7 @@ export default function Onboarding({
   const validate = () => {
     if (data.step === 2) {
       normalizeAmount(data.monthly_salary);
-      if (!data.source_label.trim()) throw new Error("ระบุชื่อนายจ้างหรือชื่อที่คุณจำได้");
+      if (!data.source_label.trim()) throw new Error("ระบุชื่อนายจ้าง");
       if (data.start_month > data.end_month)
         throw new Error("เดือนเริ่มต้องไม่อยู่หลังเดือนสุดท้าย");
     }
@@ -128,7 +128,7 @@ export default function Onboarding({
     setBusy(true);
     try {
       if (data.income_complete && data.bonus.trim() === "")
-        throw new Error("หากยืนยันรายได้ทั้งปีครบแล้ว โปรดระบุโบนัส หากไม่มีให้กรอก 0");
+        throw new Error("ยืนยันรายได้ครบทั้งปีแล้ว กรุณากรอกโบนัสด้วย ถ้าไม่มีให้กรอก 0");
       if (data.facts.social_security_confirmed && data.monthly_sso.trim() === "")
         throw new Error("โปรดระบุยอดประกันสังคม หรือกรอก 0 หากไม่มี");
       await command("save_onboarding", {
@@ -174,7 +174,6 @@ export default function Onboarding({
       </header>
       <main className="onboarding-layout">
         <aside className="onboarding-aside">
-          <span className="eyebrow">LET'S TAKE IT EASY</span>
           <h1>
             เรื่องภาษี
             <br />
@@ -268,7 +267,7 @@ export default function Onboarding({
               />
               <Answer
                 label="ไม่มีสิทธิยกเว้นพิเศษหรือเงินก้อนออกจากงานใช่ไหม?"
-                hint="รวมสิทธิคนพิการ หุ้น บ้านพัก หรือภาษีที่นายจ้างออกให้"
+                hint="รวมสิทธิ์คนพิการ หุ้น บ้านพัก หรือภาษีที่นายจ้างออกให้"
                 value={data.facts.no_special_cases}
                 onChange={(v) => fact("no_special_cases", v)}
               />
@@ -285,7 +284,7 @@ export default function Onboarding({
                 ใช้ยอดก่อนหักภาษีและประกันสังคม ซึ่งอาจมากกว่ายอดที่เข้าบัญชีของคุณ
               </p>
               <Field
-                label="ชื่อนายจ้าง / ชื่อที่คุณจำได้"
+                label="ชื่อนายจ้าง"
                 value={data.source_label}
                 maxLength={100}
                 onChange={(e) => update("source_label", e.target.value)}
@@ -327,14 +326,14 @@ export default function Onboarding({
                 ยืนยันเฉพาะเดือนที่คุณตรวจแล้ว เดือนที่เหลือจะมีป้าย “คาดการณ์” เสมอ
               </p>
               <MonthSelect
-                label="ตรวจเงินเดือนตามจำนวนที่กรอกแล้ว ถึงเดือน"
+                label="ตรวจยอดจริงแล้วถึงเดือน"
                 value={data.actual_through}
                 allowNone
                 onChange={(v) => update("actual_through", v)}
               />
               <Field
                 label="ภาษีที่หักไว้ต่อเดือน (บาท)"
-                hint="ปล่อยว่างหากยังไม่ทราบ กรอก 0 เฉพาะเมื่อยืนยันว่าไม่มี"
+                hint="เว้นว่างหากยังไม่ทราบ กรอก 0 เฉพาะเมื่อยืนยันว่าไม่มี"
                 inputMode="decimal"
                 value={data.monthly_withholding}
                 onChange={(e) => update("monthly_withholding", e.target.value)}
@@ -387,7 +386,7 @@ export default function Onboarding({
                 inputMode="decimal"
                 value={data.bonus_withholding}
                 onChange={(e) => update("bonus_withholding", e.target.value)}
-                hint="ปล่อยว่างหากยังไม่ทราบ"
+                hint="เว้นว่างหากยังไม่ทราบ"
               />
               <Notice>
                 เงินชดเชยหรือเงินก้อนจากการออกจากงานมีเงื่อนไขเฉพาะ ไม่ควรใส่เป็นโบนัสทั่วไป
@@ -409,7 +408,7 @@ export default function Onboarding({
                 inputMode="decimal"
                 value={data.monthly_sso}
                 onChange={(e) => update("monthly_sso", e.target.value)}
-                hint="เว้นว่างหากไม่ทราบ หากไม่จ่ายให้กรอก 0 ไม่เติมยอดสูงสุดให้อัตโนมัติ"
+                hint="เว้นว่างหากไม่ทราบ · ถ้าไม่จ่าย กรอก 0 ระบบไม่เติมเพดานให้อัตโนมัติ"
               />
               <Checkbox
                 checked={data.facts.social_security_confirmed}

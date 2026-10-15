@@ -12,6 +12,18 @@ export function normalizeAmount(raw: string): string {
 export function optionalAmount(raw: string): string | null {
   return raw.trim() === "" ? null : normalizeAmount(raw);
 }
+/** Editor convenience only: applies a common WHT rate (3% services, 5% rent)
+ *  with exact satang integers, rounding half-up. Returns null on invalid input. */
+export function withholdingRate(raw: string, percent: 3 | 5): string | null {
+  try {
+    const [whole, fraction = ""] = normalizeAmount(raw).split(".");
+    const satang = BigInt(whole) * 100n + BigInt(fraction.padEnd(2, "0"));
+    const withheld = (satang * BigInt(percent) + 50n) / 100n;
+    return `${withheld / 100n}.${(withheld % 100n).toString().padStart(2, "0")}`;
+  } catch {
+    return null;
+  }
+}
 export function formatMoney(value: string): string {
   const [whole, fraction = ""] = value.split(".");
   return `${BigInt(whole).toLocaleString("th-TH")}.${fraction.padEnd(2, "0")}`;

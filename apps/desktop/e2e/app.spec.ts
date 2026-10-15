@@ -93,11 +93,11 @@ test("beginner onboarding sends explicit inputs and never replaces unknown by ze
       .check();
   }
   await page.getByRole("button", { name: "ถัดไป", exact: true }).click();
-  await page.getByLabel("ชื่อนายจ้าง / ชื่อที่คุณจำได้", { exact: true }).fill("บริษัทของฉัน");
+  await page.getByLabel("ชื่อนายจ้าง", { exact: true }).fill("บริษัทของฉัน");
   await page.getByLabel("เงินเดือนต่อเดือน (บาท)", { exact: true }).fill("30,000");
   await page.getByRole("button", { name: "ถัดไป", exact: true }).click();
   await page
-    .getByRole("combobox", { name: "ตรวจเงินเดือนตามจำนวนที่กรอกแล้ว ถึงเดือน", exact: true })
+    .getByRole("combobox", { name: "ตรวจยอดจริงแล้วถึงเดือน", exact: true })
     .selectOption("6");
   await page.getByRole("button", { name: "ถัดไป", exact: true }).click();
   await page.getByLabel("โบนัส (บาท)", { exact: true }).fill("0");
@@ -232,4 +232,61 @@ test("all main screens and the income dialog remain accessible", async ({ page }
   ).toEqual([]);
   await page.keyboard.press("Escape");
   await expect(page.getByRole("dialog")).not.toBeVisible();
+});
+
+test("income note is saved with the entry and shown in the income table", async ({ page }) => {
+  await installIpc(page);
+  await openDashboard(page);
+  await page.getByRole("button", { name: "รายได้ของฉัน", exact: true }).first().click();
+  await page.getByRole("button", { name: "เพิ่มรายได้", exact: true }).first().click();
+  await page.getByLabel("ชื่อนายจ้าง").fill("งานเสริมหลังเลิก");
+  await page.getByLabel("เดือนที่รับเงิน").selectOption("3");
+  await page.getByLabel("รายได้ก่อนหัก (บาท)").fill("15000");
+  await page.getByLabel("บันทึกช่วยจำ").fill("ค่างานเสริมรอตรวจสอบ");
+  await page.getByRole("button", { name: "บันทึกรายได้", exact: true }).click();
+  await expect(page.getByRole("dialog")).not.toBeVisible();
+  expect(((await lastCall(page, "upsert_income"))?.request as { note?: string }).note).toBe(
+    "ค่างานเสริมรอตรวจสอบ",
+  );
+  await expect(page.getByText("ค่างานเสริมรอตรวจสอบ")).toBeVisible();
+});
+
+test("one-off other income is recordable and joins the estimate", async ({ page }) => {
+  await installIpc(page);
+  await openDashboard(page);
+  await page.getByRole("button", { name: "รายได้ของฉัน", exact: true }).first().click();
+  await page.getByRole("button", { name: "เพิ่มรายได้", exact: true }).first().click();
+  await page.getByLabel("ชื่อนายจ้าง").fill("ขายของออนไลน์ครั้งเดียว");
+  await page.getByLabel("ประเภท").selectOption("other");
+  await expect(page.getByText(/นำรวมเข้าคำนวณเต็มจำนวน/)).toBeVisible();
+  await page.getByLabel("เดือนที่รับเงิน").selectOption("6");
+  await page.getByLabel("รายได้ก่อนหัก (บาท)").fill("50000");
+  await page.getByLabel("บันทึกช่วยจำ").fill("ออเดอร์ใหญ่เดือน มิ.ย.");
+  await page.getByRole("button", { name: "บันทึกรายได้", exact: true }).click();
+  await expect(page.getByRole("dialog")).not.toBeVisible();
+  expect(((await lastCall(page, "upsert_income"))?.request as { kind?: string }).kind).toBe(
+    "other",
+  );
+  await expect(page.getByText("รายได้อื่น").first()).toBeVisible();
+  await expect(page.getByText("ออเดอร์ใหญ่เดือน มิ.ย.")).toBeVisible();
+});
+
+test("long modal keeps header and actions in view and locks the page behind", async ({ page }) => {
+  await installIpc(page);
+  await openDashboard(page);
+  await page.getByRole("button", { name: "รายได้ของฉัน", exact: true }).first().click();
+  await page.getByRole("button", { name: "เพิ่มรายได้", exact: true }).first().click();
+  const dialog = page.getByRole("dialog");
+  await expect(dialog).toBeVisible();
+  await expect(dialog.getByRole("heading", { name: "เพิ่มรายได้" })).toBeVisible();
+  const save = page.getByRole("button", { name: "บันทึกรายได้", exact: true });
+  await expect(save).toBeVisible();
+  const box = await save.boundingBox();
+  const state = await page.evaluate(() => ({
+    height: window.innerHeight,
+    bodyLocked: getComputedStyle(document.body).overflow === "hidden",
+  }));
+  expect(box).not.toBeNull();
+  expect(box!.y + box!.height).toBeLessThanOrEqual(state.height);
+  expect(state.bodyLocked).toBe(true);
 });

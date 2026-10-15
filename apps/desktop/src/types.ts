@@ -24,10 +24,11 @@ export interface Income {
   tax_year: number;
   source_id: string;
   month: number;
-  kind: "salary" | "bonus";
+  kind: "salary" | "bonus" | "other";
   basis: Basis;
   gross: Money;
   withholding: Money | null;
+  note: string;
 }
 export interface Deduction {
   id: string;

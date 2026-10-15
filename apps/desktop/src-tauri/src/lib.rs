@@ -88,6 +88,7 @@ pub fn run() {
             wealth_import::cancel_wealth_import,
             wealth_import::save_wealth_template,
             wealth_market::refresh_wealth_market_data,
+            wealth_market::search_wealth_instruments,
         ])
         .run(tauri::generate_context!())
         .expect("Taxly could not start");

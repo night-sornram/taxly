@@ -89,6 +89,7 @@ export async function installIpc(page: Page, forecast = false) {
                   basis: request.basis,
                   gross: request.gross,
                   withholding: request.withholding,
+                  note: (request as { note?: string }).note ?? "",
                 };
                 const index = workspace.income.findIndex((entry) => entry.id === request.id);
                 if (index >= 0) workspace.income[index] = entry;

@@ -21,7 +21,10 @@ pub fn annual_input(workspace: &YearWorkspace) -> AppResult<AnnualTaxInput> {
             .income
             .iter()
             .map(|entry| IncomeItem {
-                category: IncomeCategory::Section40_1,
+                category: match entry.kind.as_str() {
+                    "other" => IncomeCategory::Section40_8,
+                    _ => IncomeCategory::Section40_1,
+                },
                 amount: entry.gross,
                 withholding: entry.withholding,
                 basis: entry.basis,

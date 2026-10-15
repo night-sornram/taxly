@@ -90,7 +90,7 @@ export function PageTitle({
   children,
   actions,
 }: {
-  eyebrow: string;
+  eyebrow?: string;
   title: string;
   children: ReactNode;
   actions?: ReactNode;
@@ -98,7 +98,7 @@ export function PageTitle({
   return (
     <div className="wealth-page-title">
       <div>
-        <span className="wealth-eyebrow">{eyebrow}</span>
+        {eyebrow && <span className="wealth-eyebrow">{eyebrow}</span>}
         <h1 tabIndex={-1}>{title}</h1>
         <p>{children}</p>
       </div>

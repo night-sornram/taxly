@@ -65,6 +65,12 @@ export interface ImportMapping {
   date_format: string;
   columns: Record<string, string>;
 }
+export interface InstrumentSearchResult {
+  symbol: string;
+  name: string;
+  exchange: string;
+  kind: string;
+}
 export interface WealthData {
   revision: number;
   accounts: Account[];

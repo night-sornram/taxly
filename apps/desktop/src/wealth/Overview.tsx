@@ -30,7 +30,6 @@ export default function Overview({
   return (
     <>
       <PageTitle
-        eyebrow="YOUR WEALTH, AT A GLANCE"
         title="ภาพรวมการลงทุน"
         actions={
           <>
@@ -44,21 +43,18 @@ export default function Overview({
           </>
         }
       >
-        ค่อย ๆ เห็นภาพเงินของคุณ ชัดเจนขึ้นในทุกวัน
+        สรุปมูลค่า กำไรขาดทุน และผลตอบแทนของพอร์ตในช่วงที่เลือก
       </PageTitle>
       {!data.accounts.length ? (
         <div className="wealth-welcome">
           <div>
-            <span className="wealth-eyebrow">เริ่มต้นจากจุดที่คุณอยู่</span>
+            <span className="wealth-eyebrow">เริ่มต้นใช้งาน</span>
             <h2>
-              ทุกพอร์ตมี
+              รวมหุ้น ETF และเงินสด
               <br />
-              <em>จุดเริ่มต้นของตัวเอง</em>
+              <em>ไว้ในที่เดียว</em>
             </h2>
-            <p>
-              รวมหุ้น ETF และเงินสดไว้ในที่เดียว เริ่มจากประวัติการลงทุนทั้งหมด
-              หรือยอดที่คุณมีในวันนี้
-            </p>
+            <p>เริ่มจากสร้างบัญชีแรก แล้วบันทึกรายการย้อนหลัง หรือใส่ยอดที่คุณมีอยู่ในวันนี้</p>
             <Button onClick={onAccount}>
               <Plus size={17} />
               สร้างบัญชีลงทุนแรก
@@ -81,7 +77,7 @@ export default function Overview({
               </h2>
               <small>
                 {p.total_value === null
-                  ? `มูลค่าที่ทราบ ${decimal(p.known_value)} ${p.reporting_currency} · ยังมีข้อมูลไม่ครบ`
+                  ? `มูลค่าที่ทราบ ${decimal(p.known_value)} ${p.reporting_currency} · บางรายการยังไม่มีราคา`
                   : `ณ ${dateLabel(p.as_of)}`}
               </small>
               <span className="wealth-metric-spark" aria-hidden="true">
@@ -93,7 +89,7 @@ export default function Overview({
               <h2 className={signedClass(p.period_gain)}>
                 <Value value={p.period_gain} currency={p.reporting_currency} />
               </h2>
-              <small>หักเงินเข้าออกจากภายนอกแล้ว</small>
+              <small>ไม่รวมเงินฝากและเงินถอนระหว่างช่วง</small>
             </section>
             <section className="wealth-metric">
               <span>ผลตอบแทนตามช่วงเวลา</span>
@@ -106,7 +102,7 @@ export default function Overview({
                 <Value value={p.cash_value} currency={p.reporting_currency} />
               </h2>
               <small>
-                {p.cash.length} ยอดเงิน · {data.accounts.length} บัญชี
+                {p.cash.length} รายการเงินสด · {data.accounts.length} บัญชี
               </small>
             </section>
           </div>
@@ -114,12 +110,12 @@ export default function Overview({
             <div className="wealth-start-options">
               <div>
                 <span className="wealth-eyebrow">เลือกวิธีเริ่มต้น</span>
-                <h2>เติมเรื่องราวให้พอร์ตของคุณ</h2>
+                <h2>เพิ่มข้อมูลแรกเข้าพอร์ต</h2>
               </div>
               <button onClick={onActivity}>
                 <ArrowUpRight size={20} />
                 <strong>เริ่มจากรายการแรก</strong>
-                <span>บันทึกเงินฝากและประวัติซื้อขาย</span>
+                <span>บันทึกเงินฝากและการซื้อขาย</span>
               </button>
               <button onClick={onOpening}>
                 <Wallet size={20} />
@@ -133,7 +129,6 @@ export default function Overview({
             <section className="card wealth-allocation">
               <div className="wealth-section-heading">
                 <div>
-                  <span className="wealth-eyebrow">THE BIG PICTURE</span>
                   <h2>สัดส่วนสินทรัพย์</h2>
                 </div>
                 <span className="wealth-tag">{p.reporting_currency}</span>
@@ -176,7 +171,7 @@ export default function Overview({
                     ))}
                   </div>
                   <small className="wealth-help">
-                    สัดส่วนเทียบมูลค่าพอร์ตทั้งหมด รวมเงินสด ค่าที่ขาดข้อมูลจะแสดงเป็น —
+                    คิดเป็นสัดส่วนของมูลค่าพอร์ตทั้งหมด (รวมเงินสด) รายการที่ยังไม่มีราคาแสดงเป็น —
                   </small>
                 </>
               ) : (
@@ -191,7 +186,6 @@ export default function Overview({
             <section className="card wealth-card-flush">
               <div className="wealth-section-heading">
                 <div>
-                  <span className="wealth-eyebrow">YOUR POSITIONS</span>
                   <h2>หลักทรัพย์ในพอร์ต</h2>
                 </div>
                 <button className="wealth-inline-link" onClick={onHoldings}>
@@ -238,7 +232,6 @@ export default function Overview({
             <section className="card">
               <div className="wealth-section-heading">
                 <div>
-                  <span className="wealth-eyebrow">A PLACE FOR EVERY GOAL</span>
                   <h2>บัญชีของคุณ</h2>
                 </div>
               </div>
@@ -263,17 +256,17 @@ export default function Overview({
           <details className="wealth-method">
             <summary>อ่านวิธีคำนวณและขอบเขตข้อมูล</summary>
             <p>
-              คำนวณกำไรจากต้นทุน FIFO ผลตอบแทน TWR ตัดผลของการฝากต้นวันและถอนสิ้นวัน
-              การโอนระหว่างบัญชีที่เลือกเป็นรายการภายใน
+              คำนวณกำไรจากต้นทุนแบบ FIFO ผลตอบแทนแบบ TWR ซึ่งตัดผลของการฝากต้นวันและถอนสิ้นวันออก
+              การโอนระหว่างบัญชีที่เลือกอยู่นับเป็นรายการภายใน
             </p>
             <p>
-              ข้อมูลแรกสุด: {dateLabel(p.earliest_date)} · จุดเริ่มช่วงผลตอบแทน:{" "}
+              รายการแรกสุด: {dateLabel(p.earliest_date)} · เริ่มคำนวณผลตอบแทนจาก:{" "}
               {dateLabel(p.start_date)} ยอดตั้งต้นไม่สร้างผลตอบแทนย้อนหลัง
-              และต้นทุนที่ไม่ทราบจะไม่ถูกสมมติเป็นศูนย์
+              และต้นทุนที่ไม่ทราบจะไม่ถูกนับเป็นศูนย์
             </p>
             <p>
-              มูลค่าแต่ละวันใช้ราคาและอัตราแลกเปลี่ยนย้อนหลังที่มี ณ วันนั้น
-              ราคาที่ขาดหรือเก่าจะมีข้อความแจ้ง ผลการลงทุนยังไม่ถูกนำไปรวมในประมาณการภาษี
+              มูลค่าแต่ละวันใช้ราคาและอัตราแลกเปลี่ยน ณ หรือก่อนวันนั้น
+              รายการที่ไม่มีราคาจะมีข้อความแจ้งเตือน ผลการลงทุนยังไม่นำไปรวมในประมาณการภาษี
             </p>
           </details>
         </>
@@ -308,8 +301,7 @@ function PerformanceChart({ portfolio }: { portfolio: Portfolio }) {
     <section className="card wealth-performance">
       <div className="wealth-section-heading">
         <div>
-          <span className="wealth-eyebrow">EVERY STEP COUNTS</span>
-          <h2>{mode === "value" ? "เส้นทางมูลค่าพอร์ต" : "ผลตอบแทนของพอร์ต"}</h2>
+          <h2>{mode === "value" ? "มูลค่าพอร์ตตามเวลา" : "ผลตอบแทนของพอร์ต"}</h2>
         </div>
         <div className="wealth-segment" aria-label="ข้อมูลบนกราฟ">
           <button onClick={() => setMode("value")} aria-pressed={mode === "value"}>
@@ -381,7 +373,7 @@ function PerformanceChart({ portfolio }: { portfolio: Portfolio }) {
       ) : (
         <div className="wealth-chart-empty">
           <ArrowDownRight size={28} />
-          <p>เมื่อมีรายการและราคาครบ กราฟจะเริ่มเล่าเรื่องพอร์ตของคุณ</p>
+          <p>บันทึกรายการและเพิ่มราคา แล้วกราฟจะแสดงที่นี่</p>
         </div>
       )}
       <details className="wealth-chart-data">
@@ -392,7 +384,7 @@ function PerformanceChart({ portfolio }: { portfolio: Portfolio }) {
               <th>วันที่</th>
               <th>มูลค่า ({portfolio.reporting_currency})</th>
               <th>TWR</th>
-              <th>เงินเข้าออกสุทธิ</th>
+              <th>กระแสเงินสดสุทธิ</th>
             </tr>
           </thead>
           <tbody>
@@ -413,7 +405,7 @@ function PerformanceChart({ portfolio }: { portfolio: Portfolio }) {
       </details>
       {portfolio.quality !== "ok" && (
         <p className="wealth-help">
-          ช่วงที่ข้อมูลราคา อัตราแลกเปลี่ยน หรือฐานการคำนวณไม่ครบจะแสดง —
+          วันที่ไม่มีราคา อัตราแลกเปลี่ยน หรือข้อมูลตั้งต้นครบ จะแสดงเป็น —
         </p>
       )}
     </section>

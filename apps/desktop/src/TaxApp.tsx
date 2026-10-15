@@ -147,7 +147,7 @@ export default function TaxApp({ onInvestments }: { onInvestments: () => void })
   };
   const changed = async () => {
     await refresh();
-    setToast("บันทึกในเครื่องแล้ว ภาพรวมอัปเดตตามข้อมูลใหม่");
+    setToast("บันทึกเรียบร้อย คำนวณใหม่แล้ว");
   };
   const source = async (id: string) => {
     try {
@@ -255,7 +255,7 @@ export default function TaxApp({ onInvestments }: { onInvestments: () => void })
       <aside className="sidebar">
         <Brand />
         <div className="workspace-label">
-          พื้นที่ภาษีของฉัน <PanelLeftClose size={14} />
+          ภาษีของฉัน <PanelLeftClose size={14} />
         </div>
         <nav aria-label="เมนูการลงทุน">
           <button onClick={onInvestments}>
@@ -318,7 +318,7 @@ export default function TaxApp({ onInvestments }: { onInvestments: () => void })
       <div className="main-shell">
         <header className="topbar">
           <div className="breadcrumb">
-            พื้นที่ภาษีของฉัน <span>/</span>{" "}
+            ภาษีของฉัน <span>/</span>{" "}
             <strong>
               {view === "dashboard"
                 ? "ภาพรวม"

@@ -77,12 +77,22 @@ async fn onboarding_persistence_forecast_replacement_and_history() {
             basis: AmountBasis::Actual,
             gross: entry.gross,
             withholding: entry.withholding,
+            note: Some("ปรับเงินเดือนใหม่".into()),
         },
     )
     .await
     .unwrap();
     let workspace = storage::workspace(&pool, 2025).await.unwrap();
     assert_eq!(workspace.income.len(), 12);
+    assert_eq!(
+        workspace
+            .income
+            .iter()
+            .find(|entry| entry.month == 7)
+            .unwrap()
+            .note,
+        "ปรับเงินเดือนใหม่"
+    );
     assert_eq!(workspace.profile.as_ref().unwrap().revision, 2);
     assert_eq!(
         services::calculate_year(&pool, &catalog, 2025)
@@ -104,6 +114,7 @@ async fn onboarding_persistence_forecast_replacement_and_history() {
         basis: AmountBasis::Actual,
         gross: m("30000"),
         withholding: None,
+        note: None,
     };
     assert!(storage::upsert_income(&pool, duplicate).await.is_err());
     assert_eq!(
@@ -240,6 +251,7 @@ async fn invalid_backup_sources_and_cross_year_edits_are_rejected() {
         basis: AmountBasis::Actual,
         gross: m("1"),
         withholding: None,
+        note: None,
     };
     assert!(storage::upsert_income(&pool, invalid).await.is_err());
     assert_eq!(
@@ -329,4 +341,54 @@ fn frontend_contract_fixture_matches_current_engine() {
         fixture["calculation"], expected,
         "regenerate fixtures only after reviewing any rule/engine behavior change"
     );
+}
+
+#[tokio::test]
+async fn other_income_persists_and_joins_the_calculation() {
+    let (directory, pool, catalog) = database().await;
+    storage::onboarding(&pool, setup_request(2025))
+        .await
+        .unwrap();
+    let before = services::calculate_year(&pool, &catalog, 2025)
+        .await
+        .unwrap();
+    storage::upsert_income(
+        &pool,
+        IncomeRequest {
+            id: None,
+            year: 2025,
+            source_label: "งานเสริมครั้งเดียว".into(),
+            month: 5,
+            kind: "other".into(),
+            basis: AmountBasis::Actual,
+            gross: m("50000"),
+            withholding: Some(m("1500")),
+            note: Some("ขายของออนไลน์".into()),
+        },
+    )
+    .await
+    .unwrap();
+    let workspace = storage::workspace(&pool, 2025).await.unwrap();
+    let other = workspace
+        .income
+        .iter()
+        .find(|entry| entry.kind == "other")
+        .unwrap();
+    assert_eq!(other.note, "ขายของออนไลน์");
+    let after = services::calculate_year(&pool, &catalog, 2025)
+        .await
+        .unwrap();
+    assert_eq!(
+        after.gross_income,
+        before.gross_income.checked_add(m("50000")).unwrap()
+    );
+    assert_eq!(after.expenses, before.expenses);
+    assert!(
+        after
+            .scope_issues
+            .iter()
+            .any(|issue| issue.contains("รายได้อื่นถูกนำรวมเต็มจำนวน"))
+    );
+    pool.close().await;
+    drop(directory);
 }

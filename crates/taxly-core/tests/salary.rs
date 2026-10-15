@@ -280,3 +280,29 @@ proptest! {
         prop_assert!(calculate(&more,&rules()).unwrap().annual_tax>=first.annual_tax);
     }
 }
+
+#[test]
+fn other_income_is_included_in_full_without_expense_deduction() {
+    let mut data = annual_input("300000", "0", Some("0"));
+    data.income.push(IncomeItem {
+        category: IncomeCategory::Section40_8,
+        amount: m("100000"),
+        withholding: Some(m("3000")),
+        basis: AmountBasis::Actual,
+    });
+    let out = calculate(&data, &rules()).unwrap();
+    assert_eq!(out.gross_income, m("400000"));
+    // Expense stays computed from the 40(1) salary alone (cap reached).
+    assert_eq!(out.expenses, m("100000"));
+    assert!(out
+        .scope_issues
+        .iter()
+        .any(|issue| issue.contains("รายได้อื่นถูกนำรวมเต็มจำนวน")));
+}
+
+#[test]
+fn section_other_than_40_1_and_40_8_is_still_rejected() {
+    let mut data = annual_input("300000", "0", None);
+    data.income[0].category = IncomeCategory::Section40_2;
+    assert!(calculate(&data, &rules()).is_err());
+}

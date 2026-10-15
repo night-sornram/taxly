@@ -2,6 +2,7 @@ import { render, screen, fireEvent } from "@testing-library/react";
 import { it, expect, vi } from "vitest";
 import { Answer, Field } from "./components";
 import Dashboard from "./Dashboard";
+import { IncomeEditor } from "./Income";
 import fixture from "../e2e/fixtures/contract.json";
 import type { Calculation, Workspace } from "./types";
 
@@ -47,6 +48,7 @@ it("labels each month bar by income kind so a bonus never reads as a bigger sala
     basis: "forecast",
     gross: "60000.00",
     withholding: null,
+    note: "",
   });
   render(
     <Dashboard
@@ -65,4 +67,23 @@ it("labels each month bar by income kind so a bonus never reads as a bigger sala
   expect(screen.getByRole("button", { name: /^ม.ค\./ })).toHaveAccessibleName(
     expect.stringContaining("เงินเดือน 30,000.00 บาท"),
   );
+});
+
+it("fills withholding from 3% and 5% quick rates based on gross pay", () => {
+  render(
+    <IncomeEditor
+      entry={null}
+      workspace={structuredClone(fixture.workspace) as Workspace}
+      onClose={vi.fn()}
+      onSaved={vi.fn(async () => {})}
+    />,
+  );
+  const taxField = screen.getByLabelText("ภาษีที่ถูกหัก (บาท)");
+  expect(screen.getByRole("button", { name: "3%" })).toBeDisabled();
+  expect(screen.getByRole("button", { name: "5%" })).toBeDisabled();
+  fireEvent.change(screen.getByLabelText("รายได้ก่อนหัก (บาท)"), { target: { value: "30000" } });
+  fireEvent.click(screen.getByRole("button", { name: "3%" }));
+  expect((taxField as HTMLInputElement).value).toBe("900.00");
+  fireEvent.click(screen.getByRole("button", { name: "5%" }));
+  expect((taxField as HTMLInputElement).value).toBe("1500.00");
 });

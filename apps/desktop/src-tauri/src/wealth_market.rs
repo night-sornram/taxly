@@ -23,6 +23,16 @@ pub struct RefreshResult {
     pub failures: Vec<String>,
 }
 
+#[derive(Debug, Clone, serde::Serialize)]
+pub struct InstrumentSearchResult {
+    pub symbol: String,
+    pub name: String,
+    pub exchange: String,
+    pub kind: String,
+}
+
+const MAX_SEARCH_RESULTS: usize = 8;
+
 /// This provider boundary deliberately contains no ledger/storage operations.
 /// Alternate providers can return the same daily major-unit, as-traded prices.
 trait MarketDataProvider {
@@ -33,6 +43,8 @@ trait MarketDataProvider {
         start: NaiveDate,
         end: NaiveDate,
     ) -> AppResult<Vec<DailyPrice>>;
+
+    async fn search(&self, query: &str) -> AppResult<Vec<InstrumentSearchResult>>;
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -133,6 +145,40 @@ impl MarketDataProvider for YahooProvider {
         }
         parse_yahoo_chart(&bytes, currency, start, end)
     }
+
+    async fn search(&self, query: &str) -> AppResult<Vec<InstrumentSearchResult>> {
+        if !valid_search_query(query) {
+            return Err(market_error("คำค้นหาไม่ถูกต้อง"));
+        }
+        let mut url = reqwest::Url::parse("https://query1.finance.yahoo.com/v1/finance/search")
+            .map_err(|_| market_error("เตรียมการเชื่อมต่อข้อมูลตลาดไม่สำเร็จ"))?;
+        url.query_pairs_mut()
+            .append_pair("q", query)
+            .append_pair("quotesCount", "12")
+            .append_pair("newsCount", "0")
+            .append_pair("listsCount", "0");
+        let mut response = self
+            .client
+            .get(url)
+            .send()
+            .await
+            .map_err(|_| market_error("เชื่อมต่อ Yahoo Finance ไม่สำเร็จหรือหมดเวลา"))?;
+        if !response.status().is_success() {
+            return Err(provider_http_error(response.status().as_u16()));
+        }
+        let mut bytes = Vec::new();
+        while let Some(chunk) = response
+            .chunk()
+            .await
+            .map_err(|_| market_error("รับข้อมูลตลาดไม่สำเร็จ"))?
+        {
+            if bytes.len() + chunk.len() > MAX_RESPONSE_BYTES {
+                return Err(market_error("ข้อมูลตลาดมีขนาดเกินขอบเขตที่รองรับ"));
+            }
+            bytes.extend_from_slice(&chunk);
+        }
+        parse_yahoo_search(&bytes)
+    }
 }
 
 #[tauri::command]
@@ -172,6 +218,21 @@ pub async fn refresh_wealth_market_data(
         result.updated_fx = updated_fx;
     }
     Ok(result)
+}
+
+#[tauri::command]
+pub async fn search_wealth_instruments(
+    query: String,
+    state: State<'_, AppState>,
+) -> AppResult<Vec<InstrumentSearchResult>> {
+    // Same opt-in network boundary as refreshes: no Yahoo requests while the
+    // preference is off, so searching never silently leaks the query or IP.
+    let data = wealth_storage::load(&state.pool).await?;
+    if !data.preferences.market_data_enabled {
+        return Err(AppError::invalid("เปิดใช้ข้อมูลตลาดในตั้งค่าการลงทุนก่อนค้นหา"));
+    }
+    let provider = YahooProvider::new()?;
+    provider.search(query.trim()).await
 }
 
 async fn collect_market_data<P: MarketDataProvider>(
@@ -384,6 +445,66 @@ fn valid_provider_symbol(symbol: &str) -> bool {
         && symbol
             .bytes()
             .all(|c| c.is_ascii_alphanumeric() || matches!(c, b'.' | b'-' | b'^' | b'='))
+}
+
+fn valid_search_query(query: &str) -> bool {
+    let trimmed = query.trim();
+    !trimmed.is_empty()
+        && trimmed.len() <= 60
+        && trimmed
+            .bytes()
+            .all(|c| c.is_ascii_alphanumeric() || matches!(c, b'.' | b'-' | b'^' | b'=' | b' '))
+}
+
+/// Keeps only equities and ETFs: the ledger only models those instrument kinds.
+fn parse_yahoo_search(bytes: &[u8]) -> AppResult<Vec<InstrumentSearchResult>> {
+    let json: Value = serde_json::from_slice(bytes)
+        .map_err(|_| market_error("รูปแบบข้อมูลจาก Yahoo Finance ไม่ถูกต้อง"))?;
+    let quotes = json
+        .get("quotes")
+        .and_then(Value::as_array)
+        .ok_or_else(|| market_error("ไม่พบผลการค้นหา"))?;
+    let mut results = Vec::new();
+    for quote in quotes {
+        if results.len() >= MAX_SEARCH_RESULTS {
+            break;
+        }
+        let symbol = quote.get("symbol").and_then(Value::as_str).unwrap_or("");
+        if !valid_provider_symbol(symbol) {
+            continue;
+        }
+        let kind = match quote.get("quoteType").and_then(Value::as_str) {
+            Some("EQUITY") => "stock",
+            Some("ETF") => "etf",
+            _ => continue,
+        };
+        let name = quote
+            .get("shortname")
+            .or_else(|| quote.get("longname"))
+            .and_then(Value::as_str)
+            .unwrap_or("")
+            .trim();
+        if name.is_empty() || name.len() > 160 {
+            continue;
+        }
+        let exchange = quote
+            .get("exchDisp")
+            .or_else(|| quote.get("exchange"))
+            .and_then(Value::as_str)
+            .unwrap_or("")
+            .trim()
+            .to_uppercase();
+        if exchange.is_empty() || exchange.len() > 32 {
+            continue;
+        }
+        results.push(InstrumentSearchResult {
+            symbol: symbol.to_string(),
+            name: name.chars().take(160).collect(),
+            exchange,
+            kind: kind.to_string(),
+        });
+    }
+    Ok(results)
 }
 
 fn market_error(message: &str) -> AppError {
@@ -733,6 +854,33 @@ mod tests {
                 }])
             }
         }
+
+        async fn search(&self, _query: &str) -> AppResult<Vec<InstrumentSearchResult>> {
+            Ok(Vec::new())
+        }
+    }
+
+    #[test]
+    fn yahoo_search_keeps_only_equities_and_etfs_and_bounds_the_list() {
+        let bytes = serde_json::to_vec(&json!({ "quotes": [
+            { "symbol": "PTT.BK", "shortname": "ปตท.", "exchDisp": "SET", "quoteType": "EQUITY" },
+            { "symbol": "VOO", "longname": "Vanguard S&P 500 ETF", "exchDisp": "SNP", "quoteType": "ETF" },
+            { "symbol": "THB=X", "shortname": "Thai Baht", "exchDisp": "CCY", "quoteType": "CURRENCY" },
+            { "symbol": "BAD/PATH", "shortname": "สัญลักษณ์แปลก", "exchDisp": "SET", "quoteType": "EQUITY" },
+            { "symbol": "NO.EXCH", "shortname": "ไม่มีตลาด", "quoteType": "EQUITY" }
+        ]}))
+        .unwrap();
+        let results = parse_yahoo_search(&bytes).unwrap();
+        assert_eq!(results.len(), 2);
+        assert_eq!(results[0].symbol, "PTT.BK");
+        assert_eq!(results[0].kind, "stock");
+        assert_eq!(results[1].name, "Vanguard S&P 500 ETF");
+        assert_eq!(results[1].kind, "etf");
+        assert!(parse_yahoo_search(b"{").is_err());
+        assert!(!valid_search_query(""));
+        assert!(!valid_search_query("   "));
+        assert!(!valid_search_query("a;b"));
+        assert!(valid_search_query("PTT BK"));
     }
     #[tokio::test]
     async fn provider_is_replaceable_and_partial_failures_retain_other_results() {

@@ -54,11 +54,12 @@ pub fn calculate(input: &AnnualTaxInput, rules: &TaxRuleSet) -> Result<TaxCalcul
     if input.year != rules.tax_year {
         return Err(TaxError::YearMismatch);
     }
-    if input
-        .income
-        .iter()
-        .any(|item| item.category != IncomeCategory::Section40_1)
-    {
+    if input.income.iter().any(|item| {
+        !matches!(
+            item.category,
+            IncomeCategory::Section40_1 | IncomeCategory::Section40_8
+        )
+    }) {
         return Err(TaxError::UnsupportedCategory);
     }
     if input
@@ -76,6 +77,17 @@ pub fn calculate(input: &AnnualTaxInput, rules: &TaxRuleSet) -> Result<TaxCalcul
         months[usize::from(item.month - 1)] = true;
     }
     let gross = sum(input.income.iter().map(|item| item.amount))?;
+    let salary_gross = sum(
+        input
+            .income
+            .iter()
+            .filter(|item| item.category == IncomeCategory::Section40_1)
+            .map(|item| item.amount),
+    )?;
+    let has_other_income = input
+        .income
+        .iter()
+        .any(|item| item.category == IncomeCategory::Section40_8);
     let actual = sum(input
         .income
         .iter()
@@ -86,7 +98,9 @@ pub fn calculate(input: &AnnualTaxInput, rules: &TaxRuleSet) -> Result<TaxCalcul
         .iter()
         .filter(|item| item.basis == AmountBasis::Forecast)
         .map(|item| item.amount))?;
-    let expense = gross
+    // The statutory expense rate applies to section 40(1) salary income only;
+    // other one-off income is included in full until per-type expense rules ship.
+    let expense = salary_gross
         .checked_mul(rules.expense_rate)?
         .min(rules.expense_cap);
     let after_personal = gross
@@ -126,6 +140,12 @@ pub fn calculate(input: &AnnualTaxInput, rules: &TaxRuleSet) -> Result<TaxCalcul
         .filter(|item| item.withholding.is_none())
         .count();
     let mut scope_issues = input.facts.scope_issues();
+    if has_other_income {
+        scope_issues.push(
+            "รายได้อื่นถูกนำรวมเต็มจำนวนโดยยังไม่หักค่าใช้จ่ายตามหลักเกณฑ์จริง ผลประมาณการจึงอาจสูงกว่าภาษีที่ต้องชำระจริง"
+                .into(),
+        );
+    }
     if questionable_sso {
         scope_issues.push("ยอดประกันสังคมเกินกรอบปกติ ต้องตรวจยอดที่มีสิทธิ์ก่อนสรุป".into());
     }
@@ -170,8 +190,8 @@ pub fn calculate(input: &AnnualTaxInput, rules: &TaxRuleSet) -> Result<TaxCalcul
     let steps = vec![
         CalculationStep {
             rule_id: "salary_gross".into(),
-            label: "รวมรายได้ก่อนหักจากทุกนายจ้าง".into(),
-            formula: "เงินเดือน + โบนัส (ยอดจริงและคาดการณ์)".into(),
+            label: "รวมรายได้ก่อนหักจากทุกแหล่ง".into(),
+            formula: "เงินเดือน + โบนัส + รายได้อื่น (ยอดจริงและคาดการณ์)".into(),
             amount: gross,
             source_ids: vec!["rd91".into()],
         },
@@ -179,7 +199,7 @@ pub fn calculate(input: &AnnualTaxInput, rules: &TaxRuleSet) -> Result<TaxCalcul
             rule_id: "salary_expense".into(),
             label: "หักค่าใช้จ่ายตามกฎหมาย".into(),
             formula: format!(
-                "รายได้ × {} ไม่เกิน {} บาท รวมทุกนายจ้าง",
+                "รายได้เงินเดือน × {} ไม่เกิน {} บาท (รายได้อื่นยังไม่หักค่าใช้จ่าย)",
                 rules.expense_rate, rules.expense_cap
             ),
             amount: expense,

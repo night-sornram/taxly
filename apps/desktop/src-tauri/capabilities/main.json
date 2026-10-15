@@ -43,6 +43,7 @@
     "allow-commit-wealth-import",
     "allow-cancel-wealth-import",
     "allow-save-wealth-template",
-    "allow-refresh-wealth-market-data"
+    "allow-refresh-wealth-market-data",
+    "allow-search-wealth-instruments"
   ]
 }

@@ -135,6 +135,7 @@ pub async fn workspace(pool: &SqlitePool, year: u16) -> AppResult<YearWorkspace>
                         .try_get::<Option<i64>, _>("withholding_satang")?
                         .map(Money::from_satang)
                         .transpose()?,
+                    note: row.try_get("note")?,
                 })
             })
             .collect::<AppResult<Vec<_>>>()?;
@@ -283,8 +284,12 @@ pub async fn save_profile(
 pub async fn upsert_income(pool: &SqlitePool, request: IncomeRequest) -> AppResult<()> {
     validate_month(request.month)?;
     validate_label(&request.source_label)?;
-    if !["salary", "bonus"].contains(&request.kind.as_str()) {
-        return Err(AppError::invalid("รองรับเฉพาะเงินเดือนและโบนัส"));
+    if !["salary", "bonus", "other"].contains(&request.kind.as_str()) {
+        return Err(AppError::invalid("รองรับเฉพาะเงินเดือน โบนัส และรายได้อื่น"));
+    }
+    let note = request.note.unwrap_or_default();
+    if note.chars().count() > 500 {
+        return Err(AppError::invalid("บันทึกช่วยจำยาวเกิน 500 ตัวอักษร"));
     }
     let mut tx = pool.begin().await?;
     let source = source(&mut tx, request.year, &request.source_label).await?;
@@ -295,8 +300,8 @@ pub async fn upsert_income(pool: &SqlitePool, request: IncomeRequest) -> AppResu
         }
         None => Uuid::new_v4().to_string(),
     };
-    sqlx::query("INSERT INTO income_entries(id,tax_year,source_id,month,kind,basis,gross_satang,withholding_satang) VALUES (?,?,?,?,?,?,?,?) ON CONFLICT(id) DO UPDATE SET source_id=excluded.source_id,month=excluded.month,kind=excluded.kind,basis=excluded.basis,gross_satang=excluded.gross_satang,withholding_satang=excluded.withholding_satang")
-        .bind(id).bind(i64::from(request.year)).bind(source).bind(i64::from(request.month)).bind(request.kind).bind(basis_text(request.basis)).bind(request.gross.satang()?).bind(request.withholding.map(Money::satang).transpose()?).execute(&mut *tx).await?;
+    sqlx::query("INSERT INTO income_entries(id,tax_year,source_id,month,kind,basis,gross_satang,withholding_satang,note) VALUES (?,?,?,?,?,?,?,?,?) ON CONFLICT(id) DO UPDATE SET source_id=excluded.source_id,month=excluded.month,kind=excluded.kind,basis=excluded.basis,gross_satang=excluded.gross_satang,withholding_satang=excluded.withholding_satang,note=excluded.note")
+        .bind(id).bind(i64::from(request.year)).bind(source).bind(i64::from(request.month)).bind(request.kind).bind(basis_text(request.basis)).bind(request.gross.satang()?).bind(request.withholding.map(Money::satang).transpose()?).bind(note).execute(&mut *tx).await?;
     bump(&mut tx, request.year).await?;
     tx.commit().await?;
     Ok(())

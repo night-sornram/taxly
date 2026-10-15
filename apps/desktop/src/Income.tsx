@@ -12,8 +12,12 @@ import {
   MonthSelect,
   Notice,
 } from "./components";
-import { months, normalizeAmount, optionalAmount } from "./money";
+import { months, normalizeAmount, optionalAmount, withholdingRate } from "./money";
 import type { Basis, Deduction, Income, Workspace } from "./types";
+
+export function incomeKindLabel(kind: Income["kind"]): string {
+  return kind === "salary" ? "เงินเดือน" : kind === "bonus" ? "โบนัส" : "รายได้อื่น";
+}
 
 export function IncomeEditor({
   entry,
@@ -36,6 +40,7 @@ export function IncomeEditor({
   const [basis, setBasis] = useState<Basis>(entry?.basis || "actual");
   const [gross, setGross] = useState(entry?.gross || "");
   const [withholding, setWithholding] = useState(entry?.withholding ?? "");
+  const [note, setNote] = useState(entry?.note ?? "");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const save = async (e: React.FormEvent) => {
@@ -53,6 +58,7 @@ export function IncomeEditor({
           basis,
           gross: normalizeAmount(gross),
           withholding: optionalAmount(withholding),
+          note: note.trim(),
         },
       });
       await onSaved();
@@ -67,7 +73,7 @@ export function IncomeEditor({
     <Modal title={entry ? "แก้ไขรายได้" : "เพิ่มรายได้"} onClose={onClose}>
       <form onSubmit={(e) => void save(e)}>
         <Field
-          label="นายจ้าง / ชื่อที่คุณจำได้"
+          label="ชื่อนายจ้าง"
           value={source}
           onChange={(e) => setSource(e.target.value)}
           list="employers"
@@ -84,9 +90,10 @@ export function IncomeEditor({
           <MonthSelect label="เดือนที่รับเงิน" value={month} onChange={setMonth} />
           <label className="field">
             <span>ประเภท</span>
-            <select value={kind} onChange={(e) => setKind(e.target.value as "salary" | "bonus")}>
+            <select value={kind} onChange={(e) => setKind(e.target.value as Income["kind"])}>
               <option value="salary">เงินเดือน</option>
               <option value="bonus">โบนัส</option>
+              <option value="other">รายได้อื่น (ครั้งเดียว)</option>
             </select>
           </label>
         </div>
@@ -97,6 +104,12 @@ export function IncomeEditor({
             <option value="forecast">คาดการณ์ / ยังไม่ยืนยัน</option>
           </select>
         </label>
+        {kind === "other" && (
+          <p className="fine-print">
+            รายได้อื่นจะนำรวมเข้าคำนวณเต็มจำนวน โดยยังไม่หักค่าใช้จ่ายตามหลักเกณฑ์จริง
+            ผลประมาณการจึงอาจสูงกว่าภาษีที่ต้องชำระจริง
+          </p>
+        )}
         <Field
           label="รายได้ก่อนหัก (บาท)"
           inputMode="decimal"
@@ -111,6 +124,32 @@ export function IncomeEditor({
           value={withholding}
           onChange={(e) => setWithholding(e.target.value)}
           hint="เว้นว่างหากไม่ทราบ กรอก 0 เฉพาะเมื่อยืนยันว่าไม่มี"
+        />
+        <div className="wht-quick">
+          <span className="fine-print">หัก ณ ที่จ่ายจากยอดก่อนหัก</span>
+          <div className="segmented" aria-label="อัตราภาษีหัก ณ ที่จ่าย">
+            {([3, 5] as const).map((rate) => {
+              const amount = withholdingRate(gross, rate);
+              return (
+                <button
+                  key={rate}
+                  type="button"
+                  disabled={!amount}
+                  onClick={() => setWithholding(amount!)}
+                >
+                  {rate}%
+                </button>
+              );
+            })}
+          </div>
+          <span className="fine-print">3% ค่าจ้างทำของ ค่าบริการ ค่าโฆษณา · 5% ค่าเช่า</span>
+        </div>
+        <Field
+          label="บันทึกช่วยจำ"
+          value={note}
+          maxLength={500}
+          onChange={(e) => setNote(e.target.value)}
+          placeholder="เช่น รอปรับเงินเดือนเดือนหน้า"
         />
         <Notice>
           หนึ่งนายจ้างมีเงินเดือนปกติหนึ่งรายการต่อเดือน
@@ -181,7 +220,6 @@ export function IncomePage({
     <>
       <div className="page-heading">
         <div>
-          <span className="eyebrow">EVERY BIT OF INCOME</span>
           <h1 tabIndex={-1}>รายได้ของฉัน</h1>
           <p>เงินเดือน โบนัส และภาษีที่ถูกหัก จัดให้เป็นเรื่องเดียวกัน</p>
         </div>
@@ -230,6 +268,7 @@ export function IncomePage({
                 <th>สถานะ</th>
                 <th className="align-right">ก่อนหัก</th>
                 <th className="align-right">ภาษีที่หัก</th>
+                <th>บันทึก</th>
                 <th>
                   <span className="sr-only">จัดการ</span>
                 </th>
@@ -244,7 +283,7 @@ export function IncomePage({
                       {workspace.sources.find((source) => source.id === entry.source_id)?.label}
                     </small>
                   </td>
-                  <td>{entry.kind === "salary" ? "เงินเดือน" : "โบนัส"}</td>
+                  <td>{incomeKindLabel(entry.kind)}</td>
                   <td>
                     <BasisBadge basis={entry.basis} />
                   </td>
@@ -258,11 +297,12 @@ export function IncomePage({
                       <MoneyValue value={entry.withholding} currency={false} />
                     )}
                   </td>
+                  <td>{entry.note || "—"}</td>
                   <td>
                     <div className="row-actions">
                       <button
                         className="icon-button"
-                        aria-label={`แก้ไข${entry.kind === "salary" ? "เงินเดือน" : "โบนัส"} ${months[entry.month - 1]}`}
+                        aria-label={`แก้ไข${incomeKindLabel(entry.kind)} ${months[entry.month - 1]}`}
                         onClick={() => onEdit(entry)}
                       >
                         <Pencil size={15} />

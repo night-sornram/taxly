@@ -27,7 +27,7 @@ test("wealth is available before tax onboarding and accepts account opening cash
     cost_basis: null,
     date: "2026-01-01",
   });
-  await page.getByRole("button", { name: "พื้นที่ภาษีของฉัน", exact: true }).click();
+  await page.getByRole("button", { name: "ภาษีของฉัน", exact: true }).click();
   await expect(page.getByRole("button", { name: "การลงทุนของฉัน", exact: true })).toBeVisible();
 });
 
@@ -37,7 +37,7 @@ test("portfolio shows Rust-calculated values, filters, and accessible light/dark
   await installWealthIpc(page);
   await openWealth(page);
   await expect(page.getByRole("heading", { name: "10,635.00 THB", exact: true })).toBeVisible();
-  await page.getByLabel("กรองบัญชีลงทุน").selectOption("account-thb");
+  await page.getByLabel("กรองตามบัญชี").selectOption("account-thb");
   await expect
     .poll(
       async () =>
@@ -68,6 +68,10 @@ test("manual trades preserve decimal strings and final cash amount", async ({ pa
   await page.getByLabel("วันที่ (ค.ศ.)", { exact: true }).fill("2026-01-03");
   await page.getByLabel("จำนวนหน่วย", { exact: true }).fill("0.123456789012");
   await page.getByLabel("ราคาต่อหน่วย", { exact: true }).fill("100");
+  await expect(
+    page.getByText(/ขายที่ราคาปัจจุบัน 160\.00 \(.*กำไร\/ขาดทุน [\d.]+ \(59\.92%\)/),
+  ).toBeVisible();
+  await expect(page.getByText(/กำไร\/ขาดทุน [\d.,]+ \(/)).toBeVisible();
   await page.getByLabel("ค่าธรรมเนียม", { exact: true }).fill("0.01");
   await page.getByRole("button", { name: "บันทึก", exact: true }).click();
   await expect(page.getByRole("dialog")).toHaveCount(0);
@@ -101,7 +105,7 @@ test("market refresh is optional and partial failures keep the cached price tabl
 }) => {
   await installWealthIpc(page);
   await openWealth(page);
-  await page.getByRole("button", { name: "ราคาและสกุลเงิน", exact: true }).click();
+  await page.getByRole("button", { name: "ราคาและอัตราแลกเปลี่ยน", exact: true }).click();
   await expect(page.getByRole("button", { name: "รีเฟรชราคาและ FX", exact: true })).toBeDisabled();
   await page.getByRole("button", { name: "เปิดการดึงข้อมูลตลาด", exact: true }).click();
   await page.getByRole("button", { name: "รีเฟรชราคาและ FX", exact: true }).click();
@@ -126,4 +130,89 @@ test("wealth layout works on a narrow screen", async ({ page }) => {
   }));
   expect(width.scroll).toBeLessThanOrEqual(width.width);
   expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);
+});
+
+test("editor modal is centered in the viewport", async ({ page }) => {
+  await installWealthIpc(page);
+  await openWealth(page);
+  await page.getByRole("button", { name: "เพิ่มรายการ", exact: true }).click();
+  const dialog = page.getByRole("dialog");
+  await expect(dialog).toBeVisible();
+  const box = await dialog.boundingBox();
+  const viewport = await page.evaluate(() => ({
+    width: window.innerWidth,
+    height: window.innerHeight,
+  }));
+  expect(box).not.toBeNull();
+  // Tailwind preflight zeroes dialog margin; .modal restores margin:auto so the
+  // native <dialog> centers instead of sticking to the viewport top-left.
+  expect(Math.abs(box!.x + box!.width / 2 - viewport.width / 2)).toBeLessThanOrEqual(2);
+  expect(Math.abs(box!.y + box!.height / 2 - viewport.height / 2)).toBeLessThanOrEqual(2);
+});
+
+test("switching between tax and wealth keeps state without refetching", async ({ page }) => {
+  await installWealthIpc(page);
+  await openWealth(page);
+  await page.getByRole("button", { name: "หลักทรัพย์ในพอร์ต", exact: true }).click();
+  const countWorkspaceFetches = () =>
+    page.evaluate(
+      () =>
+        (
+          window as unknown as { __TAXLY_TEST_CALLS__?: { name: string }[] }
+        ).__TAXLY_TEST_CALLS__?.filter((call) => call.name === "get_wealth_workspace").length,
+    );
+  const before = await countWorkspaceFetches();
+  // Switch to tax (year 2026 has no profile yet, so onboarding shows) and open
+  // the 2025 dashboard, then return: wealth must still be on holdings.
+  await page.getByRole("button", { name: "ภาษีของฉัน", exact: true }).click();
+  await page.getByRole("combobox", { name: "เปลี่ยนปีภาษี", exact: true }).selectOption("2025");
+  await expect(page.getByRole("heading", { name: "เห็นภาพภาษี สบายใจขึ้นอีกนิด" })).toBeVisible();
+  await page.getByRole("button", { name: "การลงทุนของฉัน", exact: true }).click();
+  await expect(page.getByRole("heading", { name: "หลักทรัพย์ในพอร์ต", exact: true })).toBeVisible();
+  await page.getByRole("button", { name: "ภาษีของฉัน", exact: true }).click();
+  await expect(page.getByRole("heading", { name: "เห็นภาพภาษี สบายใจขึ้นอีกนิด" })).toBeVisible();
+  expect(await countWorkspaceFetches()).toBe(before);
+});
+
+test("instrument search autofills fields and totals derive the buy price", async ({ page }) => {
+  await installWealthIpc(page, true);
+  await openWealth(page);
+  // Market data must be on before searching; enable it on the market page.
+  await page.getByRole("button", { name: "ราคาและอัตราแลกเปลี่ยน", exact: true }).click();
+  await page.getByRole("button", { name: "เปิดการดึงข้อมูลตลาด", exact: true }).click();
+  await page.getByRole("button", { name: "หลักทรัพย์ในพอร์ต", exact: true }).click();
+  await page.getByRole("button", { name: "เพิ่มหลักทรัพย์", exact: true }).click();
+  await page.getByLabel("สัญลักษณ์", { exact: true }).fill("PTT");
+  await page.getByRole("button", { name: "ค้นหาจาก Yahoo Finance" }).click();
+  await page.getByRole("option", { name: /ปตท\./ }).click();
+  await expect(page.getByLabel("ชื่อหลักทรัพย์")).toHaveValue("ปตท. (PTT PCL)");
+  await page.getByRole("button", { name: "บันทึก", exact: true }).click();
+  await expect(page.getByRole("dialog")).toHaveCount(0);
+  expect((await lastCall(page, "save_wealth_instrument"))?.instrument).toMatchObject({
+    symbol: "PTT",
+    exchange: "SET",
+    currency: "THB",
+    provider_symbol: "PTT.BK",
+  });
+  // A buy entered with only the total derives the unit price for the ledger.
+  await page.getByRole("button", { name: "รายการลงทุน", exact: true }).click();
+  await page.getByRole("button", { name: "เพิ่มรายการ", exact: true }).click();
+  // An empty portfolio opens the account editor before the activity editor.
+  await page.getByLabel("ชื่อบัญชี").fill("บัญชีหลัก");
+  await page.getByRole("button", { name: "บันทึก", exact: true }).click();
+  await expect(page.getByRole("dialog")).toHaveCount(0);
+  await page.getByRole("button", { name: "เพิ่มรายการ", exact: true }).click();
+  const editor = page.getByRole("dialog");
+  await editor.getByLabel("ประเภทรายการ").selectOption("buy");
+  await editor.getByLabel("หลักทรัพย์").selectOption({ label: "PTT · ปตท. (PTT PCL) (THB)" });
+  await editor.getByLabel("จำนวนหน่วย").fill("100");
+  await expect(page.getByText("ยังไม่มีราคาล่าสุดของหลักทรัพย์นี้ในระบบ")).toBeVisible();
+  await editor.getByLabel("เงินสดสุทธิ (ถ้ามี)").fill("10100");
+  await expect(page.getByText(/จะใช้ราคาต่อหน่วย 101\.00/)).toBeVisible();
+  await page.getByRole("button", { name: "บันทึก", exact: true }).click();
+  await expect(page.getByRole("dialog")).toHaveCount(0);
+  expect((await lastCall(page, "save_wealth_activity"))?.activity).toMatchObject({
+    unit_price: "101.00",
+    amount: null,
+  });
 });

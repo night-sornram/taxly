@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { formatMoney, normalizeAmount, optionalAmount } from "./money";
+import { formatMoney, normalizeAmount, optionalAmount, withholdingRate } from "./money";
 
 describe("exact decimal boundary", () => {
   it("normalizes Thai digits without float conversion", () => {
@@ -20,4 +20,18 @@ describe("exact decimal boundary", () => {
       expect(() => normalizeAmount(input)).toThrow();
     },
   );
+});
+
+describe("withholding quick rate", () => {
+  it("applies 3% and 5% with exact satang arithmetic", () => {
+    expect(withholdingRate("30,000", 3)).toBe("900.00");
+    expect(withholdingRate("30000", 5)).toBe("1500.00");
+    expect(withholdingRate("1234.56", 3)).toBe("37.04");
+    expect(withholdingRate("0.17", 3)).toBe("0.01");
+  });
+  it("returns null for empty or invalid amounts", () => {
+    expect(withholdingRate("", 3)).toBeNull();
+    expect(withholdingRate("abc", 5)).toBeNull();
+    expect(withholdingRate("-1", 3)).toBeNull();
+  });
 });

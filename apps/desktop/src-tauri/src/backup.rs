@@ -103,6 +103,7 @@ pub async fn collect(pool: &SqlitePool, catalog: &Catalog) -> AppResult<Backup> 
                 .try_get::<Option<i64>, _>("withholding_satang")?
                 .map(taxly_core::Money::from_satang)
                 .transpose()?,
+            note: row.try_get("note")?,
         });
     }
     for row in sqlx::query("SELECT * FROM deduction_entries ORDER BY id")
@@ -332,7 +333,7 @@ pub async fn restore(pool: &SqlitePool, catalog: &Catalog, backup: Backup) -> Ap
             .await?;
     }
     for entry in backup.income {
-        sqlx::query("INSERT INTO income_entries(id,tax_year,source_id,month,kind,basis,gross_satang,withholding_satang) VALUES (?,?,?,?,?,?,?,?)").bind(entry.id).bind(i64::from(entry.tax_year)).bind(entry.source_id).bind(i64::from(entry.month)).bind(entry.kind).bind(basis_text(entry.basis)).bind(entry.gross.satang()?).bind(entry.withholding.map(taxly_core::Money::satang).transpose()?).execute(&mut *tx).await?;
+        sqlx::query("INSERT INTO income_entries(id,tax_year,source_id,month,kind,basis,gross_satang,withholding_satang,note) VALUES (?,?,?,?,?,?,?,?,?)").bind(entry.id).bind(i64::from(entry.tax_year)).bind(entry.source_id).bind(i64::from(entry.month)).bind(entry.kind).bind(basis_text(entry.basis)).bind(entry.gross.satang()?).bind(entry.withholding.map(taxly_core::Money::satang).transpose()?).bind(entry.note).execute(&mut *tx).await?;
     }
     for entry in backup.deductions {
         sqlx::query("INSERT INTO deduction_entries(id,tax_year,month,rule_code,basis,amount_satang) VALUES (?,?,?,?,?,?)").bind(entry.id).bind(i64::from(entry.tax_year)).bind(i64::from(entry.month)).bind(entry.rule_code).bind(basis_text(entry.basis)).bind(entry.amount.satang()?).execute(&mut *tx).await?;

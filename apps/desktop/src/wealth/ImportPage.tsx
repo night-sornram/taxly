@@ -125,9 +125,7 @@ export default function ImportPage({
   if (!data.accounts.length)
     return (
       <>
-        <PageTitle eyebrow="BRING YOUR HISTORY" title="นำเข้าข้อมูล">
-          เริ่มจากบัญชีที่ต้องการเก็บรายการนี้
-        </PageTitle>
+        <PageTitle title="นำเข้าข้อมูล">เริ่มจากสร้างบัญชีที่จะเก็บรายการเหล่านี้ก่อน</PageTitle>
         <Empty title="เพิ่มบัญชีก่อนนำเข้า" action="เพิ่มบัญชี" onAction={onAccount}>
           แต่ละไฟล์จะนำเข้าไปยังบัญชีที่คุณเลือก
         </Empty>
@@ -135,18 +133,16 @@ export default function ImportPage({
     );
   return (
     <>
-      <PageTitle eyebrow="BRING YOUR HISTORY" title="นำเข้าข้อมูล">
-        ตรวจทุกแถวก่อนบันทึกจริง รองรับไฟล์ CSV แบบ UTF-8
-      </PageTitle>
+      <PageTitle title="นำเข้าข้อมูล">ตรวจทุกแถวก่อนบันทึกจริง รองรับไฟล์ CSV แบบ UTF-8</PageTitle>
       {error && <ErrorNotice message={error} onClose={() => setError("")} />}
       {success && <Notice tone="success">{success}</Notice>}
       <section className="card wealth-import-setup">
         <div className="wealth-section-heading">
           <div>
             <h2>
-              01 <span>เลือกข้อมูลตั้งต้น</span>
+              01 <span>เลือกไฟล์และรูปแบบ</span>
             </h2>
-            <p>ใช้ประวัติครบถ้วน หรือเริ่มจากยอดที่คุณมีอยู่</p>
+            <p>เลือกบัญชี ประเภทข้อมูล และรูปแบบวันที่ในไฟล์</p>
           </div>
           <FileSpreadsheet size={25} />
         </div>
@@ -197,8 +193,8 @@ export default function ImportPage({
       </section>
       {!review && (
         <Notice>
-          ไฟล์จะถูกอ่านในเครื่อง การเลือกไฟล์ยังไม่บันทึกรายการ
-          ราคาซื้อขายและยอดเงินสดสุทธิต้องรวมค่าธรรมเนียมและภาษีตามที่ระบุในไฟล์ต้นแบบ
+          ไฟล์จะถูกอ่านในเครื่องเท่านั้น และยังไม่มีการบันทึกจนกว่าจะกดยืนยัน ·
+          ช่องเงินสดสุทธิต้องเป็นยอดที่รวมค่าธรรมเนียมและภาษีแล้ว (ดูรูปแบบในไฟล์ต้นแบบ)
         </Notice>
       )}
       {review && (
@@ -239,7 +235,7 @@ export default function ImportPage({
                   ))}
                 </Select>
                 <Field
-                  label="บันทึกรูปแบบนี้ในชื่อ (ถ้าต้องการ)"
+                  label="ตั้งชื่อชุดจับคู่นี้ (ไม่บังคับ)"
                   value={request.mapping_name}
                   onChange={(e) => changeRequest({ mapping_name: e.target.value })}
                 />
@@ -284,7 +280,9 @@ export default function ImportPage({
               </details>
               <details>
                 <summary>จับคู่สัญลักษณ์กับหลักทรัพย์ที่มีอยู่</summary>
-                <p className="wealth-help">ระบุสัญลักษณ์ตรงกับในไฟล์เพื่อแก้ตลาดหรือชื่อที่กำกวม</p>
+                <p className="wealth-help">
+                  ใช้เมื่อสัญลักษณ์ในไฟล์ไม่ตรงกับหลักทรัพย์ที่มีอยู่ เช่น ต่างตลาด หรือชื่อซ้ำกัน
+                </p>
                 <div className="form-grid">
                   <Field
                     label="สัญลักษณ์ในไฟล์"
@@ -333,7 +331,7 @@ export default function ImportPage({
               </details>
               {dirty && (
                 <Notice tone="warning">
-                  การจับคู่มีการเปลี่ยนแปลง กดตรวจตัวอย่างใหม่ก่อนยืนยัน
+                  การจับคู่มีการเปลี่ยนแปลง กด "ตรวจตัวอย่างใหม่" ก่อนจึงจะยืนยันได้
                 </Notice>
               )}
               <Button variant="secondary" onClick={() => void preview()} disabled={busy}>
@@ -343,11 +341,11 @@ export default function ImportPage({
           </section>
           {review.new_instruments.length > 0 && (
             <Notice>
-              จะสร้างหลักทรัพย์ใหม่เมื่อยืนยัน:{" "}
+              จะสร้างหลักทรัพย์ใหม่เมื่อกดยืนยัน:{" "}
               {review.new_instruments
                 .map((i) => `${i.symbol} (${i.kind.toUpperCase()} / ${i.exchange} / ${i.currency})`)
                 .join(", ")}{" "}
-              หากเป็นหลักทรัพย์เดิม ให้จับคู่สัญลักษณ์ด้านบน
+              ถ้าเป็นหลักทรัพย์เดิมที่มีอยู่แล้ว ให้จับคู่สัญลักษณ์ด้านบน
             </Notice>
           )}
           <section className="card wealth-card-flush">
@@ -356,7 +354,7 @@ export default function ImportPage({
                 <h2>
                   03 <span>ตรวจสอบและยืนยัน</span>
                 </h2>
-                <p>แถวซ้ำถูกข้ามไว้ก่อน คุณเลือกนำเข้าได้หากตั้งใจให้เป็นอีกรายการ</p>
+                <p>แถวที่อาจซ้ำจะถูกติ๊กออกไว้ก่อน ติ๊กกลับได้ถ้าตั้งใจจะนำเข้าจริง</p>
               </div>
             </div>
             <Table caption="ตัวอย่างรายการ CSV ก่อนนำเข้า">

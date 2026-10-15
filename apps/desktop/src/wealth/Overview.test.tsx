@@ -22,7 +22,7 @@ it("distinguishes known partial value from an unavailable portfolio total", () =
     />,
   );
   expect(
-    screen.getByText("มูลค่าที่ทราบ 9,007,199,254,740,993.01 THB · ยังมีข้อมูลไม่ครบ"),
+    screen.getByText("มูลค่าที่ทราบ 9,007,199,254,740,993.01 THB · บางรายการยังไม่มีราคา"),
   ).toBeInTheDocument();
   expect(screen.getAllByRole("heading", { name: /^—$/ }).length).toBe(3);
   expect(screen.getByRole("img", { name: /^กราฟมูลค่าพอร์ต/ })).toBeInTheDocument();

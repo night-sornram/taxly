@@ -6,8 +6,8 @@ import {
   ChartNoAxesCombined,
   Check,
   ChevronRight,
-  Database,
   FileSpreadsheet,
+  Landmark,
   LayoutDashboard,
   LockKeyhole,
   Plus,
@@ -37,12 +37,12 @@ import "./wealth.css";
 
 type View = "overview" | "accounts" | "holdings" | "activity" | "import" | "market" | "privacy";
 const navigation = [
-  { id: "overview", label: "ภาพรวมการลงทุน", icon: LayoutDashboard },
-  { id: "accounts", label: "บัญชีลงทุน", icon: Wallet },
+  { id: "overview", label: "ภาพรวม", icon: LayoutDashboard },
+  { id: "accounts", label: "บัญชี", icon: Wallet },
   { id: "holdings", label: "หลักทรัพย์ในพอร์ต", icon: BriefcaseBusiness },
   { id: "activity", label: "รายการลงทุน", icon: Activity },
   { id: "import", label: "นำเข้าข้อมูล", icon: FileSpreadsheet },
-  { id: "market", label: "ราคาและสกุลเงิน", icon: ChartNoAxesCombined },
+  { id: "market", label: "ราคาและอัตราแลกเปลี่ยน", icon: ChartNoAxesCombined },
 ] as const;
 export default function WealthApp({ onTaxes }: { onTaxes: () => void }) {
   const [view, setView] = useState<View>("overview");
@@ -95,7 +95,7 @@ export default function WealthApp({ onTaxes }: { onTaxes: () => void }) {
   }, [toast]);
   const changed = async () => {
     await refresh();
-    setToast("บันทึกในเครื่องแล้ว พอร์ตอัปเดตตามข้อมูลใหม่");
+    setToast("บันทึกเรียบร้อย พอร์ตอัปเดตแล้ว");
   };
   const navigate = (next: View) => {
     setView(next);
@@ -129,9 +129,7 @@ export default function WealthApp({ onTaxes }: { onTaxes: () => void }) {
       </a>
       <aside className="sidebar wealth-sidebar">
         <Brand />
-        <div className="wealth-area-label">
-          การลงทุน <span>INVESTMENTS</span>
-        </div>
+        <div className="wealth-area-label">การลงทุน</div>
         <nav aria-label="เมนูการลงทุน">
           {navigation.map((item) => (
             <button
@@ -147,13 +145,11 @@ export default function WealthApp({ onTaxes }: { onTaxes: () => void }) {
           ))}
         </nav>
         <div className="sidebar-divider" />
-        <div className="wealth-area-label">
-          ภาษี <span>TAXES</span>
-        </div>
+        <div className="wealth-area-label">ภาษี</div>
         <nav aria-label="เมนูภาษี">
           <button onClick={onTaxes}>
-            <Database size={18} />
-            <span>พื้นที่ภาษีของฉัน</span>
+            <Landmark size={18} />
+            <span>ภาษีของฉัน</span>
             <ArrowUpRight size={15} />
           </button>
         </nav>
@@ -172,14 +168,14 @@ export default function WealthApp({ onTaxes }: { onTaxes: () => void }) {
           <div className="wealth-local-card">
             <span aria-hidden="true">✳</span>
             <h3>
-              รู้จักเงินของตัวเอง
+              ข้อมูลการลงทุน
               <br />
-              ในจังหวะของคุณ
+              เก็บไว้ในเครื่องของคุณ
             </h3>
             <p>
-              ข้อมูลอยู่ในเครื่อง
+              ไม่ต้องสมัครบัญชี
               <br />
-              เปิดดูได้ทุกเมื่อ แม้ออฟไลน์
+              เปิดดูได้แม้ออฟไลน์
             </p>
           </div>
           <div className="local-status">
@@ -223,9 +219,9 @@ export default function WealthApp({ onTaxes }: { onTaxes: () => void }) {
             >
               <label>
                 <Wallet size={15} />
-                <span className="sr-only">กรองบัญชีลงทุน</span>
+                <span className="sr-only">กรองตามบัญชี</span>
                 <select
-                  aria-label="กรองบัญชีลงทุน"
+                  aria-label="กรองตามบัญชี"
                   value={filter.account_ids[0] ?? ""}
                   disabled={loading}
                   onChange={(e) =>
@@ -279,7 +275,7 @@ export default function WealthApp({ onTaxes }: { onTaxes: () => void }) {
           {!workspace ? (
             <div className="wealth-initial">
               {loading ? (
-                <Loading label="กำลังเปิดพอร์ตในเครื่อง…" />
+                <Loading label="กำลังโหลดพอร์ต…" />
               ) : (
                 <>
                   <h1 tabIndex={-1}>เปิดข้อมูลการลงทุนไม่สำเร็จ</h1>
@@ -292,7 +288,7 @@ export default function WealthApp({ onTaxes }: { onTaxes: () => void }) {
               {filtered && workspace.portfolio.warnings.length > 0 && (
                 <details className="wealth-quality-warning" open>
                   <summary>
-                    ข้อมูลบางส่วนต้องตรวจสอบ ({workspace.portfolio.warnings.length})
+                    ข้อมูลบางรายการยังไม่ครบ ({workspace.portfolio.warnings.length})
                   </summary>
                   <ul>
                     {workspace.portfolio.warnings.map((warning, index) => (
@@ -300,7 +296,7 @@ export default function WealthApp({ onTaxes }: { onTaxes: () => void }) {
                     ))}
                   </ul>
                   <button className="wealth-inline-link" onClick={() => navigate("market")}>
-                    ตรวจราคาและอัตราแลกเปลี่ยน <ChevronRight size={14} />
+                    ไปดูราคาและอัตราแลกเปลี่ยน <ChevronRight size={14} />
                   </button>
                 </details>
               )}
@@ -354,7 +350,7 @@ export default function WealthApp({ onTaxes }: { onTaxes: () => void }) {
         </main>
         <footer className="app-footer">
           <PrivacyNote />
-          <span>ผลการลงทุนแยกจากประมาณการภาษี</span>
+          <span>ผลการลงทุนไม่นำไปคำนวณภาษีในแอปนี้</span>
         </footer>
       </div>
       {editor && workspace && (

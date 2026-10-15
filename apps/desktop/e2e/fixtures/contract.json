@@ -100,8 +100,8 @@
     "steps": [
       {
         "amount": "360000",
-        "formula": "เงินเดือน + โบนัส (ยอดจริงและคาดการณ์)",
-        "label": "รวมรายได้ก่อนหักจากทุกนายจ้าง",
+        "formula": "เงินเดือน + โบนัส + รายได้อื่น (ยอดจริงและคาดการณ์)",
+        "label": "รวมรายได้ก่อนหักจากทุกแหล่ง",
         "rule_id": "salary_gross",
         "source_ids": [
           "rd91"
@@ -109,7 +109,7 @@
       },
       {
         "amount": "100000",
-        "formula": "รายได้ × 0.50 ไม่เกิน 100000 บาท รวมทุกนายจ้าง",
+        "formula": "รายได้เงินเดือน × 0.50 ไม่เกิน 100000 บาท (รายได้อื่นยังไม่หักค่าใช้จ่าย)",
         "label": "หักค่าใช้จ่ายตามกฎหมาย",
         "rule_id": "salary_expense",
         "source_ids": [
@@ -488,7 +488,8 @@
         "month": 1,
         "source_id": "dc4c5269-87a1-4257-a680-57850978db22",
         "tax_year": 2025,
-        "withholding": "250"
+        "withholding": "250",
+        "note": ""
       },
       {
         "basis": "actual",
@@ -498,7 +499,8 @@
         "month": 2,
         "source_id": "dc4c5269-87a1-4257-a680-57850978db22",
         "tax_year": 2025,
-        "withholding": "250"
+        "withholding": "250",
+        "note": ""
       },
       {
         "basis": "actual",
@@ -508,7 +510,8 @@
         "month": 3,
         "source_id": "dc4c5269-87a1-4257-a680-57850978db22",
         "tax_year": 2025,
-        "withholding": "250"
+        "withholding": "250",
+        "note": ""
       },
       {
         "basis": "actual",
@@ -518,7 +521,8 @@
         "month": 4,
         "source_id": "dc4c5269-87a1-4257-a680-57850978db22",
         "tax_year": 2025,
-        "withholding": "250"
+        "withholding": "250",
+        "note": ""
       },
       {
         "basis": "actual",
@@ -528,7 +532,8 @@
         "month": 5,
         "source_id": "dc4c5269-87a1-4257-a680-57850978db22",
         "tax_year": 2025,
-        "withholding": "250"
+        "withholding": "250",
+        "note": ""
       },
       {
         "basis": "actual",
@@ -538,7 +543,8 @@
         "month": 6,
         "source_id": "dc4c5269-87a1-4257-a680-57850978db22",
         "tax_year": 2025,
-        "withholding": "250"
+        "withholding": "250",
+        "note": ""
       },
       {
         "basis": "actual",
@@ -548,7 +554,8 @@
         "month": 7,
         "source_id": "dc4c5269-87a1-4257-a680-57850978db22",
         "tax_year": 2025,
-        "withholding": "250"
+        "withholding": "250",
+        "note": "ตัวเลขชั่วคราว รอสลิปใหม่"
       },
       {
         "basis": "actual",
@@ -558,7 +565,8 @@
         "month": 8,
         "source_id": "dc4c5269-87a1-4257-a680-57850978db22",
         "tax_year": 2025,
-        "withholding": "250"
+        "withholding": "250",
+        "note": ""
       },
       {
         "basis": "actual",
@@ -568,7 +576,8 @@
         "month": 9,
         "source_id": "dc4c5269-87a1-4257-a680-57850978db22",
         "tax_year": 2025,
-        "withholding": "250"
+        "withholding": "250",
+        "note": ""
       },
       {
         "basis": "actual",
@@ -578,7 +587,8 @@
         "month": 10,
         "source_id": "dc4c5269-87a1-4257-a680-57850978db22",
         "tax_year": 2025,
-        "withholding": "250"
+        "withholding": "250",
+        "note": ""
       },
       {
         "basis": "actual",
@@ -588,7 +598,8 @@
         "month": 11,
         "source_id": "dc4c5269-87a1-4257-a680-57850978db22",
         "tax_year": 2025,
-        "withholding": "250"
+        "withholding": "250",
+        "note": ""
       },
       {
         "basis": "actual",
@@ -598,7 +609,8 @@
         "month": 12,
         "source_id": "dc4c5269-87a1-4257-a680-57850978db22",
         "tax_year": 2025,
-        "withholding": "250"
+        "withholding": "250",
+        "note": ""
       }
     ],
     "profile": {

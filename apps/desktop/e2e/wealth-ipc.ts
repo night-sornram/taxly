@@ -58,6 +58,21 @@ export async function installWealthIpc(page: Page, empty = false) {
               args.activity as WealthWorkspace["data"]["activities"][number],
             );
             return null;
+          case "save_wealth_instrument":
+            current.data.instruments.push(
+              args.instrument as WealthWorkspace["data"]["instruments"][number],
+            );
+            return null;
+          case "search_wealth_instruments": {
+            const query = String(args.query ?? "").toLowerCase();
+            if (!current.data.preferences.market_data_enabled)
+              throw { message: "เปิดใช้ข้อมูลตลาดในตั้งค่าการลงทุนก่อนค้นหา" };
+            const catalog = [
+              { symbol: "PTT.BK", name: "ปตท. (PTT PCL)", exchange: "SET", kind: "stock" },
+              { symbol: "VOO", name: "Vanguard S&P 500 ETF", exchange: "SNP", kind: "etf" },
+            ];
+            return catalog.filter((item) => item.symbol.toLowerCase().includes(query));
+          }
           case "save_wealth_preferences":
             current.data.preferences = args.preferences as WealthWorkspace["data"]["preferences"];
             return null;
