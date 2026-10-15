@@ -4,6 +4,7 @@ import { command, errorMessage } from "../api";
 import { Button, ErrorNotice, Field, Modal, Notice } from "../components";
 import { activityLabels, dateLabel, signedClass, today } from "./format";
 import { CurrencySelect, Empty, PageTitle, Select, Table, Value } from "./ui";
+import InstrumentIdentity from "./InstrumentIdentity";
 import type { Editor } from "./Editors";
 import type { RefreshResult, WealthWorkspace } from "./types";
 type PageProps = { workspace: WealthWorkspace; edit: (editor: Editor) => void };
@@ -206,10 +207,15 @@ export function HoldingsPage({ workspace: { data, portfolio }, edit }: PageProps
                 return (
                   <tr key={`${h.account_id}-${h.instrument_id}`}>
                     <td>
-                      <strong>{i?.symbol}</strong>
-                      <small>
-                        {data.accounts.find((a) => a.id === h.account_id)?.name} · {i?.currency}
-                      </small>
+                      <InstrumentIdentity
+                        instrument={i}
+                        loadLogo={data.preferences.market_data_enabled}
+                        secondary={
+                          <>
+                            {data.accounts.find((a) => a.id === h.account_id)?.name} · {i?.currency}
+                          </>
+                        }
+                      />
                     </td>
                     <td className="numeric">
                       <Value value={h.quantity} digits={0} />
@@ -267,7 +273,10 @@ export function HoldingsPage({ workspace: { data, portfolio }, edit }: PageProps
               {data.instruments.map((i) => (
                 <tr key={i.id}>
                   <td>
-                    <strong>{i.symbol}</strong>
+                    <InstrumentIdentity
+                      instrument={i}
+                      loadLogo={data.preferences.market_data_enabled}
+                    />
                   </td>
                   <td>{i.name}</td>
                   <td>
@@ -537,8 +546,8 @@ export function MarketPage({
       <section className="card">
         <div className="wealth-section-heading">
           <div>
-            <h2>ข้อมูลตลาดจาก Yahoo Finance</h2>
-            <p>เปิดเฉพาะเมื่อคุณต้องการ และรีเฟรชด้วยตัวเอง</p>
+            <h2>ข้อมูลตลาดและโลโก้หลักทรัพย์</h2>
+            <p>ราคาจาก Yahoo Finance · โลโก้จาก Financial Modeling Prep</p>
           </div>
           <span className={`wealth-tag ${data.preferences.market_data_enabled ? "enabled" : ""}`}>
             {data.preferences.market_data_enabled ? "เปิดใช้งาน" : "ปิดอยู่"}
@@ -548,6 +557,11 @@ export function MarketPage({
           เมื่อเปิดและกดรีเฟรช แอปจะส่งสัญลักษณ์หลักทรัพย์ คู่สกุลเงิน และช่วงวันที่ไปยัง Yahoo
           Finance ผ่านอินเทอร์เน็ต ข้อมูลพอร์ตและรายการซื้อขายยังอยู่ในเครื่องเสมอ
           ราคาที่ได้อาจล่าช้าหรือไม่ครบ
+        </p>
+        <p className="wealth-help">
+          เมื่อเปิดใช้งาน โลโก้จะโหลดจาก Financial Modeling Prep ตามสัญลักษณ์หุ้นที่แสดง
+          ผู้ให้บริการจะเห็นสัญลักษณ์และ IP ของคุณ หากปิดอยู่ ออฟไลน์ หรือไม่มีโลโก้
+          จะแสดงอักษรย่อแทน
         </p>
         <Button
           variant="secondary"

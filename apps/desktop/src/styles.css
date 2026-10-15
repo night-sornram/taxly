@@ -1298,40 +1298,83 @@ code {
   left: 0;
   top: 0;
   bottom: 0;
-  padding: 32px 21px 18px;
+  padding: 27px 21px 18px;
   display: flex;
   flex-direction: column;
   z-index: 5;
+  overflow-y: auto;
 }
 .sidebar .brand {
-  margin: 0 7px 42px;
+  margin: 0 7px 29px;
 }
-.workspace-label {
+.area-switcher {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 4px;
+  padding: 4px;
+  border: 1px solid var(--line);
+  border-radius: 11px;
+  background: var(--canvas);
+  flex-shrink: 0;
+}
+.area-switcher > button {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: center;
+  gap: 7px;
+  min-height: 38px;
+  padding: 7px 9px;
+  border-radius: 7px;
+  font-size: 12.5px;
+  color: var(--muted);
+}
+.area-switcher > button:hover {
+  color: var(--ink);
+  background: var(--c-f0f4e8);
+}
+.area-switcher > button[aria-pressed="true"] {
+  background: var(--paper);
+  color: var(--accent-text);
+  font-weight: 600;
+  box-shadow:
+    0 1px 3px var(--c-213a1d0a),
+    inset 0 0 0 1px var(--line);
+}
+.area-switcher svg {
+  flex-shrink: 0;
+}
+.mobile-area-switcher {
+  display: none;
+}
+.sidebar-section-label {
   font-size: 11px;
   color: var(--c-63665e);
   letter-spacing: 0.3px;
-  margin: 0 12px 15px;
+  margin: 23px 12px 12px;
 }
 .sidebar nav {
   display: flex;
   flex-direction: column;
-  gap: 7px;
+  gap: 4px;
 }
 .sidebar nav button {
   display: flex;
   align-items: center;
   gap: 12px;
-  padding: 12px 14px;
+  padding: 10px 12px;
   text-align: left;
   position: relative;
   border-radius: 9px;
-  min-height: 43px;
-  font-size: 14.5px;
+  min-height: 42px;
+  font-size: 13.5px;
   color: var(--c-636b62);
   font-weight: 400;
+}
+.sidebar nav button > svg {
+  flex-shrink: 0;
+}
+.sidebar nav button > span:not(.nav-dot) {
+  padding-right: 8px;
 }
 .sidebar nav button.active {
   background: var(--c-eaf1df);
@@ -1353,16 +1396,12 @@ code {
 .sidebar-divider {
   height: 1px;
   background: var(--c-edf0e7);
-  margin: 24px 10px;
-}
-.sidebar nav:nth-of-type(2) button {
-  font-size: 13px;
-  padding-top: 10px;
-  padding-bottom: 10px;
+  margin: 19px 10px;
+  flex-shrink: 0;
 }
 .sidebar-bottom {
   margin-top: auto;
-  padding-top: 35px;
+  padding-top: 24px;
 }
 .sidebar-tip {
   background: var(--c-f2f5e9);
@@ -3098,6 +3137,9 @@ tbody tr:hover {
   font-size: 11px;
   z-index: 6;
 }
+.onboarding-utility .area-switcher {
+  min-width: 175px;
+}
 .onboarding-utility label {
   display: flex;
   gap: 6px;
@@ -3476,6 +3518,12 @@ tbody tr:hover {
   }
   .main-shell {
     margin-left: 0;
+  }
+  .mobile-area-switcher {
+    display: block;
+    padding: 12px 20px;
+    border-bottom: 1px solid var(--line);
+    background: var(--c-fdfefb);
   }
   .topbar {
     height: 65px;
@@ -3978,6 +4026,7 @@ tbody tr:hover {
   .onboarding-utility {
     font-size: 9.5px;
     padding-bottom: 20px;
+    flex-wrap: wrap;
   }
   .review-list > div {
     font-size: 12px;

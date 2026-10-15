@@ -10,6 +10,7 @@ import {
 import { Button } from "../components";
 import { compareValues, dateLabel, decimal, percentage, signedClass } from "./format";
 import { PageTitle, Table, Value } from "./ui";
+import InstrumentIdentity from "./InstrumentIdentity";
 import type { Portfolio, WealthWorkspace } from "./types";
 export default function Overview({
   workspace,
@@ -210,10 +211,11 @@ export default function Overview({
                       .map((h) => (
                         <tr key={`${h.account_id}-${h.instrument_id}`}>
                           <td>
-                            <strong>
-                              {data.instruments.find((i) => i.id === h.instrument_id)?.symbol}
-                            </strong>
-                            <small>{data.accounts.find((a) => a.id === h.account_id)?.name}</small>
+                            <InstrumentIdentity
+                              instrument={data.instruments.find((i) => i.id === h.instrument_id)}
+                              secondary={data.accounts.find((a) => a.id === h.account_id)?.name}
+                              loadLogo={data.preferences.market_data_enabled}
+                            />
                           </td>
                           <td className="numeric">
                             <Value value={h.market_value_base} />

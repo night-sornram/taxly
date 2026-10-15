@@ -4,6 +4,8 @@
 
 ไม่ขอ national ID ไม่สร้างบัญชี ไม่เก็บ analytics และไม่ส่ง crash data Core คำนวณไม่เรียก Network ฟอนต์และกฎอยู่ใน bundle การอัปเดตราคาลงทุน/FX ปิดไว้เริ่มต้นและเปิดใช้ได้ตามต้องการ Rust เรียก Yahoo ด้วยสัญลักษณ์และช่วงวันที่เท่านั้น ผู้ให้บริการเห็น IP ของผู้ใช้ ไม่ส่งชื่อบัญชีหรือประวัติการเงิน การเปิด source_id ที่ compile มากับแอปเรียก system browser
 
+เมื่อเปิดข้อมูลตลาด โลโก้หลักทรัพย์ที่แสดงจะโหลดผ่าน URL รูปของ Financial Modeling Prep ตามสัญลักษณ์ผู้ให้ข้อมูล ไม่เก็บไฟล์โลโก้ไว้ในโปรเจกต์หรือฐานข้อมูล รูปไม่ส่ง referrer; ผู้ให้บริการเห็นสัญลักษณ์และ IP เท่านั้น CSP อนุญาตเฉพาะเส้นทางรูป `https://financialmodelingprep.com/image-stock/` การปิดข้อมูลตลาดจะหยุดสร้างคำขอรูป และแสดงอักษรย่อแทน
+
 Production CSP อนุญาต bundled assets/IPC; ไม่มี frontend SQL, filesystem หรือ shell plugin permissions Application commands จำกัด main window ผ่าน AppManifest/capability
 
 ## Backup v2 และการอ่าน v1

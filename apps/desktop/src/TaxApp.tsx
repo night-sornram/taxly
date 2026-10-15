@@ -8,9 +8,7 @@ import {
   LayoutDashboard,
   Leaf,
   LockKeyhole,
-  PanelLeftClose,
   Plus,
-  TrendingUp,
   ShieldCheck,
   Wallet,
   X,
@@ -40,12 +38,17 @@ import Onboarding from "./Onboarding";
 import { IncomeEditor, IncomePage, DeductionEditor } from "./Income";
 import { DeductionsPage, Explanation, HistoryPage, ProfileEditor } from "./Details";
 import Privacy from "./Privacy";
+import AreaSwitcher from "./AreaSwitcher";
 
 type View = "dashboard" | "income" | "deductions" | "explanation" | "history" | "privacy";
 const nav = [
   { id: "dashboard", label: "ภาพรวมภาษี", icon: LayoutDashboard },
   { id: "income", label: "รายได้ของฉัน", icon: Wallet },
   { id: "deductions", label: "สิทธิ์ลดหย่อน", icon: Leaf },
+] as const;
+const additionalNav = [
+  { id: "explanation", label: "เข้าใจการคำนวณ", icon: BookOpen },
+  { id: "history", label: "ผลสรุปที่บันทึก", icon: FileClock },
 ] as const;
 
 export default function TaxApp({ onInvestments }: { onInvestments: () => void }) {
@@ -229,7 +232,8 @@ export default function TaxApp({ onInvestments }: { onInvestments: () => void })
             await refresh();
           }}
         />
-        <div className="onboarding-utility">
+        <nav className="onboarding-utility" aria-label="ส่วนการใช้งานและปีภาษี">
+          <AreaSwitcher area="tax" onSwitch={onInvestments} />
           <label>
             ปีภาษี{" "}
             <select
@@ -241,9 +245,8 @@ export default function TaxApp({ onInvestments }: { onInvestments: () => void })
               <option value={2025}>2568</option>
             </select>
           </label>
-          <button onClick={onInvestments}>การลงทุนของฉัน</button>
           <button onClick={() => setView("privacy")}>สำรอง / กู้คืนข้อมูล</button>
-        </div>
+        </nav>
       </>
     );
 
@@ -254,45 +257,27 @@ export default function TaxApp({ onInvestments }: { onInvestments: () => void })
       </a>
       <aside className="sidebar">
         <Brand />
-        <div className="workspace-label">
-          ภาษีของฉัน <PanelLeftClose size={14} />
-        </div>
-        <nav aria-label="เมนูการลงทุน">
-          <button onClick={onInvestments}>
-            <TrendingUp size={19} /> การลงทุนของฉัน
-          </button>
-        </nav>
-        <div className="sidebar-divider" />
+        <AreaSwitcher area="tax" onSwitch={onInvestments} />
+        <div className="sidebar-section-label">จัดการภาษี</div>
         <nav aria-label="เมนูหลัก">
-          {nav.map((item) => (
+          {[...nav, ...additionalNav].map((item) => (
             <button
               key={item.id}
               aria-current={view === item.id ? "page" : undefined}
               className={view === item.id ? "active" : ""}
               onClick={() => navigate(item.id)}
             >
-              <item.icon size={19} />
+              <item.icon size={18} />
               <span>{item.label}</span>
               {view === item.id && <span className="nav-dot" />}
             </button>
           ))}
         </nav>
         <div className="sidebar-divider" />
-        <nav aria-label="เมนูเพิ่มเติม">
-          <button
-            className={view === "explanation" ? "active" : ""}
-            onClick={() => navigate("explanation")}
-          >
-            <BookOpen size={18} /> เข้าใจการคำนวณ
-          </button>
-          <button
-            className={view === "history" ? "active" : ""}
-            onClick={() => navigate("history")}
-          >
-            <FileClock size={18} /> ผลสรุปที่บันทึก
-          </button>
+        <nav aria-label="การตั้งค่าร่วม">
           <button
             className={view === "privacy" ? "active" : ""}
+            aria-current={view === "privacy" ? "page" : undefined}
             onClick={() => navigate("privacy")}
           >
             <ShieldCheck size={18} /> ข้อมูลของฉัน
@@ -357,6 +342,9 @@ export default function TaxApp({ onInvestments }: { onInvestments: () => void })
             </button>
           </div>
         </header>
+        <nav className="mobile-area-switcher" aria-label="สลับส่วนการใช้งาน">
+          <AreaSwitcher area="tax" onSwitch={onInvestments} />
+        </nav>
         <main id="main-content" ref={main} className="main-content">
           {error && <ErrorNotice message={error} onClose={() => setError("")} />}
           {view === "privacy" ? (
@@ -466,21 +454,22 @@ export default function TaxApp({ onInvestments }: { onInvestments: () => void })
         </div>
       )}
       <nav className="mobile-nav" aria-label="เมนูสำหรับหน้าจอเล็ก">
-        <button onClick={onInvestments}>
-          <TrendingUp size={19} />
-          การลงทุน
-        </button>
         {nav.map((item) => (
           <button
             key={item.id}
             className={view === item.id ? "active" : ""}
+            aria-current={view === item.id ? "page" : undefined}
             onClick={() => navigate(item.id)}
           >
             <item.icon size={19} />
             {item.label}
           </button>
         ))}
-        <button className={view === "privacy" ? "active" : ""} onClick={() => navigate("privacy")}>
+        <button
+          className={view === "privacy" ? "active" : ""}
+          aria-current={view === "privacy" ? "page" : undefined}
+          onClick={() => navigate("privacy")}
+        >
           <ShieldCheck size={19} />
           ข้อมูลของฉัน
         </button>

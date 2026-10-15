@@ -87,6 +87,53 @@ test("manual trades preserve decimal strings and final cash amount", async ({ pa
   });
 });
 
+test("holdings load remote company logos only after market data is enabled", async ({ page }) => {
+  const requests: { url: string; referer?: string }[] = [];
+  await page.route("https://financialmodelingprep.com/image-stock/**", async (route) => {
+    requests.push({ url: route.request().url(), referer: route.request().headers().referer });
+    await route.fulfill({
+      contentType: "image/png",
+      body: Buffer.from(
+        "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+jH1kAAAAASUVORK5CYII=",
+        "base64",
+      ),
+    });
+  });
+  await installWealthIpc(page);
+  await openWealth(page);
+  expect(requests).toEqual([]);
+  await page.getByRole("button", { name: "ราคาและอัตราแลกเปลี่ยน", exact: true }).click();
+  await page.getByRole("button", { name: "เปิดการดึงข้อมูลตลาด", exact: true }).click();
+  await expect(page.getByRole("button", { name: "ปิดการดึงข้อมูลตลาด" })).toBeVisible();
+  await page.getByRole("button", { name: "ภาพรวม", exact: true }).click();
+  const overviewLogo = page
+    .getByRole("table", { name: "หลักทรัพย์และมูลค่าในสกุลรายงาน" })
+    .locator("img");
+  await expect(overviewLogo).toBeVisible();
+  await expect
+    .poll(() => overviewLogo.evaluate((image: HTMLImageElement) => image.naturalWidth))
+    .toBeGreaterThan(0);
+  await page.getByRole("button", { name: "หลักทรัพย์ในพอร์ต", exact: true }).click();
+  const holdingsLogo = page.getByRole("table", { name: "หลักทรัพย์ในพอร์ต" }).locator("img");
+  await expect(holdingsLogo).toBeVisible();
+  await expect
+    .poll(() => holdingsLogo.evaluate((image: HTMLImageElement) => image.naturalWidth))
+    .toBeGreaterThan(0);
+  expect(requests.length).toBeGreaterThan(0);
+  expect(
+    requests.every(
+      (request) =>
+        request.url === "https://financialmodelingprep.com/image-stock/PTT.BK.png" &&
+        request.referer === undefined,
+    ),
+  ).toBe(true);
+  await page.getByRole("button", { name: "ราคาและอัตราแลกเปลี่ยน", exact: true }).click();
+  await page.getByRole("button", { name: "ปิดการดึงข้อมูลตลาด", exact: true }).click();
+  await expect(page.getByRole("button", { name: "เปิดการดึงข้อมูลตลาด" })).toBeVisible();
+  await page.getByRole("button", { name: "หลักทรัพย์ในพอร์ต", exact: true }).click();
+  await expect(holdingsLogo).toHaveCount(0);
+});
+
 test("CSV preview skips duplicates and commits only reviewed rows", async ({ page }) => {
   await installWealthIpc(page);
   await openWealth(page);
@@ -154,7 +201,14 @@ test("editor modal is centered in the viewport", async ({ page }) => {
 test("switching between tax and wealth keeps state without refetching", async ({ page }) => {
   await installWealthIpc(page);
   await openWealth(page);
+  const switcher = page.getByRole("group", { name: "เลือกส่วนการใช้งาน", exact: true });
+  await expect(switcher.getByRole("button", { name: "การลงทุนของฉัน" })).toHaveAttribute(
+    "aria-pressed",
+    "true",
+  );
+  const wealthPosition = await switcher.boundingBox();
   await page.getByRole("button", { name: "หลักทรัพย์ในพอร์ต", exact: true }).click();
+  await page.getByLabel("ค้นหาหลักทรัพย์").fill("PTT");
   const countWorkspaceFetches = () =>
     page.evaluate(
       () =>
@@ -168,12 +222,61 @@ test("switching between tax and wealth keeps state without refetching", async ({
   await page.getByRole("button", { name: "ภาษีของฉัน", exact: true }).click();
   await page.getByRole("combobox", { name: "เปลี่ยนปีภาษี", exact: true }).selectOption("2025");
   await expect(page.getByRole("heading", { name: "เห็นภาพภาษี สบายใจขึ้นอีกนิด" })).toBeVisible();
+  await expect(switcher.getByRole("button", { name: "ภาษีของฉัน" })).toHaveAttribute(
+    "aria-pressed",
+    "true",
+  );
+  expect(await switcher.boundingBox()).toEqual(wealthPosition);
+  await page.getByRole("button", { name: "รายได้ของฉัน", exact: true }).first().click();
+  await expect(page.getByRole("button", { name: "รายได้ของฉัน", exact: true })).toHaveAttribute(
+    "aria-current",
+    "page",
+  );
+  // Selecting the current area keeps the current page.
+  await switcher.getByRole("button", { name: "ภาษีของฉัน" }).click();
+  await expect(page.getByRole("button", { name: "รายได้ของฉัน", exact: true })).toHaveAttribute(
+    "aria-current",
+    "page",
+  );
   await page.getByRole("button", { name: "การลงทุนของฉัน", exact: true }).click();
   await expect(page.getByRole("heading", { name: "หลักทรัพย์ในพอร์ต", exact: true })).toBeVisible();
+  await expect(page.getByLabel("ค้นหาหลักทรัพย์")).toHaveValue("PTT");
+  await expect(
+    page.getByRole("button", { name: "หลักทรัพย์ในพอร์ต", exact: true }),
+  ).toHaveAttribute("aria-current", "page");
   await page.getByRole("button", { name: "ภาษีของฉัน", exact: true }).click();
-  await expect(page.getByRole("heading", { name: "เห็นภาพภาษี สบายใจขึ้นอีกนิด" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "รายได้ของฉัน", exact: true })).toBeVisible();
   expect(await countWorkspaceFetches()).toBe(before);
 });
+
+for (const width of [740, 390]) {
+  test(`area switching stays accessible at ${width}px`, async ({ page }) => {
+    await page.setViewportSize({ width, height: 844 });
+    await installWealthIpc(page);
+    await openWealth(page);
+    const switcher = page.getByRole("group", { name: "เลือกส่วนการใช้งาน", exact: true });
+    const wealthPosition = await switcher.boundingBox();
+    await switcher.getByRole("button", { name: "ภาษีของฉัน" }).click();
+    await page.getByRole("combobox", { name: "เปลี่ยนปีภาษี" }).selectOption("2025");
+    await expect(page.getByRole("heading", { name: "เห็นภาพภาษี สบายใจขึ้นอีกนิด" })).toBeVisible();
+    await expect(switcher.getByRole("button", { name: "ภาษีของฉัน" })).toHaveAttribute(
+      "aria-pressed",
+      "true",
+    );
+    expect(await switcher.boundingBox()).toEqual(wealthPosition);
+    await switcher.getByRole("button", { name: "การลงทุนของฉัน" }).focus();
+    await page.keyboard.press("Enter");
+    await expect(page.getByRole("heading", { name: "ภาพรวมการลงทุน", exact: true })).toBeVisible();
+    await expect(switcher.getByRole("button", { name: "การลงทุนของฉัน" })).toHaveAttribute(
+      "aria-pressed",
+      "true",
+    );
+    expect(
+      await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth),
+    ).toBe(true);
+    expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);
+  });
+}
 
 test("instrument search autofills fields and totals derive the buy price", async ({ page }) => {
   await installWealthIpc(page, true);

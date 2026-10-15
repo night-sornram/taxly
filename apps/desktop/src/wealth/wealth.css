@@ -5,34 +5,6 @@
   --wealth-chart-3: #7c9890;
   --wealth-chart-4: #ceca9c;
 }
-.wealth-shell .wealth-sidebar {
-  padding-top: 27px;
-  overflow-y: auto;
-}
-.wealth-shell .wealth-sidebar .brand {
-  margin-bottom: 29px;
-}
-.wealth-area-label {
-  margin: 0 12px 15px;
-  color: var(--c-63665e);
-  font-size: 11px;
-  letter-spacing: 0.3px;
-}
-.wealth-shell .wealth-sidebar nav {
-  gap: 4px;
-}
-.wealth-shell .wealth-sidebar nav button {
-  font-size: 13.5px;
-  min-height: 42px;
-  padding: 10px 12px;
-}
-.wealth-shell .wealth-sidebar .sidebar-divider {
-  margin: 19px 10px;
-  flex-shrink: 0;
-}
-.wealth-shell .wealth-sidebar .sidebar-bottom {
-  padding-top: 24px;
-}
 .wealth-local-card {
   border-radius: 12px;
   padding: 19px 15px;
@@ -462,6 +434,40 @@
 .wealth-table strong {
   font-weight: 500;
 }
+.wealth-instrument-identity {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  min-width: 145px;
+}
+.wealth-instrument-identity > div {
+  min-width: 0;
+}
+.wealth-instrument-logo {
+  display: inline-flex;
+  flex: 0 0 38px;
+  width: 38px;
+  height: 38px;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: #fff;
+}
+.wealth-instrument-logo img {
+  display: block;
+  width: 28px;
+  height: 28px;
+  object-fit: contain;
+}
+.wealth-instrument-logo:has(> span) {
+  background: var(--c-f0f4e8);
+  color: var(--accent-text);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.3px;
+}
 .wealth-table td small {
   display: block;
   color: var(--muted);
@@ -890,9 +896,6 @@
     grid-template-columns: 1fr;
     gap: 0;
   }
-  .wealth-shell .wealth-sidebar {
-    padding-inline: 12px;
-  }
   .wealth-page-title {
     align-items: flex-start;
     flex-direction: column;
@@ -913,16 +916,10 @@
     grid-template-columns: 1fr 1fr;
   }
 }
-@media (max-width: 760px) {
-  .wealth-shell .wealth-sidebar {
-    display: none;
-  }
-  .wealth-shell .wealth-sidebar + .main-shell {
-    margin-left: 0;
-  }
+@media (max-width: 700px) {
   .wealth-shell .topbar {
     padding: 0 20px;
-    height: 61px;
+    height: 65px;
   }
   .wealth-shell .topbar .saved-label {
     display: none;

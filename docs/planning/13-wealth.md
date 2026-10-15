@@ -24,6 +24,8 @@ CSV review accepts activities or opening positions, reusable column mappings, IS
 
 Market data defaults off. Optional on-demand Yahoo requests expose requested symbols and IP to Yahoo. Refreshes fetch historical quotes and FX, retain cached results on failure, and preserve manual overrides. Provider split adjustments are reversed to match explicitly recorded split activities. Quotes are best effort, can be delayed, and are not trade execution prices.
 
+When market data is enabled, visible holdings load company/ETF logos directly from Financial Modeling Prep's `image-stock` endpoint using the market-qualified provider symbol (for example, `PTT.BK`). Logos are remote images, not bundled assets or database records. Requests omit the referrer and expose only the requested symbol and IP to the provider. The CSP permits this image path only; it grants no frontend network API access. Disabled market data, unavailable logos, and image errors show symbol initials instead.
+
 ## Storage and backup compatibility
 
 Migration 0003 adds separate STRICT wealth tables with relational foreign keys and typed JSON payloads. Each mutation takes a write transaction, validates the complete financial graph, increments its revision, and commits consistently. Existing tax tables and satang representation are retained.

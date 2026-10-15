@@ -1,13 +1,11 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
   Activity,
-  ArrowUpRight,
   BriefcaseBusiness,
   ChartNoAxesCombined,
   Check,
   ChevronRight,
   FileSpreadsheet,
-  Landmark,
   LayoutDashboard,
   LockKeyhole,
   Plus,
@@ -26,6 +24,7 @@ import {
   ThemeToggle,
 } from "../components";
 import Privacy from "../Privacy";
+import AreaSwitcher from "../AreaSwitcher";
 import EditorModal from "./Editors";
 import type { Editor } from "./Editors";
 import Overview from "./Overview";
@@ -127,9 +126,10 @@ export default function WealthApp({ onTaxes }: { onTaxes: () => void }) {
       <a className="skip-link" href="#wealth-main">
         ข้ามไปเนื้อหาหลัก
       </a>
-      <aside className="sidebar wealth-sidebar">
+      <aside className="sidebar">
         <Brand />
-        <div className="wealth-area-label">การลงทุน</div>
+        <AreaSwitcher area="wealth" onSwitch={onTaxes} />
+        <div className="sidebar-section-label">จัดการการลงทุน</div>
         <nav aria-label="เมนูการลงทุน">
           {navigation.map((item) => (
             <button
@@ -143,15 +143,6 @@ export default function WealthApp({ onTaxes }: { onTaxes: () => void }) {
               {view === item.id && <span className="nav-dot" />}
             </button>
           ))}
-        </nav>
-        <div className="sidebar-divider" />
-        <div className="wealth-area-label">ภาษี</div>
-        <nav aria-label="เมนูภาษี">
-          <button onClick={onTaxes}>
-            <Landmark size={18} />
-            <span>ภาษีของฉัน</span>
-            <ArrowUpRight size={15} />
-          </button>
         </nav>
         <div className="sidebar-divider" />
         <nav aria-label="การตั้งค่าร่วม">
@@ -203,6 +194,9 @@ export default function WealthApp({ onTaxes }: { onTaxes: () => void }) {
             </button>
           </div>
         </header>
+        <nav className="mobile-area-switcher" aria-label="สลับส่วนการใช้งาน">
+          <AreaSwitcher area="wealth" onSwitch={onTaxes} />
+        </nav>
         <main
           id="wealth-main"
           ref={main}
@@ -391,9 +385,6 @@ export default function WealthApp({ onTaxes }: { onTaxes: () => void }) {
           ))}
           <option value="privacy">ข้อมูลของฉัน</option>
         </select>
-        <button onClick={onTaxes}>
-          ภาษี <ArrowUpRight size={15} />
-        </button>
         {workspace && (
           <button
             aria-label="เพิ่มรายการลงทุน"
