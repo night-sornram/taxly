@@ -235,6 +235,20 @@ pub async fn inspect_backup(
             .keys()
             .filter(|key| key.starts_with("onboarding_"))
             .count(),
+        format_version: data.backup_format_version,
+        account_count: data
+            .wealth
+            .as_ref()
+            .map_or(0, |wealth| wealth.accounts.len()),
+        activity_count: data
+            .wealth
+            .as_ref()
+            .map_or(0, |wealth| wealth.activities.len()),
+        restore_scope: if data.backup_format_version == 1 {
+            "tax_only"
+        } else {
+            "all"
+        },
     };
     *state.pending_backup.lock().await = Some(PendingBackup {
         token,
@@ -255,11 +269,13 @@ pub async fn restore_backup(token: String, state: State<'_, AppState>) -> AppRes
     if pending.token != token || pending.created_at.elapsed() > Duration::from_secs(300) {
         return Err(AppError::backup("คำขอกู้คืนหมดอายุ กรุณาตรวจไฟล์อีกครั้ง"));
     }
+    *state.pending_import.lock().await = None;
     backup::restore(&state.pool, &state.catalog, pending.backup).await
 }
 #[tauri::command]
 pub async fn delete_all_data(state: State<'_, AppState>) -> AppResult<()> {
     *state.pending_backup.lock().await = None;
+    *state.pending_import.lock().await = None;
     storage::delete_all(&state.pool).await
 }
 

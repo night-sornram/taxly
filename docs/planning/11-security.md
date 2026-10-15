@@ -2,11 +2,13 @@
 
 ข้อมูลอยู่ใน app data directory ของผู้ใช้ (`0700`) และฐานข้อมูล `0600` บน Unix SQLite เป็น plaintext ฐานข้อมูลและ WAL ต้องอยู่ใน private directory เดียวกัน
 
-ไม่ขอ national ID ไม่สร้างบัญชี ไม่เก็บ analytics และไม่ส่ง crash data คำนวณไม่เรียก Network ฟอนต์และกฎอยู่ใน bundle มีเพียงการเปิด source_id ที่ compile มากับแอปที่เรียก system browser
+ไม่ขอ national ID ไม่สร้างบัญชี ไม่เก็บ analytics และไม่ส่ง crash data Core คำนวณไม่เรียก Network ฟอนต์และกฎอยู่ใน bundle การอัปเดตราคาลงทุน/FX ปิดไว้เริ่มต้นและเปิดใช้ได้ตามต้องการ Rust เรียก Yahoo ด้วยสัญลักษณ์และช่วงวันที่เท่านั้น ผู้ให้บริการเห็น IP ของผู้ใช้ ไม่ส่งชื่อบัญชีหรือประวัติการเงิน การเปิด source_id ที่ compile มากับแอปเรียก system browser
 
 Production CSP อนุญาต bundled assets/IPC; ไม่มี frontend SQL, filesystem หรือ shell plugin permissions Application commands จำกัด main window ผ่าน AppManifest/capability
 
-## Backup v1
+## Backup v2 และการอ่าน v1
+
+v2 เก็บภาษีและการลงทุน รวมราคาที่เก็บไว้และ FX ใน snapshot เดียว การกู้คืน v2 แทนทั้งสองโมดูล atomically ส่วน v1 แทนเฉพาะภาษีโดยรักษาการลงทุนปัจจุบัน หน้าตรวจไฟล์ระบุขอบเขตและจำนวนบัญชี/กิจกรรมก่อนยืนยัน การลบข้อมูลล้างทั้งสองโมดูลและ cache ดูรายละเอียดที่ [Wealth module](13-wealth.md)
 
 - JSON typed records/history/drafts และ trusted rule references
 - age passphrase encryption, อย่างน้อย 12 ตัวอักษร ไม่สร้าง cryptography เอง

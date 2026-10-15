@@ -2,7 +2,7 @@ use crate::{
     catalog::{Catalog, hash},
     error::{AppError, AppResult},
     models::*,
-    storage,
+    storage, wealth_storage,
 };
 use age::secrecy::SecretString;
 use serde::{Deserialize, Serialize};
@@ -27,6 +27,8 @@ pub struct Backup {
     pub deductions: Vec<DeductionEntry>,
     pub snapshots: Vec<Snapshot>,
     pub settings: BTreeMap<String, serde_json::Value>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub wealth: Option<wealth_core::WealthData>,
 }
 
 #[derive(Serialize)]
@@ -37,6 +39,10 @@ pub struct BackupSummary {
     pub deduction_count: usize,
     pub snapshot_count: usize,
     pub draft_count: usize,
+    pub format_version: u32,
+    pub account_count: usize,
+    pub activity_count: usize,
+    pub restore_scope: &'static str,
 }
 
 pub struct PendingBackup {
@@ -49,7 +55,7 @@ pub async fn collect(pool: &SqlitePool, catalog: &Catalog) -> AppResult<Backup> 
     // Hold a write transaction to prevent interleaving modifications across all export reads.
     let mut tx = pool.begin_with("BEGIN IMMEDIATE").await?;
     let mut backup = Backup {
-        backup_format_version: 1,
+        backup_format_version: 2,
         app_version: env!("CARGO_PKG_VERSION").into(),
         rules: catalog.hashes.clone(),
         years: Vec::new(),
@@ -58,6 +64,7 @@ pub async fn collect(pool: &SqlitePool, catalog: &Catalog) -> AppResult<Backup> 
         deductions: Vec::new(),
         snapshots: Vec::new(),
         settings: BTreeMap::new(),
+        wealth: Some(wealth_storage::load_in(&mut tx).await?),
     };
     for row in sqlx::query("SELECT * FROM tax_years ORDER BY year")
         .fetch_all(&mut *tx)
@@ -143,8 +150,13 @@ pub async fn collect(pool: &SqlitePool, catalog: &Catalog) -> AppResult<Backup> 
 
 impl Backup {
     pub fn validate(&self, catalog: &Catalog) -> AppResult<()> {
-        if self.backup_format_version != 1 {
+        if ![1, 2].contains(&self.backup_format_version) {
             return Err(AppError::backup("ไฟล์สำรองเป็นรุ่นที่แอปนี้ยังไม่รองรับ"));
+        }
+        match (self.backup_format_version, &self.wealth) {
+            (2, Some(data)) => wealth_storage::validate_data(data)?,
+            (1, None) => {}
+            _ => return Err(AppError::backup("ข้อมูลการลงทุนไม่ตรงกับรุ่นไฟล์สำรอง")),
         }
         for (key, value) in &self.settings {
             if key == "active_tax_year" {
@@ -334,6 +346,18 @@ pub async fn restore(pool: &SqlitePool, catalog: &Catalog, backup: Backup) -> Ap
             .bind(serde_json::to_string(&value)?)
             .execute(&mut *tx)
             .await?;
+    }
+    if let Some(mut wealth) = backup.wealth {
+        // Invalidate every pre-restore import/refresh even if the backup happens
+        // to contain the same revision as the current database.
+        let current: i64 = sqlx::query_scalar("SELECT revision FROM wealth_meta WHERE id=1")
+            .fetch_one(&mut *tx)
+            .await?;
+        wealth.revision = current
+            .max(wealth.revision)
+            .checked_add(1)
+            .ok_or_else(|| AppError::backup("รุ่นข้อมูลเกินขอบเขตที่รองรับ"))?;
+        wealth_storage::replace_in(&mut tx, &wealth).await?;
     }
     let violations = sqlx::query("PRAGMA foreign_key_check")
         .fetch_all(&mut *tx)

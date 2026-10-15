@@ -129,7 +129,7 @@ export default function Privacy({
           <p>
             บันทึกและคำนวณในเครื่อง ใช้งานได้โดยไม่ต่ออินเทอร์เน็ต
             <br />
-            เมื่อเปิดเอกสารอ้างอิงเท่านั้น แอปจึงเปิดเบราว์เซอร์ให้คุณ
+            การอัปเดตราคาเป็นตัวเลือก เมื่อเปิดใช้ ผู้ให้บริการจะเห็นสัญลักษณ์ที่ขอและ IP ของคุณ
           </p>
           <div className="privacy-tags">
             <span>
@@ -150,7 +150,9 @@ export default function Privacy({
             <ArrowDownToLine size={22} />
           </span>
           <h2>สำรองอย่างเป็นส่วนตัว</h2>
-          <p>เก็บรายการและประวัติผลคำนวณเป็นไฟล์เข้ารหัสด้วยรหัสผ่านที่คุณตั้งเอง</p>
+          <p>
+            เก็บข้อมูลภาษี การลงทุน ราคา และประวัติผลคำนวณเป็นไฟล์เข้ารหัสด้วยรหัสผ่านที่คุณตั้งเอง
+          </p>
           <Button onClick={() => open("export")}>
             สร้างไฟล์สำรอง <ArrowDownToLine size={16} />
           </Button>
@@ -161,7 +163,7 @@ export default function Privacy({
             <ArrowUpFromLine size={22} />
           </span>
           <h2>กลับมาพร้อมข้อมูลเดิม</h2>
-          <p>เลือกไฟล์สำรอง ตรวจรายการที่จะกู้คืน แล้วจึงยืนยันแทนข้อมูลปัจจุบันทั้งหมด</p>
+          <p>เลือกไฟล์สำรอง ตรวจขอบเขตและรายการที่จะกู้คืน แล้วจึงยืนยันแทนข้อมูลปัจจุบัน</p>
           <Button variant="secondary" onClick={() => open("restore")}>
             กู้คืนจากไฟล์ <ArrowUpFromLine size={16} />
           </Button>
@@ -176,7 +178,7 @@ export default function Privacy({
       <section className="card danger-zone">
         <div>
           <h2>ลบข้อมูลในแอป</h2>
-          <p>ลบรายได้ สิทธิ์ และประวัติทุกปีภาษี ไฟล์สำรองที่เก็บไว้ภายนอกจะไม่ถูกลบ</p>
+          <p>ลบข้อมูลภาษี การลงทุน ราคา และการตั้งค่าทั้งหมด ไฟล์สำรองที่เก็บไว้ภายนอกจะไม่ถูกลบ</p>
         </div>
         <Button variant="danger" onClick={() => open("delete")}>
           <Trash2 size={16} /> ลบข้อมูลทั้งหมด
@@ -189,7 +191,7 @@ export default function Privacy({
               ? "สร้างไฟล์สำรองเข้ารหัส"
               : mode === "restore"
                 ? "กู้คืนข้อมูลจากไฟล์"
-                : "ลบข้อมูลทุกปีภาษี"
+                : "ลบข้อมูลภาษีและการลงทุน"
           }
           onClose={close}
         >
@@ -267,7 +269,9 @@ export default function Privacy({
           {mode === "restore" && summary && (
             <>
               <Notice tone="warning">
-                การกู้คืนจะแทนที่ข้อมูลปัจจุบันทุกปี ไม่ได้รวมรายการเข้าด้วยกัน
+                {summary.restore_scope === "tax_only"
+                  ? "ไฟล์รุ่น 1 แทนที่เฉพาะข้อมูลภาษีทุกปี ข้อมูลการลงทุนปัจจุบันยังอยู่ครบ"
+                  : "ไฟล์รุ่น 2 แทนที่ข้อมูลภาษีและการลงทุนทั้งหมด ไม่ได้รวมรายการเข้าด้วยกัน"}{" "}
                 ควรสำรองข้อมูลปัจจุบันไว้ก่อน
               </Notice>
               <div className="review-list">
@@ -293,9 +297,23 @@ export default function Privacy({
                   <span>แบบสอบถามที่ยังไม่เสร็จ</span>
                   <strong>{summary.draft_count} ชุด</strong>
                 </div>
+                {summary.restore_scope !== "tax_only" && (
+                  <>
+                    <div>
+                      <span>บัญชีลงทุน</span>
+                      <strong>{summary.account_count ?? 0} บัญชี</strong>
+                    </div>
+                    <div>
+                      <span>กิจกรรมลงทุน</span>
+                      <strong>{summary.activity_count ?? 0} รายการ</strong>
+                    </div>
+                  </>
+                )}
               </div>
               <Checkbox checked={acknowledged} onChange={setAcknowledged}>
-                ฉันตรวจข้อมูลแล้ว และต้องการแทนที่ข้อมูลปัจจุบันทั้งหมด
+                {summary.restore_scope === "tax_only"
+                  ? "ฉันตรวจข้อมูลแล้ว และต้องการแทนที่ข้อมูลภาษีปัจจุบันทั้งหมด"
+                  : "ฉันตรวจข้อมูลแล้ว และต้องการแทนที่ข้อมูลปัจจุบันทั้งหมด"}
               </Checkbox>
               <div className="modal-actions">
                 <Button variant="secondary" disabled={busy} onClick={close}>
@@ -310,7 +328,7 @@ export default function Privacy({
           {mode === "delete" && (
             <>
               <Notice tone="warning">
-                ข้อมูลในแอปจะถูกลบทุกปีภาษี ย้อนกลับได้เฉพาะเมื่อคุณมีไฟล์สำรอง
+                ข้อมูลภาษี การลงทุน และราคาที่เก็บไว้จะถูกลบ ย้อนกลับได้เฉพาะเมื่อคุณมีไฟล์สำรอง
               </Notice>
               <Field
                 label="พิมพ์ “ลบข้อมูล” เพื่อยืนยัน"

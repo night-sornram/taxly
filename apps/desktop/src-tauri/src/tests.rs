@@ -167,15 +167,18 @@ async fn backup_is_encrypted_versioned_and_roundtrips_all_history() {
     assert!(backup::decrypt(&corrupted, "a private test passphrase".into(), &catalog).is_err());
     let mut restored =
         backup::decrypt(&encrypted, "a private test passphrase".into(), &catalog).unwrap();
-    restored.backup_format_version = 2;
+    restored.backup_format_version = 3;
     assert!(restored.validate(&catalog).is_err());
-    restored.backup_format_version = 1;
+    restored.backup_format_version = 2;
     storage::delete_all(&pool).await.unwrap();
     backup::restore(&pool, &catalog, restored).await.unwrap();
-    assert_eq!(
-        serde_json::to_value(backup::collect(&pool, &catalog).await.unwrap()).unwrap(),
-        expected
+    let mut actual = serde_json::to_value(backup::collect(&pool, &catalog).await.unwrap()).unwrap();
+    assert!(
+        actual["wealth"]["revision"].as_i64().unwrap()
+            > expected["wealth"]["revision"].as_i64().unwrap()
     );
+    actual["wealth"]["revision"] = expected["wealth"]["revision"].clone();
+    assert_eq!(actual, expected);
     assert_eq!(
         services::calculate_year(&pool, &catalog, 2025)
             .await

@@ -5,6 +5,10 @@ mod error;
 mod models;
 mod services;
 mod storage;
+mod wealth_commands;
+mod wealth_import;
+mod wealth_market;
+mod wealth_storage;
 
 use sqlx::SqlitePool;
 use std::sync::Arc;
@@ -15,6 +19,7 @@ pub struct AppState {
     pool: SqlitePool,
     catalog: Arc<catalog::Catalog>,
     pending_backup: Mutex<Option<backup::PendingBackup>>,
+    pending_import: Mutex<Option<wealth_import::PendingImport>>,
 }
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
@@ -41,6 +46,7 @@ pub fn run() {
                 pool,
                 catalog,
                 pending_backup: Mutex::new(None),
+                pending_import: Mutex::new(None),
             });
             Ok(())
         })
@@ -67,6 +73,21 @@ pub fn run() {
             commands::restore_backup,
             commands::cancel_restore,
             commands::delete_all_data,
+            wealth_commands::get_wealth_workspace,
+            wealth_commands::save_wealth_account,
+            wealth_commands::save_wealth_instrument,
+            wealth_commands::save_wealth_activity,
+            wealth_commands::delete_wealth_activity,
+            wealth_commands::save_wealth_opening,
+            wealth_commands::delete_wealth_opening,
+            wealth_commands::save_wealth_price,
+            wealth_commands::save_wealth_fx,
+            wealth_commands::save_wealth_preferences,
+            wealth_import::preview_wealth_import,
+            wealth_import::commit_wealth_import,
+            wealth_import::cancel_wealth_import,
+            wealth_import::save_wealth_template,
+            wealth_market::refresh_wealth_market_data,
         ])
         .run(tauri::generate_context!())
         .expect("Taxly could not start");
@@ -74,3 +95,5 @@ pub fn run() {
 
 #[cfg(test)]
 mod tests;
+#[cfg(test)]
+mod wealth_tests;

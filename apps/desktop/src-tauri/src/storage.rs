@@ -399,13 +399,21 @@ pub async fn history(pool: &SqlitePool, year: u16) -> AppResult<Vec<Snapshot>> {
 }
 
 pub async fn delete_all(pool: &SqlitePool) -> AppResult<()> {
-    let mut tx = pool.begin().await?;
+    let mut tx = pool.begin_with("BEGIN IMMEDIATE").await?;
     sqlx::query("DELETE FROM tax_years")
         .execute(&mut *tx)
         .await?;
     sqlx::query("DELETE FROM app_settings")
         .execute(&mut *tx)
         .await?;
+    let mut empty = wealth_core::WealthData::default();
+    let current: i64 = sqlx::query_scalar("SELECT revision FROM wealth_meta WHERE id=1")
+        .fetch_one(&mut *tx)
+        .await?;
+    empty.revision = current
+        .checked_add(1)
+        .ok_or_else(|| AppError::invalid("รุ่นข้อมูลเกินขอบเขตที่รองรับ"))?;
+    crate::wealth_storage::replace_in(&mut tx, &empty).await?;
     tx.commit().await?;
     Ok(())
 }

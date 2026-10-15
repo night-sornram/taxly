@@ -1,5 +1,28 @@
 # ผลตรวจรุ่นทดลอง 0.1.0
 
+## การตรวจเพิ่มสำหรับโมดูลลงทุน — 15 ตุลาคม 2569
+
+| การตรวจ | ผล |
+|---|---|
+| Rust formatting / workspace Clippy (`-D warnings`) | ผ่าน |
+| Rust workspace tests | 69 ผ่าน: application/contract/import/market/storage 35, salary 10, wealth core 24 |
+| TypeScript / Vite production build / Prettier | ผ่าน |
+| Vitest | 27 ผ่าน รวม decimal/เปอร์เซ็นต์, ตารางกราฟ และการตรวจ CSV |
+| Playwright Chromium | 14 ผ่าน รวม tax 8 และ wealth 6; axe ธีมสว่าง/มืดและหน้าจอแคบ |
+| SQLite migrations / restore | อัปเกรดฐานข้อมูลเก่า, restart, reject stale revision, rollback เมื่อแก้ย้อนหลัง/นำเข้า/กู้คืนล้มเหลว |
+| Encrypted backup v2 และ legacy v1 | age round-trip ทั้งสองโมดูล; v1 กู้เฉพาะภาษีและคงข้อมูลลงทุน |
+| Native macOS debug bundle | สร้าง `.app` สำเร็จและ `codesign --verify --deep --strict` ผ่าน; ad-hoc signing |
+
+Native smoke ใช้ฐานข้อมูลสังเคราะห์ใน temporary directory ผ่าน `TAXLY_DATA_DIR` ไม่อ่านหรือเปลี่ยนฐานข้อมูลจริงของผู้ใช้ เปิดพื้นที่ลงทุนได้ก่อนทำ tax onboarding นำเข้า CSV ผ่าน native file chooser และตรวจสองแถวก่อนยืนยัน (deposit 20 THB และซื้อ PTT 0.25 หน่วยที่ราคา 40 THB) หลังนำเข้าได้ 6.25 หน่วย ต้นทุน 616 THB เงินสด 9,685 THB ปิดแล้วเปิดใหม่ยังอยู่ครบ
+
+หลังแก้ URL ของ Yahoo ที่มี slash เกิน ได้ทดสอบ native refresh จริง: ดาวน์โหลดราคา PTT.BK 191 วัน พร้อมเก็บราคาบันทึกเองเดิมทั้ง 3 วัน ฐานข้อมูลมี 6 activities, `integrity_check=ok` และไม่มี foreign-key errors การทดสอบ Yahoo เป็นหลักฐานการเชื่อมต่อในรอบนี้เท่านั้น ผู้ให้บริการอาจจำกัดคำขอหรือมีข้อมูลล่าช้า
+
+Fixtures ของ portfolio ส่งออกจาก Rust และตรวจเทียบกับ engine ใน CI การทดสอบ browser ใช้ fixtures เหล่านี้เพื่อยืนยัน UI และ IPC; การทดสอบ persistence/encryption ใช้ SQLite และ age จริงแยกชั้นกัน ดูขอบเขตและวิธีคำนวณใน [เอกสารโมดูลลงทุน](planning/13-wealth.md)
+
+การลงนาม Developer ID/notarization และ release gates ของภาษีด้านล่างยังคงเป็นเงื่อนไขก่อนแจกจ่ายภายนอก ไม่มีการเชื่อมผลลงทุนเข้า tax engine
+
+## ผลตรวจฐานภาษีเดิม
+
 ตรวจวันที่ 15 ตุลาคม 2569 บน macOS 27.0.1 / Apple Silicon, Rust 1.95.0, Node 26.11.1 และ npm 11.20.0
 
 ## ผ่านแล้ว

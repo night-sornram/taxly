@@ -13,7 +13,7 @@
     "windows": [
       {
         "label": "main",
-        "title": "Taxly · เรื่องภาษี ค่อย ๆ เข้าใจ",
+        "title": "Taxly · การลงทุนและภาษี",
         "width": 1280,
         "height": 880,
         "minWidth": 390,
@@ -35,7 +35,7 @@
       "dmg"
     ],
     "category": "Finance",
-    "shortDescription": "ผู้ช่วยภาษีไทยที่เก็บข้อมูลในเครื่อง",
+    "shortDescription": "พอร์ตลงทุนและผู้ช่วยภาษีไทยที่เก็บข้อมูลในเครื่อง",
     "macOS": {
       "minimumSystemVersion": "12.0",
       "signingIdentity": "-"

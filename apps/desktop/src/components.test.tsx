@@ -59,9 +59,7 @@ it("labels each month bar by income kind so a bonus never reads as a bigger sala
     />,
   );
   const december = screen.getByRole("button", { name: /^ธ\.ค\./ });
-  expect(december).toHaveAccessibleName(
-    expect.stringContaining("เงินเดือน 30,000.00 บาท"),
-  );
+  expect(december).toHaveAccessibleName(expect.stringContaining("เงินเดือน 30,000.00 บาท"));
   expect(december).toHaveAccessibleName(expect.stringContaining("โบนัส 60,000.00 บาท"));
   expect(december.querySelector(".chart-bar .bonus")).toBeInTheDocument();
   expect(screen.getByRole("button", { name: /^ม.ค\./ })).toHaveAccessibleName(
