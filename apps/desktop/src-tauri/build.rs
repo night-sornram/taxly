@@ -1,0 +1,29 @@
+fn main() {
+    tauri_build::try_build(tauri_build::Attributes::new().app_manifest(
+        tauri_build::AppManifest::new().commands(&[
+            "list_tax_years",
+            "get_active_tax_year",
+            "set_active_tax_year",
+            "get_year_workspace",
+            "save_onboarding",
+            "save_onboarding_draft",
+            "save_profile",
+            "upsert_income",
+            "delete_income",
+            "upsert_deduction",
+            "delete_deduction",
+            "calculate_year",
+            "save_snapshot",
+            "get_history",
+            "get_deduction_guidance",
+            "get_rule_sources",
+            "open_source",
+            "export_backup",
+            "inspect_backup",
+            "restore_backup",
+            "cancel_restore",
+            "delete_all_data",
+        ]),
+    ))
+    .expect("failed to build Taxly platform configuration");
+}

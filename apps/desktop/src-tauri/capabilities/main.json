@@ -1,0 +1,12 @@
+{
+  "$schema": "../gen/schemas/desktop-schema.json",
+  "identifier": "main",
+  "description": "Only the bundled main window can access Taxly commands. No frontend file, shell, SQL or network APIs.",
+  "windows": ["main"],
+  "permissions": [
+    "core:default", "allow-list-tax-years", "allow-get-active-tax-year", "allow-set-active-tax-year", "allow-get-year-workspace", "allow-save-onboarding", "allow-save-onboarding-draft", "allow-save-profile",
+    "allow-upsert-income", "allow-delete-income", "allow-upsert-deduction", "allow-delete-deduction", "allow-calculate-year",
+    "allow-save-snapshot", "allow-get-history", "allow-get-deduction-guidance", "allow-get-rule-sources", "allow-open-source",
+    "allow-export-backup", "allow-inspect-backup", "allow-restore-backup", "allow-cancel-restore", "allow-delete-all-data"
+  ]
+}

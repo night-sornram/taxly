@@ -1,0 +1,29 @@
+[package]
+name = "taxly-app"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+
+[lib]
+name = "taxly_app"
+crate-type = ["staticlib", "cdylib", "rlib"]
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+taxly-core = { path = "../../../crates/taxly-core" }
+serde.workspace = true
+serde_json.workspace = true
+thiserror.workspace = true
+tauri = { version = "2", features = [] }
+tauri-plugin-dialog = "2"
+tauri-plugin-opener = "2"
+sqlx = { version = "0.8.6", default-features = false, features = ["runtime-tokio", "sqlite", "migrate", "macros"] }
+tokio = { version = "1", features = ["sync", "fs", "rt-multi-thread", "macros"] }
+age = "0.11.1"
+sha2 = "0.10"
+uuid = { version = "1", features = ["v4"] }
+
+[dev-dependencies]
+tempfile = "3"

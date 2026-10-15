@@ -1,0 +1,145 @@
+{
+  "rule_set_id": "th-salary-2026-v1",
+  "tax_year": 2026,
+  "version": "1.0.0",
+  "schema_version": 1,
+  "supported_scope": "single_domestic_salary_under65",
+  "effective_from": "2026-01-01",
+  "effective_to": "2026-12-31",
+  "review_state": "provisional",
+  "verified_at": "2026-10-15",
+  "rounding_policy": "unverified",
+  "expense_rate": "0.50",
+  "expense_cap": "100000",
+  "personal_allowance": "60000",
+  "filing_threshold": "120000",
+  "social_security_monthly_cap": "875",
+  "social_security_annual_cap": "10500",
+  "bands": [
+    {
+      "upper": "150000",
+      "rate": "0.05"
+    },
+    {
+      "upper": "300000",
+      "rate": "0.05"
+    },
+    {
+      "upper": "500000",
+      "rate": "0.10"
+    },
+    {
+      "upper": "750000",
+      "rate": "0.15"
+    },
+    {
+      "upper": "1000000",
+      "rate": "0.20"
+    },
+    {
+      "upper": "2000000",
+      "rate": "0.25"
+    },
+    {
+      "upper": "5000000",
+      "rate": "0.30"
+    },
+    {
+      "upper": null,
+      "rate": "0.35"
+    }
+  ],
+  "sources": [
+    {
+      "id": "rd91",
+      "authority": "กรมสรรพากร",
+      "title": "คู่มือ ภ.ง.ด.91 ปีภาษี 2568",
+      "url": "https://www.rd.go.th/fileadmin/tax_pdf/pit/2568/Ins91_241268.pdf",
+      "locator": "หน้า 1, 9 และ 15",
+      "published_on": "2025-12-24",
+      "checked_on": "2026-10-15"
+    },
+    {
+      "id": "rd_expense",
+      "authority": "กรมสรรพากร",
+      "title": "การหักค่าใช้จ่ายเงินได้ตามมาตรา 40(1) และ 40(2)",
+      "url": "https://www.rd.go.th/556.html",
+      "locator": "ตารางการหักค่าใช้จ่าย",
+      "published_on": null,
+      "checked_on": "2026-10-15"
+    },
+    {
+      "id": "rd_code",
+      "authority": "กรมสรรพากร",
+      "title": "ประมวลรัษฎากร มาตรา 38–64",
+      "url": "https://www.rd.go.th/5937.html",
+      "locator": "มาตรา 47, 56, 60 และ 63",
+      "published_on": null,
+      "checked_on": "2026-10-15"
+    },
+    {
+      "id": "rd_rounding",
+      "authority": "กรมสรรพากร",
+      "title": "การยกเว้นเศษบาทของภาษี (ยังต้องตรวจจุดปัดระหว่างขั้นและยอดคืน)",
+      "url": "https://www.rd.go.th/25123.html",
+      "locator": "ข้อหารือ 0811(กม.01)/355",
+      "published_on": null,
+      "checked_on": "2026-10-15"
+    },
+    {
+      "id": "sso",
+      "authority": "สำนักงานประกันสังคม",
+      "title": "ทะเบียนกฎหมาย: ฐานค่าจ้างและอัตราเงินสมทบ",
+      "url": "https://infocenter.oic.go.th/สำนักงานประกันสังคม/topic.php?gid=8151&mid=1017",
+      "locator": "กฎกระทรวงกำหนดค่าจ้างขั้นต่ำและขั้นสูง พ.ศ.2568 มีผล 1 มกราคม 2569",
+      "published_on": "2025-12-12",
+      "checked_on": "2026-10-15"
+    },
+    {
+      "id": "rd_year",
+      "authority": "กรมสรรพากร",
+      "title": "แบบปีภาษี 2569 (ยังไม่พบคู่มือประจำปี 90/91 ณ วันที่ตรวจ)",
+      "url": "https://www.rd.go.th/68191.html",
+      "locator": "แบบและคู่มือของปีภาษีที่เกี่ยวข้อง",
+      "published_on": null,
+      "checked_on": "2026-10-15"
+    },
+    {
+      "id": "sso_reduction",
+      "authority": "สำนักงานประกันสังคม / ราชกิจจานุเบกษา",
+      "title": "มาตรการลดอัตราสมทบเก้าจังหวัดภาคใต้",
+      "url": "https://drive.google.com/file/d/1VmGsq7tG_6APU4hMcQMHQs4oHLDBWaRo/view?usp=sharing",
+      "locator": "ราชกิจจานุเบกษา เล่ม 143 ตอนพิเศษ 6 ง หน้า 7 งวด ธ.ค.2568–พ.ค.2569",
+      "published_on": "2026-01-08",
+      "checked_on": "2026-10-15"
+    },
+    {
+      "id": "rd_rates",
+      "authority": "กรมสรรพากร",
+      "title": "บัญชีอัตราภาษีเงินได้บุคคลธรรมดา",
+      "url": "https://www.rd.go.th/5938.html",
+      "locator": "บัญชีอัตราสำหรับบุคคลธรรมดา ตั้งแต่ปีภาษี 2560 เป็นต้นไป",
+      "published_on": null,
+      "checked_on": "2026-10-15"
+    },
+    {
+      "id": "rd_exemption",
+      "authority": "กรมสรรพากร",
+      "title": "ยกเว้นภาษีสำหรับเงินได้สุทธิ 150,000 บาทแรก",
+      "url": "https://rd.go.th/38676.html",
+      "locator": "คำชี้แจงตามพระราชกฤษฎีกาฉบับที่ 470 พ.ศ. 2551 ข้อ 1",
+      "published_on": null,
+      "checked_on": "2026-10-15"
+    }
+  ],
+  "limitations": [
+    "ใช้ประมาณการสำหรับผู้โสดอายุต่ำกว่า 65 ปี เฉพาะเงินเดือนในประเทศ สิทธิ์ส่วนตัวและประกันสังคม ม.33",
+    "ยังไม่เปิดสรุปยอดชำระหรือคืน: ต้องยืนยันวิธีปัดเศษระหว่างขั้นและยอดคืนกับกรมสรรพากร",
+    "ประกันสังคมใช้ยอดจ่ายจริงที่เข้าเงื่อนไข ต้องตรวจกรณีลดอัตรา ส่งเกิน หรือได้รับคืนเงินสมทบ",
+    "ปี 2569 เป็นชุดกฎสำหรับประมาณการ ยังต้องทบทวนกับคู่มือประจำปีเมื่อประกาศ"
+  ],
+  "net_income_exemption": {
+    "up_to": "150000",
+    "source_id": "rd_exemption"
+  }
+}

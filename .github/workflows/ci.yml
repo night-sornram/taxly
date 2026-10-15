@@ -1,0 +1,36 @@
+name: Taxly checks
+on:
+  push:
+  pull_request:
+permissions:
+  contents: read
+jobs:
+  verify:
+    runs-on: macos-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version: '24'
+          cache: npm
+          cache-dependency-path: apps/desktop/package-lock.json
+      - name: Rust checks
+        run: |
+          cargo fmt --all -- --check
+          cargo clippy --workspace --all-targets --locked -- -D warnings
+          cargo test --workspace --locked
+      - name: Frontend checks
+        working-directory: apps/desktop
+        run: |
+          npm ci
+          npm run format:check
+          npm run build
+          npm test
+          npx playwright install chromium
+          npm run test:e2e
+      - name: Native app bundle
+        working-directory: apps/desktop
+        run: |
+          npm run tauri build -- --debug --bundles app
+          codesign --verify --deep --strict ../../target/debug/bundle/macos/Taxly.app

@@ -1,0 +1,7 @@
+node_modules
+dist
+src-tauri
+package-lock.json
+e2e/fixtures
+test-results
+playwright-report

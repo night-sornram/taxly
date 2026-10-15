@@ -1,0 +1,626 @@
+{
+  "calculation": {
+    "actual_income": "360000",
+    "actual_withholding": "3000",
+    "annual_tax": "2050",
+    "bands": [
+      {
+        "exempt_amount": "150000",
+        "lower": "0",
+        "rate": "0",
+        "statutory_rate": "0.05",
+        "tax": "0",
+        "taxable_amount": "150000",
+        "upper": "150000"
+      },
+      {
+        "exempt_amount": "0",
+        "lower": "150000",
+        "rate": "0.05",
+        "statutory_rate": "0.05",
+        "tax": "2050",
+        "taxable_amount": "41000",
+        "upper": "300000"
+      },
+      {
+        "exempt_amount": "0",
+        "lower": "300000",
+        "rate": "0.10",
+        "statutory_rate": "0.10",
+        "tax": "0",
+        "taxable_amount": "0",
+        "upper": "500000"
+      },
+      {
+        "exempt_amount": "0",
+        "lower": "500000",
+        "rate": "0.15",
+        "statutory_rate": "0.15",
+        "tax": "0",
+        "taxable_amount": "0",
+        "upper": "750000"
+      },
+      {
+        "exempt_amount": "0",
+        "lower": "750000",
+        "rate": "0.20",
+        "statutory_rate": "0.20",
+        "tax": "0",
+        "taxable_amount": "0",
+        "upper": "1000000"
+      },
+      {
+        "exempt_amount": "0",
+        "lower": "1000000",
+        "rate": "0.25",
+        "statutory_rate": "0.25",
+        "tax": "0",
+        "taxable_amount": "0",
+        "upper": "2000000"
+      },
+      {
+        "exempt_amount": "0",
+        "lower": "2000000",
+        "rate": "0.30",
+        "statutory_rate": "0.30",
+        "tax": "0",
+        "taxable_amount": "0",
+        "upper": "5000000"
+      },
+      {
+        "exempt_amount": "0",
+        "lower": "5000000",
+        "rate": "0.35",
+        "statutory_rate": "0.35",
+        "tax": "0",
+        "taxable_amount": "0",
+        "upper": null
+      }
+    ],
+    "data_complete": true,
+    "difference_preview": {
+      "amount": "950",
+      "kind": "overpaid"
+    },
+    "expenses": "100000",
+    "filing": "required",
+    "forecast_income": "0",
+    "forecast_withholding": "0",
+    "gross_income": "360000",
+    "known_withholding": "3000",
+    "personal_allowance": "60000",
+    "remaining_after_actual_withholding": "0",
+    "rounding_verified": false,
+    "rule_set_id": "th-salary-2025-v1",
+    "rules_status": "verified_scope",
+    "scope_issues": [],
+    "settlement": null,
+    "social_security": "9000",
+    "social_security_savings": "450",
+    "steps": [
+      {
+        "amount": "360000",
+        "formula": "เงินเดือน + โบนัส (ยอดจริงและคาดการณ์)",
+        "label": "รวมรายได้ก่อนหักจากทุกนายจ้าง",
+        "rule_id": "salary_gross",
+        "source_ids": [
+          "rd91"
+        ]
+      },
+      {
+        "amount": "100000",
+        "formula": "รายได้ × 0.50 ไม่เกิน 100000 บาท รวมทุกนายจ้าง",
+        "label": "หักค่าใช้จ่ายตามกฎหมาย",
+        "rule_id": "salary_expense",
+        "source_ids": [
+          "rd_expense"
+        ]
+      },
+      {
+        "amount": "60000",
+        "formula": "ใช้สิทธิ์ครั้งเดียวต่อปี",
+        "label": "หักลดหย่อนส่วนตัว",
+        "rule_id": "personal_allowance",
+        "source_ids": [
+          "rd_code"
+        ]
+      },
+      {
+        "amount": "9000",
+        "formula": "ยอดจ่ายที่เข้าเงื่อนไข ภายใต้กรอบของปีภาษี",
+        "label": "หักประกันสังคมที่บันทึก",
+        "rule_id": "social_security",
+        "source_ids": [
+          "rd91",
+          "sso"
+        ]
+      },
+      {
+        "amount": "191000",
+        "formula": "รายได้ − ค่าใช้จ่าย − ส่วนตัว − ประกันสังคม (ขั้นต่ำ 0)",
+        "label": "เงินได้สุทธิที่ใช้คำนวณ",
+        "rule_id": "taxable_income",
+        "source_ids": [
+          "rd91"
+        ]
+      },
+      {
+        "amount": "150000",
+        "formula": "เงินได้สุทธิส่วนแรกไม่เกิน 150000 บาทได้รับยกเว้นภาษี แยกจากอัตราตามกฎหมาย",
+        "label": "ยกเว้นเงินได้สุทธิช่วงแรก",
+        "rule_id": "first_net_income_exemption",
+        "source_ids": [
+          "rd_exemption"
+        ]
+      },
+      {
+        "amount": "2050",
+        "formula": "รวมภาษีของเงินได้แต่ละช่วง ไม่ใช่อัตราสูงสุดคูณรายได้ทั้งหมด",
+        "label": "ภาษีตามขั้นบันได",
+        "rule_id": "progressive_tax",
+        "source_ids": [
+          "rd_rates",
+          "rd91",
+          "rd_rounding"
+        ]
+      },
+      {
+        "amount": "3000",
+        "formula": "เป็นเครดิตหลังคำนวณภาษี ไม่ใช่ค่าลดหย่อน",
+        "label": "ภาษีที่หักไว้และที่คาดว่าจะถูกหัก",
+        "rule_id": "withholding_credit",
+        "source_ids": [
+          "rd_code"
+        ]
+      }
+    ],
+    "taxable_income": "191000",
+    "unknown_withholding_count": 0,
+    "warnings": [
+      "ใช้ประมาณการสำหรับผู้โสดอายุต่ำกว่า 65 ปี เฉพาะเงินเดือนในประเทศ สิทธิ์ส่วนตัวและประกันสังคม ม.33",
+      "ยังไม่เปิดสรุปยอดชำระหรือคืน: ต้องยืนยันวิธีปัดเศษระหว่างขั้นและยอดคืนกับกรมสรรพากร",
+      "ประกันสังคมใช้ยอดจ่ายจริงที่เข้าเงื่อนไข ต้องตรวจกรณีลดอัตรา ส่งเกิน หรือได้รับคืนเงินสมทบ"
+    ],
+    "year": 2025
+  },
+  "guidance": [
+    {
+      "code": "personal",
+      "conditions": "สำหรับขอบเขตผู้โสดที่แอปรองรับ ไม่ใช้แทนสิทธิ์ยกเว้นพิเศษ",
+      "documents": [
+        "ไม่ต้องแนบเอกสารในแอป"
+      ],
+      "explanation": "แอปรวมสิทธิ์ส่วนตัวไว้ให้ครั้งเดียวต่อปีแล้ว ไม่ต้องซื้อหรือจ่ายอะไรเพิ่ม",
+      "limit": "60000",
+      "savings": null,
+      "source_ids": [
+        "rd_code"
+      ],
+      "status": "included",
+      "title": "สิทธิ์ส่วนตัวของคุณ"
+    },
+    {
+      "code": "sso_33",
+      "conditions": "ตรวจจำนวนเดือน อัตราที่ลดลงเฉพาะกรณี ยอดส่งเกิน และเงินสมทบที่ได้รับคืนก่อนยืนยัน",
+      "documents": [
+        "สลิปเงินเดือน",
+        "หนังสือรับรอง 50 ทวิหรือหลักฐานเงินสมทบ"
+      ],
+      "explanation": "ใช้ยอดเงินสมทบฝ่ายลูกจ้างที่เข้าเงื่อนไขตามที่จ่ายจริง ไม่ใช่ยอดสมทบของนายจ้าง",
+      "limit": "9000",
+      "savings": "450",
+      "source_ids": [
+        "rd91",
+        "sso"
+      ],
+      "status": "supported",
+      "title": "ประกันสังคมที่จ่ายไปแล้ว"
+    },
+    {
+      "code": "insurance",
+      "conditions": "รุ่นนี้ยังไม่รวมสิทธิ์นี้ในผลคำนวณ กรุณาตรวจหลักเกณฑ์ของปีภาษีจากกรมสรรพากร",
+      "documents": [
+        "หนังสือรับรองเบี้ยประกันเพื่อใช้สิทธิ์ภาษี"
+      ],
+      "explanation": "อาจมีสิทธิ์ตามประเภทกรมธรรม์ เงื่อนไข และวงเงินร่วมของปีนั้น",
+      "limit": null,
+      "savings": null,
+      "source_ids": [
+        "rd_year"
+      ],
+      "status": "not_included",
+      "title": "ประกันชีวิตและสุขภาพ"
+    },
+    {
+      "code": "family",
+      "conditions": "รุ่นนี้ยังไม่รวมสิทธิ์นี้ในผลคำนวณ กรุณาตรวจหลักเกณฑ์ของปีภาษีจากกรมสรรพากร",
+      "documents": [
+        "เอกสารยืนยันความสัมพันธ์และสิทธิ์ตามกรณี"
+      ],
+      "explanation": "สิทธิ์เกี่ยวกับบุตร คู่สมรส บิดามารดา และผู้พิการมีเงื่อนไขเฉพาะ",
+      "limit": null,
+      "savings": null,
+      "source_ids": [
+        "rd_year"
+      ],
+      "status": "not_included",
+      "title": "ดูแลคนในครอบครัว"
+    },
+    {
+      "code": "retirement",
+      "conditions": "รุ่นนี้ยังไม่รวมสิทธิ์นี้ในผลคำนวณ กรุณาตรวจหลักเกณฑ์ของปีภาษีจากกรมสรรพากร",
+      "documents": [
+        "หนังสือรับรองเงินสะสมหรือการลงทุน"
+      ],
+      "explanation": "ต้องตรวจประเภทกองทุน ระยะเวลาถือครอง และเพดานร่วม ไม่ควรลงทุนเพียงเพื่อภาษี",
+      "limit": null,
+      "savings": null,
+      "source_ids": [
+        "rd_year"
+      ],
+      "status": "not_included",
+      "title": "กองทุนและการออมเพื่อเกษียณ"
+    },
+    {
+      "code": "home",
+      "conditions": "รุ่นนี้ยังไม่รวมสิทธิ์นี้ในผลคำนวณ กรุณาตรวจหลักเกณฑ์ของปีภาษีจากกรมสรรพากร",
+      "documents": [
+        "หนังสือรับรองดอกเบี้ยจากผู้ให้กู้"
+      ],
+      "explanation": "ต้องตรวจผู้กู้ ประเภทเงินกู้ และการแบ่งสิทธิ์ผู้กู้ร่วม",
+      "limit": null,
+      "savings": null,
+      "source_ids": [
+        "rd_year"
+      ],
+      "status": "not_included",
+      "title": "ดอกเบี้ยบ้าน"
+    },
+    {
+      "code": "donation",
+      "conditions": "รุ่นนี้ยังไม่รวมสิทธิ์นี้ในผลคำนวณ กรุณาตรวจหลักเกณฑ์ของปีภาษีจากกรมสรรพากร",
+      "documents": [
+        "หลักฐานบริจาคหรือข้อมูล e-Donation"
+      ],
+      "explanation": "สิทธิ์ขึ้นกับผู้รับบริจาค หลักฐาน และลำดับการหักในปีนั้น",
+      "limit": null,
+      "savings": null,
+      "source_ids": [
+        "rd_year"
+      ],
+      "status": "not_included",
+      "title": "เงินบริจาค"
+    }
+  ],
+  "history": [
+    {
+      "created_at": "2026-10-15T05:21:24.433Z",
+      "data_revision": 1,
+      "engine_version": "0.1.0",
+      "id": "7d7ca538-707f-4ee1-9a1b-bd7642f483e7",
+      "input_hash": "bc4b5339f2214fd6a329097540e68ae08134aa8947db82b0223ec1e6d561ae24",
+      "input_json": "{\"year\":2025,\"facts\":{\"single\":true,\"under_65\":true,\"domestic_salary_only\":true,\"no_special_cases\":true,\"no_other_deductions\":true,\"social_security_confirmed\":true},\"income\":[{\"category\":\"section40_1\",\"amount\":\"30000\",\"withholding\":\"250\",\"basis\":\"actual\"},{\"category\":\"section40_1\",\"amount\":\"30000\",\"withholding\":\"250\",\"basis\":\"actual\"},{\"category\":\"section40_1\",\"amount\":\"30000\",\"withholding\":\"250\",\"basis\":\"actual\"},{\"category\":\"section40_1\",\"amount\":\"30000\",\"withholding\":\"250\",\"basis\":\"actual\"},{\"category\":\"section40_1\",\"amount\":\"30000\",\"withholding\":\"250\",\"basis\":\"actual\"},{\"category\":\"section40_1\",\"amount\":\"30000\",\"withholding\":\"250\",\"basis\":\"actual\"},{\"category\":\"section40_1\",\"amount\":\"30000\",\"withholding\":\"250\",\"basis\":\"actual\"},{\"category\":\"section40_1\",\"amount\":\"30000\",\"withholding\":\"250\",\"basis\":\"actual\"},{\"category\":\"section40_1\",\"amount\":\"30000\",\"withholding\":\"250\",\"basis\":\"actual\"},{\"category\":\"section40_1\",\"amount\":\"30000\",\"withholding\":\"250\",\"basis\":\"actual\"},{\"category\":\"section40_1\",\"amount\":\"30000\",\"withholding\":\"250\",\"basis\":\"actual\"},{\"category\":\"section40_1\",\"amount\":\"30000\",\"withholding\":\"250\",\"basis\":\"actual\"}],\"social_security\":[{\"month\":1,\"amount\":\"750\",\"basis\":\"actual\"},{\"month\":2,\"amount\":\"750\",\"basis\":\"actual\"},{\"month\":3,\"amount\":\"750\",\"basis\":\"actual\"},{\"month\":4,\"amount\":\"750\",\"basis\":\"actual\"},{\"month\":5,\"amount\":\"750\",\"basis\":\"actual\"},{\"month\":6,\"amount\":\"750\",\"basis\":\"actual\"},{\"month\":7,\"amount\":\"750\",\"basis\":\"actual\"},{\"month\":8,\"amount\":\"750\",\"basis\":\"actual\"},{\"month\":9,\"amount\":\"750\",\"basis\":\"actual\"},{\"month\":10,\"amount\":\"750\",\"basis\":\"actual\"},{\"month\":11,\"amount\":\"750\",\"basis\":\"actual\"},{\"month\":12,\"amount\":\"750\",\"basis\":\"actual\"}],\"income_complete\":true}",
+      "result_json": "{\"year\":2025,\"rule_set_id\":\"th-salary-2025-v1\",\"rules_status\":\"verified_scope\",\"rounding_verified\":false,\"gross_income\":\"360000\",\"actual_income\":\"360000\",\"forecast_income\":\"0\",\"expenses\":\"100000\",\"personal_allowance\":\"60000\",\"social_security\":\"9000\",\"social_security_savings\":\"450\",\"taxable_income\":\"191000\",\"annual_tax\":\"2050\",\"known_withholding\":\"3000\",\"actual_withholding\":\"3000\",\"remaining_after_actual_withholding\":\"0\",\"forecast_withholding\":\"0\",\"unknown_withholding_count\":0,\"filing\":\"required\",\"data_complete\":true,\"scope_issues\":[],\"warnings\":[\"ใช้ประมาณการสำหรับผู้โสดอายุต่ำกว่า 65 ปี เฉพาะเงินเดือนในประเทศ สิทธิ์ส่วนตัวและประกันสังคม ม.33\",\"ยังไม่เปิดสรุปยอดชำระหรือคืน: ต้องยืนยันวิธีปัดเศษระหว่างขั้นและยอดคืนกับกรมสรรพากร\",\"ประกันสังคมใช้ยอดจ่ายจริงที่เข้าเงื่อนไข ต้องตรวจกรณีลดอัตรา ส่งเกิน หรือได้รับคืนเงินสมทบ\"],\"difference_preview\":{\"kind\":\"overpaid\",\"amount\":\"950\"},\"settlement\":null,\"bands\":[{\"lower\":\"0\",\"upper\":\"150000\",\"rate\":\"0\",\"statutory_rate\":\"0.05\",\"exempt_amount\":\"150000\",\"taxable_amount\":\"150000\",\"tax\":\"0\"},{\"lower\":\"150000\",\"upper\":\"300000\",\"rate\":\"0.05\",\"statutory_rate\":\"0.05\",\"exempt_amount\":\"0\",\"taxable_amount\":\"41000\",\"tax\":\"2050\"},{\"lower\":\"300000\",\"upper\":\"500000\",\"rate\":\"0.10\",\"statutory_rate\":\"0.10\",\"exempt_amount\":\"0\",\"taxable_amount\":\"0\",\"tax\":\"0\"},{\"lower\":\"500000\",\"upper\":\"750000\",\"rate\":\"0.15\",\"statutory_rate\":\"0.15\",\"exempt_amount\":\"0\",\"taxable_amount\":\"0\",\"tax\":\"0\"},{\"lower\":\"750000\",\"upper\":\"1000000\",\"rate\":\"0.20\",\"statutory_rate\":\"0.20\",\"exempt_amount\":\"0\",\"taxable_amount\":\"0\",\"tax\":\"0\"},{\"lower\":\"1000000\",\"upper\":\"2000000\",\"rate\":\"0.25\",\"statutory_rate\":\"0.25\",\"exempt_amount\":\"0\",\"taxable_amount\":\"0\",\"tax\":\"0\"},{\"lower\":\"2000000\",\"upper\":\"5000000\",\"rate\":\"0.30\",\"statutory_rate\":\"0.30\",\"exempt_amount\":\"0\",\"taxable_amount\":\"0\",\"tax\":\"0\"},{\"lower\":\"5000000\",\"upper\":null,\"rate\":\"0.35\",\"statutory_rate\":\"0.35\",\"exempt_amount\":\"0\",\"taxable_amount\":\"0\",\"tax\":\"0\"}],\"steps\":[{\"rule_id\":\"salary_gross\",\"label\":\"รวมรายได้ก่อนหักจากทุกนายจ้าง\",\"formula\":\"เงินเดือน + โบนัส (ยอดจริงและคาดการณ์)\",\"amount\":\"360000\",\"source_ids\":[\"rd91\"]},{\"rule_id\":\"salary_expense\",\"label\":\"หักค่าใช้จ่ายตามกฎหมาย\",\"formula\":\"รายได้ × 0.50 ไม่เกิน 100000 บาท รวมทุกนายจ้าง\",\"amount\":\"100000\",\"source_ids\":[\"rd_expense\"]},{\"rule_id\":\"personal_allowance\",\"label\":\"หักลดหย่อนส่วนตัว\",\"formula\":\"ใช้สิทธิ์ครั้งเดียวต่อปี\",\"amount\":\"60000\",\"source_ids\":[\"rd_code\"]},{\"rule_id\":\"social_security\",\"label\":\"หักประกันสังคมที่บันทึก\",\"formula\":\"ยอดจ่ายที่เข้าเงื่อนไข ภายใต้กรอบของปีภาษี\",\"amount\":\"9000\",\"source_ids\":[\"rd91\",\"sso\"]},{\"rule_id\":\"taxable_income\",\"label\":\"เงินได้สุทธิที่ใช้คำนวณ\",\"formula\":\"รายได้ − ค่าใช้จ่าย − ส่วนตัว − ประกันสังคม (ขั้นต่ำ 0)\",\"amount\":\"191000\",\"source_ids\":[\"rd91\"]},{\"rule_id\":\"first_net_income_exemption\",\"label\":\"ยกเว้นเงินได้สุทธิช่วงแรก\",\"formula\":\"เงินได้สุทธิส่วนแรกไม่เกิน 150000 บาทได้รับยกเว้นภาษี แยกจากอัตราตามกฎหมาย\",\"amount\":\"150000\",\"source_ids\":[\"rd_exemption\"]},{\"rule_id\":\"progressive_tax\",\"label\":\"ภาษีตามขั้นบันได\",\"formula\":\"รวมภาษีของเงินได้แต่ละช่วง ไม่ใช่อัตราสูงสุดคูณรายได้ทั้งหมด\",\"amount\":\"2050\",\"source_ids\":[\"rd_rates\",\"rd91\",\"rd_rounding\"]},{\"rule_id\":\"withholding_credit\",\"label\":\"ภาษีที่หักไว้และที่คาดว่าจะถูกหัก\",\"formula\":\"เป็นเครดิตหลังคำนวณภาษี ไม่ใช่ค่าลดหย่อน\",\"amount\":\"3000\",\"source_ids\":[\"rd_code\"]}]}",
+      "rule_set_id": "th-salary-2025-v1",
+      "tax_year": 2025
+    }
+  ],
+  "sources": [
+    {
+      "authority": "กรมสรรพากร",
+      "checked_on": "2026-10-15",
+      "id": "rd91",
+      "locator": "หน้า 1, 9 และ 15",
+      "published_on": "2025-12-24",
+      "title": "คู่มือ ภ.ง.ด.91 ปีภาษี 2568",
+      "url": "https://www.rd.go.th/fileadmin/tax_pdf/pit/2568/Ins91_241268.pdf"
+    },
+    {
+      "authority": "กรมสรรพากร",
+      "checked_on": "2026-10-15",
+      "id": "rd_expense",
+      "locator": "ตารางการหักค่าใช้จ่าย",
+      "published_on": null,
+      "title": "การหักค่าใช้จ่ายเงินได้ตามมาตรา 40(1) และ 40(2)",
+      "url": "https://www.rd.go.th/556.html"
+    },
+    {
+      "authority": "กรมสรรพากร",
+      "checked_on": "2026-10-15",
+      "id": "rd_code",
+      "locator": "มาตรา 47, 56, 60 และ 63",
+      "published_on": null,
+      "title": "ประมวลรัษฎากร มาตรา 38–64",
+      "url": "https://www.rd.go.th/5937.html"
+    },
+    {
+      "authority": "กรมสรรพากร",
+      "checked_on": "2026-10-15",
+      "id": "rd_rounding",
+      "locator": "ข้อหารือ 0811(กม.01)/355",
+      "published_on": null,
+      "title": "การยกเว้นเศษบาทของภาษี (ยังต้องตรวจจุดปัดระหว่างขั้นและยอดคืน)",
+      "url": "https://www.rd.go.th/25123.html"
+    },
+    {
+      "authority": "กรมสรรพากร",
+      "checked_on": "2026-10-15",
+      "id": "sso",
+      "locator": "ม.33 ตามจริงภายใต้กรอบปกติ 9,000 บาทต่อปี",
+      "published_on": "2025-12-12",
+      "title": "สิทธิ์ลดหย่อนประกันสังคม ปีภาษี 2568",
+      "url": "https://rd.go.th/fileadmin/user_upload/lorkhor/newsbanner/2025/12/PR1161_12122568.pdf"
+    },
+    {
+      "authority": "กรมสรรพากร",
+      "checked_on": "2026-10-15",
+      "id": "rd_year",
+      "locator": "แบบและคู่มือของปีภาษีที่เกี่ยวข้อง",
+      "published_on": null,
+      "title": "แบบภาษีประจำปี",
+      "url": "https://www.rd.go.th/67335.html"
+    },
+    {
+      "authority": "กรมสรรพากร",
+      "checked_on": "2026-10-15",
+      "id": "rd_rates",
+      "locator": "บัญชีอัตราสำหรับบุคคลธรรมดา ตั้งแต่ปีภาษี 2560 เป็นต้นไป",
+      "published_on": null,
+      "title": "บัญชีอัตราภาษีเงินได้บุคคลธรรมดา",
+      "url": "https://www.rd.go.th/5938.html"
+    },
+    {
+      "authority": "กรมสรรพากร",
+      "checked_on": "2026-10-15",
+      "id": "rd_exemption",
+      "locator": "คำชี้แจงตามพระราชกฤษฎีกาฉบับที่ 470 พ.ศ. 2551 ข้อ 1",
+      "published_on": null,
+      "title": "ยกเว้นภาษีสำหรับเงินได้สุทธิ 150,000 บาทแรก",
+      "url": "https://rd.go.th/38676.html"
+    }
+  ],
+  "workspace": {
+    "deductions": [
+      {
+        "amount": "750",
+        "basis": "actual",
+        "id": "78fb0033-546c-4a0c-84d1-eb311d76aaab",
+        "month": 1,
+        "rule_code": "sso_33",
+        "tax_year": 2025
+      },
+      {
+        "amount": "750",
+        "basis": "actual",
+        "id": "51ea2bbd-98b3-4fc8-b555-0510abd76ad5",
+        "month": 2,
+        "rule_code": "sso_33",
+        "tax_year": 2025
+      },
+      {
+        "amount": "750",
+        "basis": "actual",
+        "id": "7f758b58-0cde-4598-bc38-6238d5100823",
+        "month": 3,
+        "rule_code": "sso_33",
+        "tax_year": 2025
+      },
+      {
+        "amount": "750",
+        "basis": "actual",
+        "id": "ba152dd5-c27d-4a39-8cca-f533583e5f67",
+        "month": 4,
+        "rule_code": "sso_33",
+        "tax_year": 2025
+      },
+      {
+        "amount": "750",
+        "basis": "actual",
+        "id": "a027935c-97f1-44b6-9f49-cc42562a2fa8",
+        "month": 5,
+        "rule_code": "sso_33",
+        "tax_year": 2025
+      },
+      {
+        "amount": "750",
+        "basis": "actual",
+        "id": "88e3609a-fae3-4a92-ba5d-c9379e3c3409",
+        "month": 6,
+        "rule_code": "sso_33",
+        "tax_year": 2025
+      },
+      {
+        "amount": "750",
+        "basis": "actual",
+        "id": "08c44b6c-d5a1-4052-aeec-b1fae9ae8c0e",
+        "month": 7,
+        "rule_code": "sso_33",
+        "tax_year": 2025
+      },
+      {
+        "amount": "750",
+        "basis": "actual",
+        "id": "ac8cca3d-28c2-436e-8ba2-0454e6bbabe2",
+        "month": 8,
+        "rule_code": "sso_33",
+        "tax_year": 2025
+      },
+      {
+        "amount": "750",
+        "basis": "actual",
+        "id": "d06d6bb2-0f50-40bf-bd75-fb3d245cf5de",
+        "month": 9,
+        "rule_code": "sso_33",
+        "tax_year": 2025
+      },
+      {
+        "amount": "750",
+        "basis": "actual",
+        "id": "2f5c1d48-9031-45b0-a0c3-4750f9e1faf9",
+        "month": 10,
+        "rule_code": "sso_33",
+        "tax_year": 2025
+      },
+      {
+        "amount": "750",
+        "basis": "actual",
+        "id": "cc660d4f-0e28-48c2-b5ce-1b678dd2b05c",
+        "month": 11,
+        "rule_code": "sso_33",
+        "tax_year": 2025
+      },
+      {
+        "amount": "750",
+        "basis": "actual",
+        "id": "9acff10a-b921-4213-8b1e-e5d71dcfe400",
+        "month": 12,
+        "rule_code": "sso_33",
+        "tax_year": 2025
+      }
+    ],
+    "draft": null,
+    "income": [
+      {
+        "basis": "actual",
+        "gross": "30000",
+        "id": "49593a08-b0ee-4a4b-8ad6-542d92c972b8",
+        "kind": "salary",
+        "month": 1,
+        "source_id": "dc4c5269-87a1-4257-a680-57850978db22",
+        "tax_year": 2025,
+        "withholding": "250"
+      },
+      {
+        "basis": "actual",
+        "gross": "30000",
+        "id": "bbdc9751-7515-41b4-8eee-46354816ad33",
+        "kind": "salary",
+        "month": 2,
+        "source_id": "dc4c5269-87a1-4257-a680-57850978db22",
+        "tax_year": 2025,
+        "withholding": "250"
+      },
+      {
+        "basis": "actual",
+        "gross": "30000",
+        "id": "de9b1f00-75f4-40e9-a332-2cadccf6c5c8",
+        "kind": "salary",
+        "month": 3,
+        "source_id": "dc4c5269-87a1-4257-a680-57850978db22",
+        "tax_year": 2025,
+        "withholding": "250"
+      },
+      {
+        "basis": "actual",
+        "gross": "30000",
+        "id": "2b54700d-7c43-47cd-b134-a7c6af7b1877",
+        "kind": "salary",
+        "month": 4,
+        "source_id": "dc4c5269-87a1-4257-a680-57850978db22",
+        "tax_year": 2025,
+        "withholding": "250"
+      },
+      {
+        "basis": "actual",
+        "gross": "30000",
+        "id": "50d7dfc8-111c-455f-9bb8-533f66b9419c",
+        "kind": "salary",
+        "month": 5,
+        "source_id": "dc4c5269-87a1-4257-a680-57850978db22",
+        "tax_year": 2025,
+        "withholding": "250"
+      },
+      {
+        "basis": "actual",
+        "gross": "30000",
+        "id": "c32ec526-bd65-44db-9658-eb41fafc9c29",
+        "kind": "salary",
+        "month": 6,
+        "source_id": "dc4c5269-87a1-4257-a680-57850978db22",
+        "tax_year": 2025,
+        "withholding": "250"
+      },
+      {
+        "basis": "actual",
+        "gross": "30000",
+        "id": "b51b184c-098c-4cad-bade-35065aba7f85",
+        "kind": "salary",
+        "month": 7,
+        "source_id": "dc4c5269-87a1-4257-a680-57850978db22",
+        "tax_year": 2025,
+        "withholding": "250"
+      },
+      {
+        "basis": "actual",
+        "gross": "30000",
+        "id": "ad49f36e-e3e6-414d-b32c-2d559a8241ff",
+        "kind": "salary",
+        "month": 8,
+        "source_id": "dc4c5269-87a1-4257-a680-57850978db22",
+        "tax_year": 2025,
+        "withholding": "250"
+      },
+      {
+        "basis": "actual",
+        "gross": "30000",
+        "id": "5a9a4359-3896-4a85-a127-37d409c89dd6",
+        "kind": "salary",
+        "month": 9,
+        "source_id": "dc4c5269-87a1-4257-a680-57850978db22",
+        "tax_year": 2025,
+        "withholding": "250"
+      },
+      {
+        "basis": "actual",
+        "gross": "30000",
+        "id": "a2298320-5b09-4a20-b813-2cdadd1d6725",
+        "kind": "salary",
+        "month": 10,
+        "source_id": "dc4c5269-87a1-4257-a680-57850978db22",
+        "tax_year": 2025,
+        "withholding": "250"
+      },
+      {
+        "basis": "actual",
+        "gross": "30000",
+        "id": "40b44c3a-9246-4d32-8196-0d61d2a8e6ea",
+        "kind": "salary",
+        "month": 11,
+        "source_id": "dc4c5269-87a1-4257-a680-57850978db22",
+        "tax_year": 2025,
+        "withholding": "250"
+      },
+      {
+        "basis": "actual",
+        "gross": "30000",
+        "id": "05fe55eb-415f-4d45-8660-35f0a1824aa2",
+        "kind": "salary",
+        "month": 12,
+        "source_id": "dc4c5269-87a1-4257-a680-57850978db22",
+        "tax_year": 2025,
+        "withholding": "250"
+      }
+    ],
+    "profile": {
+      "facts": {
+        "domestic_salary_only": true,
+        "no_other_deductions": true,
+        "no_special_cases": true,
+        "single": true,
+        "social_security_confirmed": true,
+        "under_65": true
+      },
+      "income_complete": true,
+      "revision": 1,
+      "year": 2025
+    },
+    "sources": [
+      {
+        "id": "dc4c5269-87a1-4257-a680-57850978db22",
+        "label": "งานประจำของฉัน",
+        "tax_year": 2025
+      }
+    ],
+    "year": 2025
+  }
+}

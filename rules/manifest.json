@@ -1,0 +1,17 @@
+{
+  "schema_version": 1,
+  "rule_sets": [
+    {
+      "year": 2025,
+      "id": "th-salary-2025-v1",
+      "file": "2025/salary-v1.json",
+      "sha256": "65e2ff2b904c7f0c14eb9b91edf08e38262d9a7ac2135c6bef3eb5a78e4218a1"
+    },
+    {
+      "year": 2026,
+      "id": "th-salary-2026-v1",
+      "file": "2026/salary-v1.json",
+      "sha256": "def7c3250f27aebc5c1cfbdf1e03943cdc85123de507f7c949af1ac353214a2b"
+    }
+  ]
+}
