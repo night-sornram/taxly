@@ -891,3 +891,93 @@ async fn upgrade_drops_investment_tables_and_seeds_ledger() {
     assert_eq!(ledger_rows(&pool).await.categories.len(), 14);
     pool.close().await;
 }
+
+#[tokio::test]
+async fn sync_carries_tax_rows_and_applies_them_without_side_effects() {
+    let (_directory, pool, catalog) = database().await;
+    storage::onboarding(&pool, setup_request(2026))
+        .await
+        .unwrap();
+    ledger::save_entry(
+        &pool,
+        &catalog,
+        entry("2026-02-01", "income-side", Some(link())),
+        today(),
+    )
+    .await
+    .unwrap();
+    sync::bind(&pool, SYNC_OWNER, SYNC_PROJECT, true)
+        .await
+        .unwrap();
+    let before = sync::read(&pool).await.unwrap();
+    let tax = &before.snapshot.tax;
+    assert_eq!(tax.years.len(), 1);
+    assert!(tax.years[0].income_complete);
+    // 12 onboarding salaries (a zero bonus is not stored); the ledger-linked income stays out.
+    assert_eq!(tax.incomes.len(), 12);
+    assert!(tax.incomes.iter().all(|i| i.kind != "other"));
+    assert_eq!(tax.deductions.len(), 12);
+
+    let mut next = before.snapshot.clone();
+    let removed = next.tax.incomes.remove(0);
+    next.tax.incomes[0].gross = m("32000");
+    let edited = next.tax.incomes[0].id.clone();
+    let removed_deduction = next.tax.deductions.remove(0);
+    next.tax.deductions.push(sync_deduction(&removed_deduction));
+    let revision = storage::workspace(&pool, 2026)
+        .await
+        .unwrap()
+        .profile
+        .unwrap()
+        .revision;
+    assert!(
+        sync::apply(
+            &pool,
+            &catalog,
+            sync_request(&before, next.clone(), 1),
+            today()
+        )
+        .await
+        .unwrap()
+    );
+    let workspace = storage::workspace(&pool, 2026).await.unwrap();
+    let profile = workspace.profile.unwrap();
+    assert!(
+        profile.income_complete,
+        "synced deletes keep the confirmation"
+    );
+    assert!(profile.revision > revision);
+    assert!(workspace.income.iter().all(|i| i.id != removed.id));
+    assert_eq!(
+        workspace
+            .income
+            .iter()
+            .find(|i| i.id == edited)
+            .unwrap()
+            .gross,
+        m("32000")
+    );
+    assert!(workspace.deductions.iter().any(|d| d.id == "phone-sso"));
+    let after = sync::read(&pool).await.unwrap();
+    assert_eq!(after.snapshot.tax, next.tax.sorted());
+
+    // Two salaries for one employer and month are rejected before any write.
+    let mut duplicate = after.snapshot.clone();
+    let mut copy = duplicate.tax.incomes[1].clone();
+    copy.id = "copy".into();
+    duplicate.tax.incomes.push(copy);
+    assert!(
+        sync::apply(&pool, &catalog, sync_request(&after, duplicate, 2), today())
+            .await
+            .is_err()
+    );
+    pool.close().await;
+}
+
+fn sync_deduction(removed: &crate::tax_sync::TaxDeductionRow) -> crate::tax_sync::TaxDeductionRow {
+    crate::tax_sync::TaxDeductionRow {
+        id: "phone-sso".into(),
+        amount: m("600"),
+        ..removed.clone()
+    }
+}

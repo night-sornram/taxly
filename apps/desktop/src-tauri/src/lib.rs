@@ -7,6 +7,7 @@ mod ledger_sync;
 mod models;
 mod services;
 mod storage;
+mod tax_sync;
 
 use sqlx::SqlitePool;
 use std::sync::Arc;

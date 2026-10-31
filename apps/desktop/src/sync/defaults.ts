@@ -1,3 +1,4 @@
+import { emptyTax } from "./model";
 import type { Snapshot } from "./model";
 export function starterSnapshot(): Snapshot {
   const income = [
@@ -24,5 +25,6 @@ export function starterSnapshot(): Snapshot {
       ...expense.map(([id, name]) => ({ id: `expense-${id}`, kind: "expense" as const, name })),
     ],
     entries: [],
+    tax: emptyTax(),
   };
 }

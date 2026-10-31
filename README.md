@@ -63,7 +63,7 @@ If DMG window customization hangs or times out, build with `CI=true npm run taur
 
 Support is incomplete for married taxpayers, people aged 65 or older, foreign income, lump-sum termination payments, special exemptions, and other allowances. The app discloses these limits before showing results. It does not file returns or pay taxes on your behalf.
 
-The local database is **not encrypted**; access is restricted through per-user file permissions. Backup files are encrypted with a password of at least 12 characters. Tax features work without an account. Phone sync is opt-in: email sign-in and Supabase send ledger categories, entries, and tax-link settings to your project. Tax profiles and calculation history remain local. There are no usage analytics. Cloud data is not end-to-end encrypted; the project administrator can read it.
+The local database is **not encrypted**; access is restricted through per-user file permissions. Backup files are encrypted with a password of at least 12 characters. Tax features work without an account. Phone sync is opt-in: email sign-in and Supabase send ledger categories, entries, tax-link settings, and tax data (eligibility answers, incomes, social security) to your project. Calculation history remains local. There are no usage analytics. Cloud data is not end-to-end encrypted; the project administrator can read it.
 
 ### Verification
 
@@ -169,7 +169,7 @@ npm run tauri build -- --bundles app,dmg
 
 ผู้สมรส ผู้มีอายุ 65 ปีขึ้นไป รายได้จากต่างประเทศ เงินก้อนจากการออกจากงาน สิทธิ์ยกเว้นพิเศษ และสิทธิ์ลดหย่อนอื่นยังไม่รวมครบ แอปแจ้งขอบเขตเหล่านี้ก่อนแสดงผลเสมอ และไม่ยื่นแบบหรือชำระภาษีแทนผู้ใช้
 
-ฐานข้อมูลในเครื่อง **ยังไม่เข้ารหัส** โดยป้องกันด้วยสิทธิ์ไฟล์เฉพาะผู้ใช้ของระบบ ส่วนไฟล์สำรองเข้ารหัสด้วยรหัสผ่านที่ยาวอย่างน้อย 12 ตัวอักษร ภาษีใช้ได้โดยไม่มีบัญชี หากเปิดซิงก์มือถือ ระบบใช้อีเมลเข้าบัญชีและส่งหมวดหมู่ รายรับรายจ่าย และตัวเลือกเชื่อมภาษีไปยัง Supabase ของคุณ โปรไฟล์ภาษีและประวัติผลคำนวณยังอยู่ในเครื่อง ไม่มีสถิติการใช้งาน ข้อมูลออนไลน์ไม่ได้เข้ารหัสแบบปลายทางถึงปลายทาง ผู้ดูแลโปรเจกต์อ่านได้
+ฐานข้อมูลในเครื่อง **ยังไม่เข้ารหัส** โดยป้องกันด้วยสิทธิ์ไฟล์เฉพาะผู้ใช้ของระบบ ส่วนไฟล์สำรองเข้ารหัสด้วยรหัสผ่านที่ยาวอย่างน้อย 12 ตัวอักษร ภาษีใช้ได้โดยไม่มีบัญชี หากเปิดซิงก์มือถือ ระบบใช้อีเมลเข้าบัญชีและส่งหมวดหมู่ รายรับรายจ่าย ตัวเลือกเชื่อมภาษี และข้อมูลภาษี (คำตอบเรื่องสิทธิ์ รายได้ ประกันสังคม) ไปยัง Supabase ของคุณ ประวัติผลคำนวณยังอยู่ในเครื่อง ไม่มีสถิติการใช้งาน ข้อมูลออนไลน์ไม่ได้เข้ารหัสแบบปลายทางถึงปลายทาง ผู้ดูแลโปรเจกต์อ่านได้
 
 ### การตรวจสอบ
 
