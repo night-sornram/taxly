@@ -122,8 +122,7 @@ export interface Snapshot {
 }
 export interface BackupSummary {
   format_version: number;
-  account_count: number;
-  activity_count: number;
+  ledger_count: number;
   restore_scope: "all" | "tax_only";
   token: string;
   years: number[];

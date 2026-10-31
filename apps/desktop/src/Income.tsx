@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { Check, CheckCheck, ChevronDown, Pencil, Plus, Trash2 } from "lucide-react";
+import { Check, ChevronDown, Pencil, Plus, Trash2 } from "lucide-react";
+import { EmptyArt } from "./Art";
 import { command, errorMessage } from "./api";
 import {
   BasisBadge,
@@ -322,7 +323,7 @@ export function IncomePage({
           </table>
           {rows.length === 0 && (
             <div className="empty-state">
-              <CheckCheck size={30} />
+              <EmptyArt className="empty-art" />
               <h3>ยังไม่มีรายการในมุมมองนี้</h3>
               <p>เปลี่ยนตัวกรองหรือเพิ่มรายได้ที่ต้องการบันทึก</p>
             </div>

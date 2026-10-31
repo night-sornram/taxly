@@ -1,16 +1,23 @@
-import { useEffect, useRef, useState } from "react";
-import TaxApp from "./TaxApp";
-import WealthApp from "./wealth/WealthApp";
+import { lazy, Suspense, useEffect, useRef, useState } from "react";
+import { Loading } from "./components";
+import LedgerApp from "./ledger/LedgerApp";
+import { isDesktop } from "./api";
+import { useCloud } from "./sync/SyncProvider";
+import SyncPage from "./sync/SyncPage";
 
+type Area = "tax" | "ledger";
+const TaxApp = lazy(() => import("./TaxApp"));
 export default function App() {
-  const [area, setArea] = useState<"tax" | "wealth">("tax");
+  const cloud = useCloud();
+  const [area, setArea] = useState<Area>("tax");
+  const [taxVersion, setTaxVersion] = useState(0);
   // Both modules stay mounted; switching only toggles visibility so each keeps
   // its data, current view, and scroll position instead of refetching.
   const taxShell = useRef<HTMLDivElement>(null);
-  const wealthShell = useRef<HTMLDivElement>(null);
-  const scrollMemory = useRef({ tax: 0, wealth: 0 });
+  const ledgerShell = useRef<HTMLDivElement>(null);
+  const scrollMemory = useRef({ tax: 0, ledger: 0 });
   const previous = useRef(area);
-  const switchArea = (next: "tax" | "wealth") => {
+  const switchArea = (next: Area) => {
     if (next === previous.current) return;
     scrollMemory.current[previous.current] = window.scrollY;
     previous.current = next;
@@ -18,16 +25,33 @@ export default function App() {
   };
   useEffect(() => {
     window.scrollTo({ top: scrollMemory.current[area] });
-    const shell = area === "wealth" ? wealthShell.current : taxShell.current;
+    const shell = area === "ledger" ? ledgerShell.current : taxShell.current;
     shell?.querySelector<HTMLElement>("main h1")?.focus({ preventScroll: true });
   }, [area]);
+  useEffect(() => {
+    const updated = () => setTaxVersion((v) => v + 1);
+    window.addEventListener("taxly-tax-changed", updated);
+    return () => window.removeEventListener("taxly-tax-changed", updated);
+  }, []);
+  if (!isDesktop())
+    return cloud.ready && !cloud.recovery ? (
+      <LedgerApp active onSwitchArea={() => {}} onTaxChanged={() => {}} mobile />
+    ) : (
+      <SyncPage standalone />
+    );
   return (
     <>
       <div hidden={area !== "tax"} ref={taxShell}>
-        <TaxApp onInvestments={() => switchArea("wealth")} />
+        <Suspense fallback={<Loading />}>
+          <TaxApp onSwitchArea={() => switchArea("ledger")} dataVersion={taxVersion} />
+        </Suspense>
       </div>
-      <div hidden={area !== "wealth"} ref={wealthShell}>
-        <WealthApp onTaxes={() => switchArea("tax")} />
+      <div hidden={area !== "ledger"} ref={ledgerShell}>
+        <LedgerApp
+          active={area === "ledger"}
+          onSwitchArea={() => switchArea("tax")}
+          onTaxChanged={() => setTaxVersion((v) => v + 1)}
+        />
       </div>
     </>
   );

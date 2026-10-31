@@ -13,7 +13,7 @@
     "windows": [
       {
         "label": "main",
-        "title": "Taxly · การลงทุนและภาษี",
+        "title": "Taxly · ภาษีและรายรับรายจ่าย",
         "width": 1280,
         "height": 880,
         "minWidth": 390,
@@ -24,8 +24,8 @@
       "capabilities": [
         "main"
       ],
-      "csp": "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; font-src 'self'; img-src 'self' data: https://financialmodelingprep.com/image-stock/; connect-src ipc: http://ipc.localhost; object-src 'none'; base-uri 'self'; frame-src 'none'",
-      "devCsp": "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; font-src 'self'; img-src 'self' data: https://financialmodelingprep.com/image-stock/; connect-src ipc: http://ipc.localhost http://127.0.0.1:1420 http://localhost:1420 ws://127.0.0.1:1420 ws://localhost:1420; object-src 'none'; frame-src 'none'"
+      "csp": "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; font-src 'self'; img-src 'self' data:; connect-src ipc: http://ipc.localhost https://*.supabase.co wss://*.supabase.co; object-src 'none'; base-uri 'self'; frame-src 'none'",
+      "devCsp": "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; font-src 'self'; img-src 'self' data:; connect-src ipc: http://ipc.localhost https://*.supabase.co wss://*.supabase.co http://127.0.0.1:1420 http://localhost:1420 ws://127.0.0.1:1420 ws://localhost:1420; object-src 'none'; frame-src 'none'"
     }
   },
   "bundle": {
@@ -35,7 +35,7 @@
       "dmg"
     ],
     "category": "Finance",
-    "shortDescription": "พอร์ตลงทุนและผู้ช่วยภาษีไทยที่เก็บข้อมูลในเครื่อง",
+    "shortDescription": "ผู้ช่วยภาษีไทยและบันทึกรายรับรายจ่ายที่เก็บข้อมูลในเครื่อง",
     "macOS": {
       "minimumSystemVersion": "12.0",
       "signingIdentity": "-"

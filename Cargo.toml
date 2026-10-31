@@ -1,6 +1,6 @@
 [workspace]
-members = ["crates/taxly-core", "crates/wealth-core", "apps/desktop/src-tauri"]
-default-members = ["crates/taxly-core", "crates/wealth-core", "apps/desktop/src-tauri"]
+members = ["crates/taxly-core", "apps/desktop/src-tauri"]
+default-members = ["crates/taxly-core", "apps/desktop/src-tauri"]
 resolver = "2"
 
 [workspace.package]

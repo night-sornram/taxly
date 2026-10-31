@@ -23,6 +23,7 @@ import {
   ThemeToggle,
 } from "./components";
 import { emptyFacts } from "./types";
+import { MoneyArt } from "./Art";
 import type { OnboardingDraft, Facts } from "./types";
 import { normalizeAmount, optionalAmount, months } from "./money";
 
@@ -199,9 +200,7 @@ export default function Onboarding({
               </li>
             ))}
           </ol>
-          <div className="aside-flower" aria-hidden="true">
-            ✳
-          </div>
+          <MoneyArt className="aside-art" />
         </aside>
         <section className="onboarding-card" aria-label="เริ่มต้นใช้งาน">
           <div className="step-meta">

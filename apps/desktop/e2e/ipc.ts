@@ -11,6 +11,15 @@ export async function installIpc(page: Page, forecast = false) {
       const original = structuredClone(fixture);
       const workspace = structuredClone(fixture.workspace);
       if (forecast) workspace.income[6].basis = "forecast";
+      const ledger = {
+        categories: [
+          { id: "income-salary", kind: "income", name: "เงินเดือน" },
+          { id: "income-side", kind: "income", name: "รายได้เสริม" },
+          { id: "expense-food", kind: "expense", name: "อาหารและเครื่องดื่ม" },
+          { id: "expense-transport", kind: "expense", name: "เดินทาง" },
+        ],
+        entries: [] as Record<string, unknown>[],
+      };
       let draft: unknown = null;
       let created = false;
       const calls: { name: string; args: Record<string, unknown> }[] = [];
@@ -115,6 +124,36 @@ export async function installIpc(page: Page, forecast = false) {
               case "restore_backup":
                 Object.assign(workspace, structuredClone(original.workspace));
                 return null;
+              case "get_ledger":
+                return structuredClone(ledger);
+              case "save_ledger_entry": {
+                const request = args.request as Record<string, unknown>;
+                const entry = {
+                  id: request.id ?? `ledger-${ledger.entries.length + 1}`,
+                  date: request.date,
+                  category_id: request.category_id,
+                  amount: request.amount,
+                  note: request.note,
+                  tax_income_id: request.tax ? `tax-${ledger.entries.length + 1}` : null,
+                };
+                ledger.entries = [entry, ...ledger.entries.filter((e) => e.id !== entry.id)];
+                return null;
+              }
+              case "delete_ledger_entry":
+                ledger.entries = ledger.entries.filter((e) => e.id !== args.id);
+                return null;
+              case "read_ledger_csv":
+                return {
+                  file_name: "statement.csv",
+                  rows: [
+                    ["วันที่", "รายละเอียด", "ถอน", "ฝาก"],
+                    ["01/03/2569", "ร้านกาแฟ", "65.00", ""],
+                    ["02/03/2569", "รับโอน", "", "1,500.00"],
+                    ["ยอดยกไป", "", "", ""],
+                  ],
+                };
+              case "import_ledger_entries":
+                return (args.rows as unknown[]).length;
               default:
                 throw { message: `Unexpected test command: ${name}` };
             }

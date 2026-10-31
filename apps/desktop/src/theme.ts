@@ -3,7 +3,7 @@ import { useCallback, useEffect, useState } from "react";
 export type ThemeMode = "system" | "light" | "dark";
 export type ResolvedTheme = "light" | "dark";
 const STORAGE_KEY = "taxly-theme";
-const DARK_CANVAS = "#111310";
+const DARK_CANVAS = "#0f1214";
 
 export function readStoredMode(): ThemeMode {
   const stored = localStorage.getItem(STORAGE_KEY);
@@ -33,7 +33,7 @@ function applyMode(mode: ThemeMode) {
   else root.dataset.theme = mode;
   root.style.colorScheme = mode === "system" ? "" : mode;
   const meta = document.querySelector('meta[name="theme-color"]');
-  meta?.setAttribute("content", resolveTheme(mode) === "dark" ? DARK_CANVAS : "#f6f7f2");
+  meta?.setAttribute("content", resolveTheme(mode) === "dark" ? DARK_CANVAS : "#f3f5f7");
 }
 
 export function useTheme() {

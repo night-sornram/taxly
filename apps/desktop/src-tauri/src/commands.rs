@@ -144,6 +144,27 @@ pub async fn open_source(
 }
 
 #[tauri::command]
+pub async fn open_ledger_mobile(url: String, app: AppHandle) -> AppResult<()> {
+    let parsed = tauri::Url::parse(&url).map_err(|_| AppError::invalid("ที่อยู่เว็บมือถือไม่ถูกต้อง"))?;
+    if parsed.scheme() != "https"
+        || parsed.host_str().is_none()
+        || !parsed.username().is_empty()
+        || parsed.password().is_some()
+        || parsed.query().is_some()
+        || parsed.fragment().is_some()
+        || url.len() > 512
+    {
+        return Err(AppError::invalid(
+            "ที่อยู่เว็บมือถือต้องเป็น HTTPS และไม่มีข้อมูลเข้าสู่ระบบ",
+        ));
+    }
+    app.opener()
+        .open_url(parsed.as_str(), None::<&str>)
+        .map_err(|_| AppError::invalid("เปิดเว็บมือถือไม่สำเร็จ"))?;
+    Ok(())
+}
+
+#[tauri::command]
 pub async fn export_backup(
     password: String,
     app: AppHandle,
@@ -236,15 +257,11 @@ pub async fn inspect_backup(
             .filter(|key| key.starts_with("onboarding_"))
             .count(),
         format_version: data.backup_format_version,
-        account_count: data
-            .wealth
+        ledger_count: data
+            .ledger
             .as_ref()
-            .map_or(0, |wealth| wealth.accounts.len()),
-        activity_count: data
-            .wealth
-            .as_ref()
-            .map_or(0, |wealth| wealth.activities.len()),
-        restore_scope: if data.backup_format_version == 1 {
+            .map_or(0, |ledger| ledger.entries.len()),
+        restore_scope: if data.ledger.is_none() {
             "tax_only"
         } else {
             "all"
@@ -269,13 +286,11 @@ pub async fn restore_backup(token: String, state: State<'_, AppState>) -> AppRes
     if pending.token != token || pending.created_at.elapsed() > Duration::from_secs(300) {
         return Err(AppError::backup("คำขอกู้คืนหมดอายุ กรุณาตรวจไฟล์อีกครั้ง"));
     }
-    *state.pending_import.lock().await = None;
     backup::restore(&state.pool, &state.catalog, pending.backup).await
 }
 #[tauri::command]
 pub async fn delete_all_data(state: State<'_, AppState>) -> AppResult<()> {
     *state.pending_backup.lock().await = None;
-    *state.pending_import.lock().await = None;
     storage::delete_all(&state.pool).await
 }
 
