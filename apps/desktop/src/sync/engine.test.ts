@@ -2,12 +2,14 @@ import { expect, it, vi } from "vitest";
 import { SyncEngine } from "./engine";
 import type { CloudTransport } from "./engine";
 import { emptySnapshot, sameSnapshot } from "./model";
+import { emptyTax } from "./model";
 import type { LocalState, Snapshot, Upload } from "./model";
 import type { SyncStore } from "./store";
 const clone = structuredClone;
 const initial: Snapshot = {
   categories: [{ id: "food", kind: "expense", name: "อาหาร" }],
   entries: [],
+  tax: emptyTax(),
 };
 class Store implements SyncStore {
   state: LocalState = {

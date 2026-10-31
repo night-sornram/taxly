@@ -35,6 +35,6 @@ GRANT USAGE ON SCHEMA auth TO authenticated;
 GRANT EXECUTE ON FUNCTION auth.uid() TO authenticated;
 INSERT INTO auth.users VALUES ('11111111-1111-4111-8111-111111111111'),('22222222-2222-4222-8222-222222222222');
 SQL
-sync_psql -f "$sync_repo/supabase/migrations/202610310001_ledger_sync.sql"
+for migration in "$sync_repo"/supabase/migrations/*.sql; do sync_psql -f "$migration"; done
 sync_psql -f "$sync_repo/supabase/tests/ledger_sync.sql"
-echo 'Ledger RPC validation, replay, revision checks, and account isolation passed.'
+echo 'Ledger and tax RPC validation, replay, revision checks, and account isolation passed.'

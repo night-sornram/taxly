@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { canonical, emptySnapshot, mergeSnapshots, validateSnapshot } from "./model";
-import type { Snapshot, SyncEntry } from "./model";
+import { emptyTax } from "./model";
+import type { Snapshot, SyncEntry, TaxIncomeRow } from "./model";
 import { parseCsv } from "./mobile";
 const entry = (id: string, amount = "1.00"): SyncEntry => ({
   id,
@@ -13,6 +14,7 @@ const entry = (id: string, amount = "1.00"): SyncEntry => ({
 const snapshot = (entries: SyncEntry[] = []): Snapshot => ({
   categories: [{ id: "food", kind: "expense", name: "อาหาร" }],
   entries,
+  tax: emptyTax(),
 });
 describe("portable ledger", () => {
   it("combines independent changes and preserves exact money", () => {
@@ -47,10 +49,12 @@ describe("portable ledger", () => {
     const a: Snapshot = {
       categories: [{ id: "a", kind: "expense", name: "กาแฟ" }],
       entries: [{ ...entry("phone"), category_id: "a" }],
+      tax: emptyTax(),
     };
     const b: Snapshot = {
       categories: [{ id: "b", kind: "expense", name: "กาแฟ" }],
       entries: [{ ...entry("desktop"), category_id: "b" }],
+      tax: emptyTax(),
     };
     const merged = mergeSnapshots(emptySnapshot(), a, b);
     expect(merged.conflicts).toEqual([]);
@@ -66,6 +70,7 @@ describe("portable ledger", () => {
         { id: "b", kind: "expense", name: "เดินทาง" },
       ],
       entries: [],
+      tax: emptyTax(),
     };
     const mine = structuredClone(base),
       theirs = structuredClone(base);
@@ -106,5 +111,73 @@ describe("portable ledger", () => {
     ]);
     expect(() => parseCsv('date,"unterminated')).toThrow();
     expect(() => parseCsv('a,"closed"extra')).toThrow();
+  });
+});
+
+describe("tax sync", () => {
+  const facts = {
+    single: true,
+    under_65: true,
+    domestic_salary_only: true,
+    no_special_cases: true,
+    no_other_deductions: true,
+    social_security_confirmed: false,
+  };
+  const year = { id: "2026", year: 2026, facts, income_complete: false };
+  const salary = (id: string, month: number, gross = "30000.00"): TaxIncomeRow => ({
+    id,
+    year: 2026,
+    source_label: "บริษัท",
+    month,
+    kind: "salary",
+    basis: "forecast",
+    gross,
+    withholding: null,
+    note: "",
+  });
+  const withTax = (incomes: TaxIncomeRow[]): Snapshot => ({
+    ...emptySnapshot(),
+    tax: { years: [year], incomes, deductions: [] },
+  });
+
+  it("reads snapshots written before tax sync as having no tax data", () => {
+    expect(validateSnapshot({ categories: [], entries: [] }).tax).toEqual(emptyTax());
+  });
+  it("merges one copy when two devices set up the same salary offline", () => {
+    const phone = withTax([salary("p1", 1), salary("p2", 2)]);
+    const desktop = withTax([salary("d1", 1), salary("d2", 2)]);
+    const merged = mergeSnapshots(emptySnapshot(), phone, desktop);
+    expect(merged.conflicts).toEqual([]);
+    expect(validateSnapshot(merged.snapshot).tax.incomes.map((i) => i.id)).toEqual(["d1", "d2"]);
+  });
+  it("asks which salary to keep when the same month differs", () => {
+    const phone = withTax([salary("p1", 1, "31000.00")]);
+    const desktop = withTax([salary("d1", 1)]);
+    const result = mergeSnapshots(emptySnapshot(), phone, desktop);
+    expect(result.conflicts.map((c) => c.key)).toEqual(["incomes:same:salary:2026:บริษัท:1"]);
+    const chosen = mergeSnapshots(emptySnapshot(), phone, desktop, {
+      "incomes:same:salary:2026:บริษัท:1": "local",
+    });
+    expect(chosen.snapshot.tax.incomes.map((i) => [i.id, i.gross])).toEqual([["p1", "31000.00"]]);
+  });
+  it("combines independent tax edits from two devices", () => {
+    const base = withTax([salary("a", 1)]);
+    const mine = withTax([salary("a", 1), salary("b", 2)]);
+    const theirs = withTax([salary("a", 1, "35000.00")]);
+    const merged = mergeSnapshots(base, mine, theirs);
+    expect(merged.conflicts).toEqual([]);
+    expect(merged.snapshot.tax.incomes.map((i) => [i.id, i.gross])).toEqual([
+      ["a", "35000.00"],
+      ["b", "30000.00"],
+    ]);
+  });
+  it("keeps the tax year a concurrently added income needs", () => {
+    const mine = withTax([salary("b", 2)]);
+    const merged = mergeSnapshots(withTax([]), mine, emptySnapshot());
+    expect(merged.conflicts).toEqual([]);
+    expect(validateSnapshot(merged.snapshot).tax.years).toHaveLength(1);
+  });
+  it("rejects two salaries for one employer and month", () => {
+    expect(() => validateSnapshot(withTax([salary("a", 1), salary("b", 1)]))).toThrow("ภาษี");
   });
 });

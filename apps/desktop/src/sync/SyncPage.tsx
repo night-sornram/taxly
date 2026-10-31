@@ -3,8 +3,9 @@ import { Cloud, CloudOff, RefreshCw, Smartphone } from "lucide-react";
 import { isDesktop, errorMessage, command } from "../api";
 import { Brand, Button, ErrorNotice, Field, Loading, Notice } from "../components";
 import { useCloud } from "./SyncProvider";
-import { formatMoney } from "../money";
-import type { Conflict } from "./model";
+import { formatMoney, months } from "../money";
+import type { Conflict, SyncEntry, TaxDeductionRow, TaxIncomeRow, TaxYearRow } from "./model";
+import type { LedgerCategory } from "../ledger/types";
 import "./sync.css";
 
 export function SyncBadge({ onOpen }: { onOpen: () => void }) {
@@ -28,35 +29,86 @@ export function SyncBadge({ onOpen }: { onOpen: () => void }) {
     </button>
   );
 }
+const incomeKinds = { salary: "เงินเดือน", bonus: "โบนัส", other: "รายได้อื่น" };
+const basisLabel = (basis: "actual" | "forecast") => (basis === "actual" ? "ยอดจริง" : "คาดการณ์");
 function ConflictValue({
+  kind,
   value,
   categoryName,
 }: {
+  kind: Conflict["kind"];
   value: Conflict["local"];
   categoryName?: string;
 }) {
   if (!value) return <p>ลบรายการนี้</p>;
-  if ("amount" in value)
+  if (kind === "entries") {
+    const entry = value as SyncEntry;
     return (
       <div>
-        <strong>{formatMoney(value.amount)} บาท</strong>
+        <strong>{formatMoney(entry.amount)} บาท</strong>
         <p>
-          {value.date} · {value.note || "ไม่มีบันทึก"}
+          {entry.date} · {entry.note || "ไม่มีบันทึก"}
         </p>
         <p>หมวดหมู่: {categoryName || "หมวดหมู่เดิม"}</p>
         <p>
-          {value.tax
-            ? `เชื่อมภาษี · ${value.tax.source_label} · ${{ salary: "เงินเดือน", bonus: "โบนัส", other: "รายได้อื่น" }[value.tax.kind]} · หัก ณ ที่จ่าย ${value.tax.withholding === null ? "ไม่ทราบ" : `${formatMoney(value.tax.withholding)} บาท`}`
+          {entry.tax
+            ? `เชื่อมภาษี · ${entry.tax.source_label} · ${incomeKinds[entry.tax.kind]} · หัก ณ ที่จ่าย ${entry.tax.withholding === null ? "ไม่ทราบ" : `${formatMoney(entry.tax.withholding)} บาท`}`
             : "ไม่เชื่อมภาษี"}
         </p>
       </div>
     );
+  }
+  if (kind === "incomes") {
+    const income = value as TaxIncomeRow;
+    return (
+      <div>
+        <strong>{formatMoney(income.gross)} บาท</strong>
+        <p>
+          {incomeKinds[income.kind]} · {income.source_label} · {months[income.month - 1]}{" "}
+          {income.year + 543} · {basisLabel(income.basis)}
+        </p>
+        <p>
+          หัก ณ ที่จ่าย{" "}
+          {income.withholding === null ? "ไม่ทราบ" : `${formatMoney(income.withholding)} บาท`}
+        </p>
+      </div>
+    );
+  }
+  if (kind === "deductions") {
+    const deduction = value as TaxDeductionRow;
+    return (
+      <div>
+        <strong>{formatMoney(deduction.amount)} บาท</strong>
+        <p>
+          ประกันสังคม · {months[deduction.month - 1]} {deduction.year + 543} ·{" "}
+          {basisLabel(deduction.basis)}
+        </p>
+      </div>
+    );
+  }
+  if (kind === "years") {
+    const year = value as TaxYearRow;
+    return (
+      <div>
+        <strong>ข้อมูลของฉัน ปีภาษี {year.year + 543}</strong>
+        <p>{year.income_complete ? "ยืนยันว่ารายได้ครบทั้งปีแล้ว" : "ยังไม่ยืนยันว่ารายได้ครบ"}</p>
+      </div>
+    );
+  }
+  const category = value as LedgerCategory;
   return (
     <p>
-      {value.name} · {value.kind === "income" ? "รายรับ" : "รายจ่าย"}
+      {category.name} · {category.kind === "income" ? "รายรับ" : "รายจ่าย"}
     </p>
   );
 }
+const conflictTitles: Record<Conflict["kind"], string> = {
+  entries: "รายการรายรับรายจ่าย",
+  categories: "หมวดหมู่",
+  years: "ข้อมูลภาษีของฉัน",
+  incomes: "รายได้ในภาษี",
+  deductions: "ประกันสังคมในภาษี",
+};
 export default function SyncPage({ standalone = false }: { standalone?: boolean }) {
   const cloud = useCloud();
   const [url, setUrl] = useState(cloud.config?.url ?? ""),
@@ -134,7 +186,7 @@ export default function SyncPage({ standalone = false }: { standalone?: boolean 
           <h2>เชื่อมบริการสำหรับ Taxly</h2>
           <p>
             ตั้งค่า Supabase โปรเจกต์ของคุณครั้งเดียว
-            ข้อมูลรายรับรายจ่ายและตัวเลือกเชื่อมภาษีจะซิงก์เฉพาะบัญชีที่เข้าใช้
+            ข้อมูลรายรับรายจ่ายและข้อมูลภาษีจะซิงก์เฉพาะบัญชีที่เข้าใช้
           </p>
           <form
             onSubmit={(e) => {
@@ -276,9 +328,9 @@ export default function SyncPage({ standalone = false }: { standalone?: boolean 
             {!cloud.enabled ? (
               <>
                 <p>
-                  เริ่มซิงก์รายรับรายจ่าย {cloud.localEntries} รายการกับบัญชีนี้
-                  หากมีข้อมูลอยู่บนคลาวด์แล้ว ระบบจะตรวจรวมข้อมูลก่อน
-                  ไม่ส่งแบบสอบถามหรือผลคำนวณภาษีขึ้นคลาวด์
+                  เริ่มซิงก์รายรับรายจ่าย {cloud.localEntries} รายการ และข้อมูลภาษี
+                  (คำตอบเรื่องสิทธิ์ รายได้ ประกันสังคม) กับบัญชีนี้ หากมีข้อมูลอยู่บนคลาวด์แล้ว
+                  ระบบจะตรวจรวมข้อมูลก่อน ประวัติผลคำนวณไม่ถูกส่งขึ้นคลาวด์
                 </p>
                 <p>
                   ส่งข้อมูลผ่าน HTTPS และจำกัดสิทธิ์ตามบัญชี
@@ -339,7 +391,7 @@ export default function SyncPage({ standalone = false }: { standalone?: boolean 
               <p>รายการเดียวกันถูกแก้ไขมากกว่าหนึ่งเครื่อง ข้อมูลจะยังไม่ถูกทับจนกว่าจะเลือกครบ</p>
               {cloud.status.conflicts.map((c) => (
                 <fieldset className="sync-conflict" key={c.key}>
-                  <legend>{c.kind === "entries" ? "รายการรายรับรายจ่าย" : "หมวดหมู่"}</legend>
+                  <legend>{conflictTitles[c.kind]}</legend>
                   {(["local", "remote"] as const).map((side) => (
                     <label key={side}>
                       <input
@@ -351,6 +403,7 @@ export default function SyncPage({ standalone = false }: { standalone?: boolean 
                       <div>
                         <strong>{side === "local" ? "ข้อมูลในเครื่องนี้" : "ข้อมูลออนไลน์"}</strong>
                         <ConflictValue
+                          kind={c.kind}
                           value={side === "local" ? c.local : c.remote}
                           categoryName={side === "local" ? c.localCategory : c.remoteCategory}
                         />

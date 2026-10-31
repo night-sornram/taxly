@@ -5,6 +5,7 @@ use crate::{
     error::{AppError, AppResult},
     ledger::{self, TaxLink},
     storage,
+    tax_sync::{self, TaxSnapshot},
 };
 use chrono::NaiveDate;
 use serde::{Deserialize, Serialize};
@@ -28,6 +29,9 @@ pub struct SyncEntry {
 pub struct SyncSnapshot {
     pub categories: Vec<ledger::LedgerCategory>,
     pub entries: Vec<SyncEntry>,
+    /// Absent in snapshots saved before tax sync.
+    #[serde(default)]
+    pub tax: TaxSnapshot,
 }
 #[derive(Serialize)]
 pub struct SyncState {
@@ -87,6 +91,7 @@ pub async fn state_in(tx: &mut Transaction<'_, Sqlite>) -> AppResult<SyncState> 
                     note: e.note,
                 })
                 .collect(),
+            tax: tax_sync::load(tx).await?,
         },
     };
     state.snapshot.categories.sort_by(|a, b| a.id.cmp(&b.id));
@@ -163,6 +168,7 @@ pub fn validate(snapshot: &SyncSnapshot) -> AppResult<()> {
             .collect(),
     };
     ledger::validate_data(&data, &HashSet::new())?;
+    tax_sync::validate(&snapshot.tax)?;
     for entry in &snapshot.entries {
         if let Some(tax) = &entry.tax
             && (snapshot
@@ -204,9 +210,10 @@ pub struct ApplyRequest {
 pub async fn apply(
     pool: &SqlitePool,
     catalog: &Catalog,
-    request: ApplyRequest,
+    mut request: ApplyRequest,
     today: NaiveDate,
 ) -> AppResult<bool> {
+    request.snapshot.tax = std::mem::take(&mut request.snapshot.tax).sorted();
     identity(&request.owner_id, &request.project_url)?;
     validate(&request.snapshot)?;
     validate(&request.base_snapshot)?;
@@ -225,6 +232,8 @@ pub async fn apply(
     }
     let changed = old.snapshot != request.snapshot;
     if changed {
+        // Tax years first: linked ledger incomes need their year to exist.
+        tax_sync::apply(&mut tx, &old.snapshot.tax, &request.snapshot.tax).await?;
         let old_entries: HashMap<_, _> = old
             .snapshot
             .entries

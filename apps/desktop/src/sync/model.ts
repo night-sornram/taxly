@@ -1,5 +1,6 @@
 import { normalizeAmount } from "../money";
 import type { LedgerCategory, LedgerEntry } from "../ledger/types";
+import type { Facts } from "../types";
 
 export interface TaxLink {
   source_label: string;
@@ -14,10 +15,44 @@ export interface SyncEntry {
   note: string;
   tax: TaxLink | null;
 }
+/** Tax data that travels between devices. Ledger-linked tax incomes are not
+ * listed here: each device rebuilds them from the entry's tax link. */
+export interface TaxYearRow {
+  id: string;
+  year: number;
+  facts: Facts;
+  income_complete: boolean;
+}
+export interface TaxIncomeRow {
+  id: string;
+  year: number;
+  source_label: string;
+  month: number;
+  kind: "salary" | "bonus" | "other";
+  basis: "actual" | "forecast";
+  gross: string;
+  withholding: string | null;
+  note: string;
+}
+export interface TaxDeductionRow {
+  id: string;
+  year: number;
+  month: number;
+  basis: "actual" | "forecast";
+  amount: string;
+}
+export interface TaxSnapshot {
+  years: TaxYearRow[];
+  incomes: TaxIncomeRow[];
+  deductions: TaxDeductionRow[];
+}
 export interface Snapshot {
   categories: LedgerCategory[];
   entries: SyncEntry[];
+  tax: TaxSnapshot;
 }
+type Row = LedgerCategory | SyncEntry | TaxYearRow | TaxIncomeRow | TaxDeductionRow;
+type RowKind = "categories" | "entries" | "years" | "incomes" | "deductions";
 export interface LocalState {
   revision: number;
   owner_id: string | null;
@@ -40,16 +75,63 @@ export interface CloudState {
 }
 export interface Conflict {
   key: string;
-  kind: "categories" | "entries";
+  kind: RowKind;
   id: string;
-  local: LedgerCategory | SyncEntry | null;
-  remote: LedgerCategory | SyncEntry | null;
+  local: Row | null;
+  remote: Row | null;
   localCategory?: string;
   remoteCategory?: string;
 }
-export const emptySnapshot = (): Snapshot => ({ categories: [], entries: [] });
+export const emptyTax = (): TaxSnapshot => ({ years: [], incomes: [], deductions: [] });
+export const emptySnapshot = (): Snapshot => ({ categories: [], entries: [], tax: emptyTax() });
+const byId = <T extends { id: string }>(rows: T[]) => rows.sort((a, b) => a.id.localeCompare(b.id));
+const optionalAmount = (value: string | null) => (value === null ? null : normalizeAmount(value));
+// Snapshots written before tax sync have no tax section.
+export function canonicalTax(tax: TaxSnapshot | undefined): TaxSnapshot {
+  const t = tax ?? emptyTax();
+  return {
+    years: byId(
+      t.years.map((y) => ({
+        id: String(y.year),
+        year: y.year,
+        facts: {
+          single: y.facts.single,
+          under_65: y.facts.under_65,
+          domestic_salary_only: y.facts.domestic_salary_only,
+          no_special_cases: y.facts.no_special_cases,
+          no_other_deductions: y.facts.no_other_deductions,
+          social_security_confirmed: y.facts.social_security_confirmed,
+        },
+        income_complete: y.income_complete,
+      })),
+    ),
+    incomes: byId(
+      t.incomes.map((i) => ({
+        id: i.id,
+        year: i.year,
+        source_label: i.source_label.trim(),
+        month: i.month,
+        kind: i.kind,
+        basis: i.basis,
+        gross: normalizeAmount(i.gross),
+        withholding: optionalAmount(i.withholding),
+        note: i.note.trim(),
+      })),
+    ),
+    deductions: byId(
+      t.deductions.map((d) => ({
+        id: d.id,
+        year: d.year,
+        month: d.month,
+        basis: d.basis,
+        amount: normalizeAmount(d.amount),
+      })),
+    ),
+  };
+}
 export function canonical(snapshot: Snapshot): Snapshot {
   return {
+    tax: canonicalTax(snapshot.tax),
     categories: snapshot.categories
       .map((c) => ({ id: c.id, kind: c.kind, name: c.name.trim() }))
       .sort((a, b) => a.id.localeCompare(b.id)),
@@ -149,8 +231,111 @@ export function validateSnapshot(value: unknown): Snapshot {
       throw bad();
     ids.add(e.id);
   }
+  validateTax("tax" in value ? value.tax : undefined, idOk, amountOk);
   return canonical(value as Snapshot);
 }
+const TAX_YEARS = [2025, 2026];
+function validateTax(
+  tax: unknown,
+  idOk: (id: unknown) => id is string,
+  amountOk: (amount: unknown, zero: boolean) => boolean,
+) {
+  const bad = () => new Error("ข้อมูลภาษีที่ซิงก์ไม่ถูกต้อง");
+  if (tax === undefined) return;
+  const t = tax as Partial<Record<keyof TaxSnapshot, unknown>>;
+  if (
+    !tax ||
+    typeof tax !== "object" ||
+    Object.keys(tax).length !== 3 ||
+    !Array.isArray(t.years) ||
+    !Array.isArray(t.incomes) ||
+    !Array.isArray(t.deductions) ||
+    t.years.length > 20 ||
+    t.incomes.length > 50_000 ||
+    t.deductions.length > 1_000
+  )
+    throw bad();
+  const month = (m: unknown) => Number.isInteger(m) && (m as number) >= 1 && (m as number) <= 12;
+  const basis = (b: unknown) => b === "actual" || b === "forecast";
+  const flag = (f: unknown) => f === null || typeof f === "boolean";
+  const years = new Set<number>();
+  for (const y of t.years as TaxYearRow[]) {
+    const f = y?.facts as unknown as Record<string, unknown> | undefined;
+    if (
+      !y ||
+      !TAX_YEARS.includes(y.year) ||
+      y.id !== String(y.year) ||
+      years.has(y.year) ||
+      typeof y.income_complete !== "boolean" ||
+      !f ||
+      typeof f !== "object" ||
+      Object.keys(f).length !== 6 ||
+      typeof f.social_security_confirmed !== "boolean" ||
+      ![
+        "single",
+        "under_65",
+        "domestic_salary_only",
+        "no_special_cases",
+        "no_other_deductions",
+      ].every((k) => k in f && flag(f[k]))
+    )
+      throw bad();
+    years.add(y.year);
+  }
+  const ids = new Set<string>();
+  const salaries = new Set<string>();
+  for (const i of t.incomes as TaxIncomeRow[]) {
+    if (
+      !i ||
+      !idOk(i.id) ||
+      ids.has(i.id) ||
+      !years.has(i.year) ||
+      typeof i.source_label !== "string" ||
+      !i.source_label.trim() ||
+      [...i.source_label].length > 100 ||
+      !month(i.month) ||
+      !["salary", "bonus", "other"].includes(i.kind) ||
+      !basis(i.basis) ||
+      !amountOk(i.gross, true) ||
+      (i.withholding !== null && !amountOk(i.withholding, true)) ||
+      typeof i.note !== "string" ||
+      [...i.note].length > 500
+    )
+      throw bad();
+    ids.add(i.id);
+    if (i.kind === "salary") {
+      const key = salaryKey(i);
+      if (salaries.has(key)) throw bad();
+      salaries.add(key);
+    }
+  }
+  ids.clear();
+  const months = new Set<string>();
+  for (const d of t.deductions as TaxDeductionRow[]) {
+    if (
+      !d ||
+      !idOk(d.id) ||
+      ids.has(d.id) ||
+      !years.has(d.year) ||
+      !month(d.month) ||
+      !basis(d.basis) ||
+      !amountOk(d.amount, true) ||
+      months.has(`${d.year}:${d.month}`)
+    )
+      throw bad();
+    ids.add(d.id);
+    months.add(`${d.year}:${d.month}`);
+  }
+}
+// The tax database allows one salary per employer per month and one social
+// security row per month; these keys find copies created separately offline.
+const salaryKey = (i: TaxIncomeRow) => `${i.year}:${i.source_label.trim()}:${i.month}`;
+const naturalKey = (kind: "incomes" | "deductions", row: TaxIncomeRow | TaxDeductionRow) =>
+  kind === "incomes"
+    ? (row as TaxIncomeRow).kind === "salary"
+      ? `salary:${salaryKey(row as TaxIncomeRow)}`
+      : null
+    : `sso:${row.year}:${row.month}`;
 
 /** Three-way merge: independent changes combine; competing edits require a choice. */
 export function mergeSnapshots(
@@ -161,17 +346,18 @@ export function mergeSnapshots(
 ) {
   const result = emptySnapshot();
   const conflicts: Conflict[] = [];
-  for (const kind of ["categories", "entries"] as const) {
-    const original = new Map(canonical(base)[kind].map((r) => [r.id, r]));
-    const mine = new Map(canonical(local)[kind].map((r) => [r.id, r]));
-    const theirs = new Map(canonical(remote)[kind].map((r) => [r.id, r]));
-    const rows: (LedgerCategory | SyncEntry)[] = [];
+  const [b0, l0, r0] = [canonical(base), canonical(local), canonical(remote)];
+  const mergeRows = <T extends Row>(kind: RowKind, pick: (s: Snapshot) => T[]): T[] => {
+    const original = new Map(pick(b0).map((r) => [r.id, r]));
+    const mine = new Map(pick(l0).map((r) => [r.id, r]));
+    const theirs = new Map(pick(r0).map((r) => [r.id, r]));
+    const rows: T[] = [];
     for (const id of new Set([...original.keys(), ...mine.keys(), ...theirs.keys()])) {
       const b = original.get(id) ?? null,
         l = mine.get(id) ?? null,
         r = theirs.get(id) ?? null;
       const key = `${kind}:${id}`;
-      let chosen: LedgerCategory | SyncEntry | null;
+      let chosen: T | null;
       if (equal(l, r)) chosen = l;
       else if (equal(l, b)) chosen = r;
       else if (equal(r, b)) chosen = l;
@@ -196,9 +382,59 @@ export function mergeSnapshots(
       }
       if (chosen) rows.push(chosen);
     }
-    if (kind === "categories") result.categories = rows as LedgerCategory[];
-    else result.entries = rows as SyncEntry[];
-  }
+    return rows;
+  };
+  result.categories = mergeRows("categories", (s) => s.categories);
+  result.entries = mergeRows("entries", (s) => s.entries);
+  result.tax.years = mergeRows("years", (s) => s.tax.years);
+  // Two devices that each set up the same month keep one copy: identical
+  // values merge silently, different values need the user's choice.
+  const dedupe = <T extends TaxIncomeRow | TaxDeductionRow>(
+    kind: "incomes" | "deductions",
+    rows: T[],
+  ): T[] => {
+    const remoteIds = new Set(r0.tax[kind].map((r) => r.id));
+    const kept = new Map<string, T>();
+    const out: T[] = [];
+    for (const row of [...rows].sort(
+      (a, b) =>
+        Number(remoteIds.has(b.id)) - Number(remoteIds.has(a.id)) || a.id.localeCompare(b.id),
+    )) {
+      const natural = naturalKey(kind, row);
+      const first = natural ? kept.get(natural) : undefined;
+      if (!natural || !first) {
+        if (natural) kept.set(natural, row);
+        out.push(row);
+        continue;
+      }
+      const same = equal({ ...first, id: "" }, { ...row, id: "" });
+      const key = `${kind}:same:${natural}`;
+      if (same || choices[key] === "remote") continue;
+      if (choices[key] === "local") {
+        out.splice(out.indexOf(first), 1, row);
+        kept.set(natural, row);
+        continue;
+      }
+      conflicts.push({ key, kind, id: natural, local: row, remote: first });
+    }
+    return out;
+  };
+  result.tax.incomes = dedupe(
+    "incomes",
+    mergeRows("incomes", (s) => s.tax.incomes),
+  );
+  result.tax.deductions = dedupe(
+    "deductions",
+    mergeRows("deductions", (s) => s.tax.deductions),
+  );
+  // Keep the tax year needed by a concurrently added income or deduction.
+  for (const row of [...result.tax.incomes, ...result.tax.deductions])
+    if (!result.tax.years.some((y) => y.year === row.year)) {
+      const year = [...r0.tax.years, ...l0.tax.years, ...b0.tax.years].find(
+        (y) => y.year === row.year,
+      );
+      if (year) result.tax.years.push(year);
+    }
   // Keep a category needed by a concurrently added entry instead of losing the entry.
   for (const entry of result.entries) {
     if (!result.categories.some((c) => c.id === entry.category_id)) {
@@ -241,9 +477,14 @@ export function mergeSnapshots(
 }
 export function pendingCount(state: LocalState): number {
   let count = 0;
-  for (const kind of ["categories", "entries"] as const) {
-    const base = new Map(canonical(state.base_snapshot)[kind].map((r) => [r.id, r]));
-    const current = new Map(canonical(state.snapshot)[kind].map((r) => [r.id, r]));
+  const rows = (s: Snapshot): Row[][] => {
+    const c = canonical(s);
+    return [c.categories, c.entries, c.tax.years, c.tax.incomes, c.tax.deductions];
+  };
+  const [before, after] = [rows(state.base_snapshot), rows(state.snapshot)];
+  for (let i = 0; i < before.length; i++) {
+    const base = new Map<string, Row>(before[i].map((r) => [r.id, r]));
+    const current = new Map<string, Row>(after[i].map((r) => [r.id, r]));
     for (const id of new Set([...base.keys(), ...current.keys()]))
       if (!equal(base.get(id), current.get(id))) count++;
   }

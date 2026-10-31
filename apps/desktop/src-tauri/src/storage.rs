@@ -184,7 +184,11 @@ async fn bump(tx: &mut Transaction<'_, Sqlite>, year: u16) -> AppResult<()> {
     Ok(())
 }
 
-async fn source(tx: &mut Transaction<'_, Sqlite>, year: u16, label: &str) -> AppResult<String> {
+pub(crate) async fn source(
+    tx: &mut Transaction<'_, Sqlite>,
+    year: u16,
+    label: &str,
+) -> AppResult<String> {
     if let Some(id) = sqlx::query_scalar::<_, String>(
         "SELECT id FROM income_sources WHERE tax_year=? AND label=?",
     )
