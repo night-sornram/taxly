@@ -85,7 +85,7 @@
   display: flex;
   align-items: center;
   gap: 20px;
-  padding-top: 14px;
+  padding-top: calc(14px + env(safe-area-inset-top, 0px));
   padding-bottom: 10px;
 }
 .tx-header .brand {
@@ -951,6 +951,10 @@ td .cat-name .cat-icon {
 }
 .onboarding-top {
   border-bottom: 0;
+  padding-top: env(safe-area-inset-top, 0px);
+}
+.onboarding {
+  padding-bottom: env(safe-area-inset-bottom, 0px);
 }
 .onboarding-top .brand i {
   display: none;
@@ -1029,7 +1033,8 @@ td .cat-name .cat-icon {
   position: static;
   justify-content: center;
   flex-wrap: wrap;
-  padding: 0 16px 28px;
+  padding: 0 16px calc(28px + env(safe-area-inset-bottom, 0px));
+  background: var(--canvas);
   color: var(--muted);
   font-size: 14px;
 }
@@ -1243,4 +1248,14 @@ td .cat-name .cat-icon {
   .pockets {
     grid-template-columns: minmax(0, 1fr);
   }
+}
+
+/* Phones draw the app under the status bar; keep scrolled content out from under it. */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0 0 auto;
+  height: env(safe-area-inset-top, 0px);
+  background: var(--canvas);
+  z-index: 40;
 }

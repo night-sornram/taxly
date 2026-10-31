@@ -26,10 +26,15 @@ pub async fn get_active_tax_year(state: State<'_, AppState>) -> AppResult<u16> {
         sqlx::query_scalar("SELECT value_json FROM app_settings WHERE key='active_tax_year'")
             .fetch_optional(&state.pool)
             .await?;
-    let year = stored
-        .map(|value| serde_json::from_str::<u16>(&value))
-        .transpose()?
-        .unwrap_or(2026);
+    // Never chosen on this device: open the latest year with data (for
+    // example one that arrived by sync) rather than an empty year.
+    let latest: Option<i64> = sqlx::query_scalar("SELECT max(year) FROM tax_years")
+        .fetch_one(&state.pool)
+        .await?;
+    let year = match stored {
+        Some(value) => serde_json::from_str::<u16>(&value)?,
+        None => latest.map_or(2026, |year| year as u16),
+    };
     state.catalog.get(year)?;
     Ok(year)
 }
