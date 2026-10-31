@@ -1,25 +1,28 @@
 # ผลตรวจรุ่นทดลอง 0.1.0
 
-## การตรวจเพิ่มสำหรับโมดูลลงทุน — 15 ตุลาคม 2569
+## มือถือและการซิงก์ — 31 ตุลาคม 2569
+
+- Vitest: 41 ผ่าน รวมการรวมข้อมูลที่แก้ต่างเครื่อง การแก้ชนกัน การส่งซ้ำเมื่อคำตอบหาย การลบระหว่างส่ง การเปิด engine ใหม่ และหมวดหมู่ชื่อเดียวกันที่สร้างแยกกันออฟไลน์
+- Rust: 26 ผ่าน (application 14 + tax core 12) รวมการรักษา ID ภาษีในเครื่อง การ rollback ข้อมูลซิงก์ที่เชื่อมปีภาษียังไม่ตั้งค่า การบันทึก upload intent ข้ามการเปิดฐานข้อมูลใหม่ CAS และการพักซิงก์หลังล้างข้อมูล Clippy `-D warnings` และ formatting ผ่าน
+- PostgreSQL 17 ใน cluster ชั่วคราวที่เปิดเฉพาะ Unix socket: migration จริง, RLS สองบัญชี, สิทธิ์ anonymous/direct write, RPC, revision, receipt replay/hash mismatch, duplicate ID, category reference/kind, date และจำนวนเงินเกินช่วง ผ่าน รันซ้ำได้ด้วย `scripts/test-ledger-sync-sql.sh` ใช้ `PG_BIN` เลือกไดเรกทอรี PostgreSQL ได้ ไม่แตะโปรเจกต์ Supabase จริง
+- Playwright Chromium ทั้งชุด: 17 ผ่าน + ข้าม 1 กรณีที่ต้องใช้ production build ส่วนมือถือใช้ Supabase auth/RPC/WebSocket จำลองและ IndexedDB จริง แยกสอง browser context ทดสอบเพิ่ม/แก้/ลบสดและรายการค้างส่งหลัง reload
+- Production PWA: 3 ผ่าน รวม reload ออฟไลน์ บันทึกออฟไลน์ reload อีกครั้ง และส่งเมื่อกลับออนไลน์ ใช้ service worker ที่ build จริง ตรวจ axe และความกว้าง 320 px ทั้งธีมสว่าง/มืดผ่าน
+- TypeScript, Prettier และ Vite build ผ่าน ผลตรวจเหล่านี้ยังไม่ใช่การทดสอบ Supabase บนคลาวด์หรือโทรศัพท์จริง ต้องสร้างโปรเจกต์และโฮสต์ HTTPS แล้วตรวจอีกครั้งตาม [คู่มือซิงก์มือถือ](mobile-sync.md)
+- สร้าง macOS release `.app`/`.dmg` สำหรับ arm64 ใหม่แล้ว ตรวจ `codesign --verify --deep --strict` และ `hdiutil verify` ผ่าน ยังไม่ได้ติดตั้งทับหรือเปิดใช้ข้อมูลจริงของผู้ใช้
+
+## รายรับรายจ่ายแทนโมดูลลงทุน — 31 ตุลาคม 2569
+
+ถอดโมดูลลงทุนออก (ผู้ใช้ย้ายไปใช้ Wealthfolio) โค้ดเดิมรวมงาน DCA เก็บไว้ที่ branch `archive/wealth-dca` migration `0006_ledger.sql` ลบตาราง `wealth_*` และข้อมูลในตารางเหล่านั้นถาวร แล้วสร้างตารางรายรับรายจ่าย
 
 | การตรวจ | ผล |
 |---|---|
 | Rust formatting / workspace Clippy (`-D warnings`) | ผ่าน |
-| Rust workspace tests | 69 ผ่าน: application/contract/import/market/storage 35, salary 10, wealth core 24 |
+| Rust workspace tests | ผ่านทั้งหมด รวมการอัปเกรดฐานข้อมูลที่มีข้อมูลลงทุน, การซิงก์รายรับที่นับภาษี, การปฏิเสธข้อมูลไม่ถูกต้อง, CSV UTF-8/TIS-620 และ backup v3 |
 | TypeScript / Vite production build / Prettier | ผ่าน |
-| Vitest | 27 ผ่าน รวม decimal/เปอร์เซ็นต์, ตารางกราฟ และการตรวจ CSV |
-| Playwright Chromium | 14 ผ่าน รวม tax 8 และ wealth 6; axe ธีมสว่าง/มืดและหน้าจอแคบ |
-| SQLite migrations / restore | อัปเกรดฐานข้อมูลเก่า, restart, reject stale revision, rollback เมื่อแก้ย้อนหลัง/นำเข้า/กู้คืนล้มเหลว |
-| Encrypted backup v2 และ legacy v1 | age round-trip ทั้งสองโมดูล; v1 กู้เฉพาะภาษีและคงข้อมูลลงทุน |
-| Native macOS debug bundle | สร้าง `.app` สำเร็จและ `codesign --verify --deep --strict` ผ่าน; ad-hoc signing |
+| Vitest | ผ่าน รวมยอดรวมแบบสตางค์ และการอ่านวันที่/จำนวนเงินจาก CSV |
+| Playwright Chromium | ผ่าน รวมรายรับรายจ่าย 4 กรณีและ axe หน้าจอหลักและหน้าจอแคบ |
 
-Native smoke ใช้ฐานข้อมูลสังเคราะห์ใน temporary directory ผ่าน `TAXLY_DATA_DIR` ไม่อ่านหรือเปลี่ยนฐานข้อมูลจริงของผู้ใช้ เปิดพื้นที่ลงทุนได้ก่อนทำ tax onboarding นำเข้า CSV ผ่าน native file chooser และตรวจสองแถวก่อนยืนยัน (deposit 20 THB และซื้อ PTT 0.25 หน่วยที่ราคา 40 THB) หลังนำเข้าได้ 6.25 หน่วย ต้นทุน 616 THB เงินสด 9,685 THB ปิดแล้วเปิดใหม่ยังอยู่ครบ
-
-หลังแก้ URL ของ Yahoo ที่มี slash เกิน ได้ทดสอบ native refresh จริง: ดาวน์โหลดราคา PTT.BK 191 วัน พร้อมเก็บราคาบันทึกเองเดิมทั้ง 3 วัน ฐานข้อมูลมี 6 activities, `integrity_check=ok` และไม่มี foreign-key errors การทดสอบ Yahoo เป็นหลักฐานการเชื่อมต่อในรอบนี้เท่านั้น ผู้ให้บริการอาจจำกัดคำขอหรือมีข้อมูลล่าช้า
-
-Fixtures ของ portfolio ส่งออกจาก Rust และตรวจเทียบกับ engine ใน CI การทดสอบ browser ใช้ fixtures เหล่านี้เพื่อยืนยัน UI และ IPC; การทดสอบ persistence/encryption ใช้ SQLite และ age จริงแยกชั้นกัน ดูขอบเขตและวิธีคำนวณใน [เอกสารโมดูลลงทุน](planning/13-wealth.md)
-
-การลงนาม Developer ID/notarization และ release gates ของภาษีด้านล่างยังคงเป็นเงื่อนไขก่อนแจกจ่ายภายนอก ไม่มีการเชื่อมผลลงทุนเข้า tax engine
+ไฟล์สำรองรุ่น 3 มีข้อมูลรายรับรายจ่าย ไฟล์รุ่น 1/2 ยังกู้คืนได้เฉพาะข้อมูลภาษี ส่วนข้อมูลลงทุนในไฟล์รุ่น 2 ถูกข้าม
 
 ## ผลตรวจฐานภาษีเดิม
 

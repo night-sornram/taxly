@@ -13,11 +13,9 @@ tauri-build = { version = "2", features = [] }
 
 [dependencies]
 taxly-core = { path = "../../../crates/taxly-core" }
-wealth-core = { path = "../../../crates/wealth-core" }
 rust_decimal.workspace = true
 chrono = { version = "0.4", default-features = false, features = ["std", "clock", "serde"] }
 csv = "1.3"
-reqwest = { version = "0.12", default-features = false, features = ["json", "rustls-tls"] }
 serde.workspace = true
 serde_json = { workspace = true, features = ["arbitrary_precision"] }
 thiserror.workspace = true

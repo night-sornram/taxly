@@ -1,0 +1,133 @@
+.ledger-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.ledger-month {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  min-height: 44px;
+  padding: 2px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--paper);
+}
+.ledger-month .icon-button {
+  width: 38px;
+  height: 38px;
+  border-radius: 999px;
+  color: var(--ink);
+}
+.ledger-month select {
+  appearance: none;
+  min-height: 38px;
+  padding: 0 8px;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--ink);
+  font: inherit;
+  font-size: 15px;
+  font-weight: 600;
+  text-align: center;
+  cursor: pointer;
+}
+.ledger-month select:hover,
+.ledger-month .icon-button:hover {
+  background: var(--canvas);
+}
+.ledger-month select:focus-visible,
+.ledger-month .icon-button:focus-visible {
+  outline: 2px solid var(--forest);
+  outline-offset: 0;
+}
+.ledger-stats {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+  margin-bottom: 18px;
+}
+.ledger-stats > .card {
+  padding: 18px 20px;
+  display: grid;
+  gap: 6px;
+}
+.ledger-stats .money {
+  font-size: 22px;
+}
+.ledger-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 18px;
+  align-items: start;
+}
+.ledger-panel {
+  padding: 20px;
+  margin-bottom: 18px;
+}
+.ledger-panel h2 {
+  font-size: 15px;
+  margin-bottom: 14px;
+}
+.ledger-bars,
+.ledger-category-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: grid;
+  gap: 12px;
+}
+.ledger-bars li > div,
+.ledger-category-list li {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+}
+.ledger-bars .progress-track {
+  display: block;
+  margin: 6px 0 0;
+}
+.ledger-category-list li {
+  border-bottom: 1px solid var(--line);
+  padding-bottom: 8px;
+}
+.ledger-income {
+  color: var(--c-496849);
+}
+.ledger-negative,
+.ledger-expense {
+  color: var(--c-a44936);
+}
+.ledger-current td {
+  font-weight: 600;
+}
+.ledger-invalid td {
+  color: var(--muted);
+}
+.ledger-tax-badge {
+  margin-left: 6px;
+}
+.ledger-kind {
+  margin-bottom: 14px;
+}
+.ledger-tax-link {
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 12px 14px;
+  margin-bottom: 14px;
+  display: grid;
+  gap: 10px;
+}
+@media (max-width: 760px) {
+  .ledger-stats,
+  .ledger-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+@media (max-width: 700px) {
+  .ledger-app .tx-main {
+    padding-bottom: calc(100px + env(safe-area-inset-bottom, 0px));
+  }
+}

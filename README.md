@@ -4,7 +4,7 @@
 
 ## English
 
-A Thai tax assistant and investment portfolio tracker that stores all your data on your device. Built with **Rust · Tauri 2 · React · TypeScript · Tailwind CSS · SQLite/SQLx**.
+A Thai tax assistant and personal income and expense tracker with local storage and optional real-time phone sync. Built with **Rust · Tauri 2 · React · TypeScript · Tailwind CSS · SQLite/SQLx**.
 
 This experimental release supports single taxpayers under 65 with domestic salary or bonus income, multiple employers, the personal allowance, Section 33 social security contributions, and withholding tax credits for tax years **2025 / 2026 (B.E. 2568 / 2569)**.
 
@@ -18,7 +18,7 @@ npm ci
 npm run tauri dev
 ```
 
-Run the desktop app through Tauri to use the database. `npm run dev` starts only the frontend, which displays instructions to open the desktop app. The production frontend does not simulate financial data.
+Run the desktop app through Tauri for local SQLite and tax calculations. `npm run dev` also serves the phone ledger UI; configure Supabase and sign in to use it. No financial data is simulated. See [mobile sync setup](docs/mobile-sync.md) for the new Supabase project and HTTPS hosting.
 
 Build a local experimental package:
 
@@ -33,14 +33,13 @@ If DMG window customization hangs or times out, build with `CI=true npm run taur
 
 ### Features
 
-**Investments**
+**Income and expenses**
 
-- Track stocks, ETFs, and cash in multiple currencies across accounts. Record trades and calculate first-in, first-out (FIFO) cost basis and time-weighted returns (TWR).
-- Start with a complete transaction history or opening balances. Import CSV files with duplicate detection and automatic column matching.
-- Search Yahoo Finance for securities and automatically fill in the name, exchange, type, and symbol. Market data must be enabled first.
-- Record purchases using a total amount and let the app calculate the unit price. Preview profit or loss against the latest price, or use the latest stored price directly.
-- Record prices and exchange rates manually, or optionally fetch them from Yahoo Finance. Data is cached locally for offline use.
-- When market data is enabled, stock and ETF logos load directly from Financial Modeling Prep by symbol. Initials appear when market data is disabled or no image is available.
+- Record income and expenses with a date, category, and note. Rename, add, or remove categories.
+- Monthly summary of income, expenses, and the remaining balance, with spending by category and a 12-month table.
+- Phone PWA with real-time account sync, offline entry storage, and explicit conflict choices. [Setup and limits](docs/mobile-sync.md).
+- Mark an income entry as taxable to add it to the tax year's income (salary, bonus, or other one-time income, with withholding). Editing or deleting the entry updates the tax side too.
+- Import bank or credit card CSV files (UTF-8 or Thai TIS-620). Pick the header row, match columns (one signed amount column or separate withdrawal/deposit columns), review every row, and skip likely duplicates.
 
 **Taxes**
 
@@ -54,8 +53,8 @@ If DMG window customization hangs or times out, build with `CI=true npm run taur
 
 **Data and privacy**
 
-- Investment results are kept separate from tax calculations and are not included in taxable income.
-- Back up tax and investment data in a password-encrypted file (v2). Restore older tax-only v1 backups, or clear all app data.
+- Expenses are not used as tax deductions; only income entries you mark as taxable reach the tax calculation.
+- Back up tax and income/expense data in a password-encrypted file (v3). Older v1/v2 backups restore tax data only; investment data in v2 files is ignored. Clear all app data at any time.
 - Fonts and rule sets are bundled with the app. Core features work offline.
 
 ### Experimental release limitations
@@ -64,7 +63,7 @@ If DMG window customization hangs or times out, build with `CI=true npm run taur
 
 Support is incomplete for married taxpayers, people aged 65 or older, foreign income, lump-sum termination payments, special exemptions, and other allowances. The app discloses these limits before showing results. It does not file returns or pay taxes on your behalf.
 
-The local database is **not encrypted**; access is restricted through per-user file permissions. Backup files are encrypted with a password of at least 12 characters. There are no user accounts, usage analytics, or cloud sync. Market data is optional and disabled by default. When enabled, Yahoo Finance receives the requested symbols and your IP address. Financial Modeling Prep receives symbols and your IP address when security logos load. Market prices may be delayed or incomplete.
+The local database is **not encrypted**; access is restricted through per-user file permissions. Backup files are encrypted with a password of at least 12 characters. Tax features work without an account. Phone sync is opt-in: email sign-in and Supabase send ledger categories, entries, and tax-link settings to your project. Tax profiles and calculation history remain local. There are no usage analytics. Cloud data is not end-to-end encrypted; the project administrator can read it.
 
 ### Verification
 
@@ -99,20 +98,19 @@ Debug builds support `TAXLY_DATA_DIR` to isolate test data. Release builds ignor
 
 ### Architecture and documentation
 
-`taxly-core` and `wealth-core` contain pure calculations without Tauri, SQLx, or network access. The app calls them through typed commands. Tax amounts are stored as integer satang in SQLite. Portfolio amounts, quantities, prices, and exchange rates are stored as decimal strings and validated by Rust on every use.
+`taxly-core` contains pure tax calculations without Tauri, SQLx, or network access. The app calls it through typed commands. Tax and income/expense amounts are stored as integer satang in SQLite.
 
 - [Product and design documentation](docs/planning/README.md)
 - [Rule evidence and open questions](docs/planning/09-rule-versioning.md)
 - [Testing and acceptance criteria](docs/planning/10-testing.md)
 - [Privacy and backups](docs/planning/11-security.md)
 - [Experimental release verification and remaining criteria](docs/verification.md)
-- [Investment scope and data contracts](docs/planning/13-wealth.md)
 
 License: [Apache-2.0](LICENSE)
 
 ## ภาษาไทย
 
-ผู้ช่วยภาษีไทยและติดตามพอร์ตลงทุนที่เก็บข้อมูลไว้ในเครื่องของคุณทั้งหมด สร้างด้วย **Rust · Tauri 2 · React · TypeScript · Tailwind CSS · SQLite/SQLx**
+ผู้ช่วยภาษีไทยและบันทึกรายรับรายจ่ายที่เก็บข้อมูลไว้ในเครื่องของคุณทั้งหมด สร้างด้วย **Rust · Tauri 2 · React · TypeScript · Tailwind CSS · SQLite/SQLx**
 
 รุ่นทดลองสำหรับผู้โสดอายุต่ำกว่า 65 ปี มีเงินเดือนหรือโบนัสในประเทศ รองรับหลายนายจ้าง สิทธิ์ลดหย่อนส่วนตัว ประกันสังคม ม.33 และเครดิตภาษีหัก ณ ที่จ่าย สำหรับปีภาษี **2568 / 2569**
 
@@ -126,7 +124,7 @@ npm ci
 npm run tauri dev
 ```
 
-ต้องเปิดแอปจริงผ่าน Tauri จึงจะใช้ฐานข้อมูลได้ ส่วน `npm run dev` เปิดเฉพาะส่วนหน้าจอ และจะแสดงคำแนะนำให้เปิดแอปเดสก์ท็อปแทน ไม่มีการจำลองข้อมูลการเงินในส่วนหน้าจอรุ่นที่ใช้งานจริง
+เปิดแอปผ่าน Tauri เพื่อใช้ SQLite และคำนวณภาษีในเครื่อง ส่วน `npm run dev` เปิดหน้ารายรับรายจ่ายสำหรับมือถือได้หลังตั้งค่า Supabase และเข้าบัญชี ไม่มีข้อมูลการเงินจำลอง ดู [การตั้งค่าซิงก์มือถือ](docs/mobile-sync.md) สำหรับโปรเจกต์ใหม่และโฮสต์ HTTPS
 
 สร้างแพ็กเกจทดลองในเครื่อง:
 
@@ -141,14 +139,13 @@ npm run tauri build -- --bundles app,dmg
 
 ### ความสามารถ
 
-**การลงทุน**
+**รายรับรายจ่าย**
 
-- พอร์ตหุ้นและ ETF พร้อมเงินสดหลายสกุลเงิน แยกตามบัญชี บันทึกการซื้อขาย คำนวณต้นทุนแบบเข้าก่อน-ออกก่อน (FIFO) และผลตอบแทนถ่วงน้ำหนักตามเวลา (TWR)
-- เริ่มด้วยประวัติรายการทั้งหมด หรือยอดยกมา นำเข้าไฟล์ CSV พร้อมตรวจรายการซ้ำและจับคู่คอลัมน์ให้อัตโนมัติ
-- ค้นหาหลักทรัพย์จาก Yahoo Finance แล้วกรอกชื่อ ตลาด ประเภท และสัญลักษณ์ให้อัตโนมัติ (ต้องเปิดข้อมูลตลาดก่อน)
-- บันทึกการซื้อด้วยยอดเงินรวมได้เลย ระบบคำนวณราคาต่อหน่วยให้ พร้อมพรีวิวกำไรขาดทุนทันทีเทียบราคาล่าสุด และมีปุ่มใช้ราคาล่าสุดในระบบ
-- บันทึกราคาและอัตราแลกเปลี่ยนเองได้ หรือเปิดดึงข้อมูลจาก Yahoo Finance เมื่อต้องการ ข้อมูลถูกเก็บไว้ในเครื่องเพื่อเปิดดูแบบออฟไลน์
-- โลโก้หุ้นและ ETF โหลดตรงจาก Financial Modeling Prep ตามสัญลักษณ์เมื่อเปิดข้อมูลตลาด หากปิดอยู่หรือไม่มีรูปจะแสดงอักษรย่อแทน
+- บันทึกรายรับและรายจ่ายพร้อมวันที่ หมวดหมู่ และบันทึกช่วยจำ เพิ่ม เปลี่ยนชื่อ หรือลบหมวดหมู่ได้
+- สรุปรายเดือน: รายรับ รายจ่าย คงเหลือ รายจ่ายตามหมวด และตารางทั้งปี
+- ใช้ในโทรศัพท์แบบ PWA ซิงก์บัญชีแบบ real time เก็บรายการออฟไลน์และเลือกเมื่อข้อมูลแก้ชนกัน [วิธีตั้งค่าและขอบเขต](docs/mobile-sync.md)
+- ติ๊กให้รายรับนับเป็นรายได้ในภาษีได้ (เงินเดือน โบนัส หรือรายได้อื่น พร้อมภาษีหัก ณ ที่จ่าย) แก้ไขหรือลบรายการแล้วฝั่งภาษีตามไปด้วย
+- นำเข้า CSV จากธนาคารหรือบัตรเครดิต (UTF-8 หรือ TIS-620) เลือกแถวหัวตาราง จับคู่คอลัมน์ (คอลัมน์เดียวแบบติดลบ หรือแยกถอน/ฝาก) ตรวจทุกแถวก่อนบันทึก และข้ามรายการที่น่าจะซ้ำ
 
 **ภาษี**
 
@@ -162,8 +159,8 @@ npm run tauri build -- --bundles app,dmg
 
 **ข้อมูลและความเป็นส่วนตัว**
 
-- ผลการลงทุนแยกจากการคำนวณภาษี ยังไม่นำไปรวมในฐานภาษี
-- สำรองข้อมูลทั้งภาษีและการลงทุนเป็นไฟล์เข้ารหัส (รูปแบบ v2) ด้วยรหัสผ่าน กู้คืนไฟล์รุ่นเก่า v1 ที่เก็บเฉพาะข้อมูลภาษีได้ และล้างข้อมูลทั้งแอปได้
+- รายจ่ายไม่ถูกนำไปเป็นค่าลดหย่อนภาษี เฉพาะรายรับที่ติ๊กให้นับภาษีเท่านั้นที่เข้าการคำนวณ
+- สำรองข้อมูลภาษีและรายรับรายจ่ายเป็นไฟล์เข้ารหัส (รูปแบบ v3) ด้วยรหัสผ่าน ไฟล์รุ่นเก่า v1/v2 กู้คืนเฉพาะข้อมูลภาษี (ข้อมูลการลงทุนในไฟล์ v2 จะถูกข้าม) และล้างข้อมูลทั้งแอปได้
 - ฟอนต์และชุดกฎมาพร้อมกับแอป ใช้งานหลักได้แบบออฟไลน์
 
 ### ข้อจำกัดของรุ่นทดลอง
@@ -172,7 +169,7 @@ npm run tauri build -- --bundles app,dmg
 
 ผู้สมรส ผู้มีอายุ 65 ปีขึ้นไป รายได้จากต่างประเทศ เงินก้อนจากการออกจากงาน สิทธิ์ยกเว้นพิเศษ และสิทธิ์ลดหย่อนอื่นยังไม่รวมครบ แอปแจ้งขอบเขตเหล่านี้ก่อนแสดงผลเสมอ และไม่ยื่นแบบหรือชำระภาษีแทนผู้ใช้
 
-ฐานข้อมูลในเครื่อง **ยังไม่เข้ารหัส** โดยป้องกันด้วยสิทธิ์ไฟล์เฉพาะผู้ใช้ของระบบ ส่วนไฟล์สำรองเข้ารหัสด้วยรหัสผ่านที่ยาวอย่างน้อย 12 ตัวอักษร ไม่มีบัญชีผู้ใช้ ไม่มีการเก็บสถิติการใช้งาน และไม่มีการซิงก์ผ่านคลาวด์ การดึงข้อมูลตลาดเป็นตัวเลือกและปิดไว้ตั้งแต่ติดตั้ง เมื่อเปิดใช้ Yahoo Finance จะทราบสัญลักษณ์ที่ขอและที่อยู่ IP ของผู้ใช้ ส่วน Financial Modeling Prep จะทราบสัญลักษณ์และ IP เมื่อโหลดโลโก้หลักทรัพย์ ราคาที่ได้อาจล่าช้าหรือไม่ครบถ้วน
+ฐานข้อมูลในเครื่อง **ยังไม่เข้ารหัส** โดยป้องกันด้วยสิทธิ์ไฟล์เฉพาะผู้ใช้ของระบบ ส่วนไฟล์สำรองเข้ารหัสด้วยรหัสผ่านที่ยาวอย่างน้อย 12 ตัวอักษร ภาษีใช้ได้โดยไม่มีบัญชี หากเปิดซิงก์มือถือ ระบบใช้อีเมลเข้าบัญชีและส่งหมวดหมู่ รายรับรายจ่าย และตัวเลือกเชื่อมภาษีไปยัง Supabase ของคุณ โปรไฟล์ภาษีและประวัติผลคำนวณยังอยู่ในเครื่อง ไม่มีสถิติการใช้งาน ข้อมูลออนไลน์ไม่ได้เข้ารหัสแบบปลายทางถึงปลายทาง ผู้ดูแลโปรเจกต์อ่านได้
 
 ### การตรวจสอบ
 
@@ -207,13 +204,12 @@ TAXLY_EXPORT_FIXTURE=1 cargo test -p taxly-app export_contract_fixture_when_requ
 
 ### โครงสร้างและเอกสาร
 
-`taxly-core` และ `wealth-core` เป็นตัวคำนวณล้วน ไม่เชื่อมต่อ Tauri, SQLx หรือเครือข่าย ส่วนของแอปเรียกใช้ผ่านคำสั่งที่กำหนดชนิดข้อมูลชัดเจน ข้อมูลภาษีเก็บเป็นจำนวนเต็มสตางค์ใน SQLite ส่วนจำนวนเงิน หน่วย ราคา และอัตราแลกเปลี่ยนของพอร์ตเก็บเป็นข้อความทศนิยมที่ตรวจสอบความถูกต้องด้วย Rust ทุกครั้ง
+`taxly-core` เป็นตัวคำนวณภาษีล้วน ไม่เชื่อมต่อ Tauri, SQLx หรือเครือข่าย ส่วนของแอปเรียกใช้ผ่านคำสั่งที่กำหนดชนิดข้อมูลชัดเจน ข้อมูลภาษีและรายรับรายจ่ายเก็บเป็นจำนวนเต็มสตางค์ใน SQLite
 
 - [เอกสารผลิตภัณฑ์และการออกแบบ](docs/planning/README.md)
 - [หลักฐานกฎและประเด็นที่ต้องยืนยัน](docs/planning/09-rule-versioning.md)
 - [เกณฑ์ทดสอบและตรวจรับ](docs/planning/10-testing.md)
 - [ความเป็นส่วนตัวและไฟล์สำรอง](docs/planning/11-security.md)
 - [ผลทดสอบรุ่นทดลองและเกณฑ์ที่ยังเหลือ](docs/verification.md)
-- [ขอบเขตและสัญญาข้อมูลพอร์ตลงทุน](docs/planning/13-wealth.md)
 
 สัญญาอนุญาตใช้งาน: [Apache-2.0](LICENSE)

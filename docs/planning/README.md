@@ -14,4 +14,3 @@
 - [Testing Strategy และเกณฑ์ตรวจรับ](10-testing.md)
 - [Security และ Privacy](11-security.md)
 - [Roadmap และสถานะส่งมอบ](12-roadmap.md)
-- [Wealth portfolio module — ขอบเขตและสัญญาข้อมูล](13-wealth.md)

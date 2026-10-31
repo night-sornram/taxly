@@ -49,6 +49,9 @@ pub async fn connect(path: &Path, catalog: &Catalog) -> AppResult<SqlitePool> {
         .run(&pool)
         .await
         .map_err(|_| AppError::invalid("อัปเกรดฐานข้อมูลไม่สำเร็จ ข้อมูลเดิมยังไม่ถูกลบ"))?;
+    let mut tx = pool.begin().await?;
+    crate::ledger::seed_categories(&mut tx).await?;
+    tx.commit().await?;
     for (year, rule) in &catalog.rules {
         let expected = &catalog.hashes[&rule.rule_set_id];
         sqlx::query("INSERT INTO rule_sets (id,tax_year,version,schema_version,payload_json,sha256,review_state,verified_at) VALUES (?,?,?,?,?,?,?,?) ON CONFLICT(id) DO NOTHING")
@@ -282,6 +285,16 @@ pub async fn save_profile(
 }
 
 pub async fn upsert_income(pool: &SqlitePool, request: IncomeRequest) -> AppResult<()> {
+    let mut tx = pool.begin().await?;
+    upsert_income_in(&mut tx, request).await?;
+    tx.commit().await?;
+    Ok(())
+}
+
+pub async fn upsert_income_in(
+    tx: &mut Transaction<'_, Sqlite>,
+    request: IncomeRequest,
+) -> AppResult<String> {
     validate_month(request.month)?;
     validate_label(&request.source_label)?;
     if !["salary", "bonus", "other"].contains(&request.kind.as_str()) {
@@ -291,20 +304,18 @@ pub async fn upsert_income(pool: &SqlitePool, request: IncomeRequest) -> AppResu
     if note.chars().count() > 500 {
         return Err(AppError::invalid("บันทึกช่วยจำยาวเกิน 500 ตัวอักษร"));
     }
-    let mut tx = pool.begin().await?;
-    let source = source(&mut tx, request.year, &request.source_label).await?;
+    let source = source(tx, request.year, &request.source_label).await?;
     let id = match &request.id {
         Some(id) => {
-            require_entry(&mut tx, "income_entries", id, request.year).await?;
+            require_entry(tx, "income_entries", id, request.year).await?;
             id.clone()
         }
         None => Uuid::new_v4().to_string(),
     };
     sqlx::query("INSERT INTO income_entries(id,tax_year,source_id,month,kind,basis,gross_satang,withholding_satang,note) VALUES (?,?,?,?,?,?,?,?,?) ON CONFLICT(id) DO UPDATE SET source_id=excluded.source_id,month=excluded.month,kind=excluded.kind,basis=excluded.basis,gross_satang=excluded.gross_satang,withholding_satang=excluded.withholding_satang,note=excluded.note")
-        .bind(id).bind(i64::from(request.year)).bind(source).bind(i64::from(request.month)).bind(request.kind).bind(basis_text(request.basis)).bind(request.gross.satang()?).bind(request.withholding.map(Money::satang).transpose()?).bind(note).execute(&mut *tx).await?;
-    bump(&mut tx, request.year).await?;
-    tx.commit().await?;
-    Ok(())
+        .bind(&id).bind(i64::from(request.year)).bind(source).bind(i64::from(request.month)).bind(request.kind).bind(basis_text(request.basis)).bind(request.gross.satang()?).bind(request.withholding.map(Money::satang).transpose()?).bind(note).execute(&mut **tx).await?;
+    bump(tx, request.year).await?;
+    Ok(id)
 }
 
 pub async fn upsert_deduction(pool: &SqlitePool, request: DeductionRequest) -> AppResult<()> {
@@ -349,8 +360,19 @@ async fn require_entry(
 
 pub async fn delete_entry(pool: &SqlitePool, year: u16, id: &str, income: bool) -> AppResult<()> {
     let mut tx = pool.begin().await?;
+    delete_entry_in(&mut tx, year, id, income).await?;
+    tx.commit().await?;
+    Ok(())
+}
+
+pub async fn delete_entry_in(
+    tx: &mut Transaction<'_, Sqlite>,
+    year: u16,
+    id: &str,
+    income: bool,
+) -> AppResult<()> {
     require_entry(
-        &mut tx,
+        tx,
         if income {
             "income_entries"
         } else {
@@ -367,15 +389,14 @@ pub async fn delete_entry(pool: &SqlitePool, year: u16, id: &str, income: bool) 
     })
     .bind(id)
     .bind(i64::from(year))
-    .execute(&mut *tx)
+    .execute(&mut **tx)
     .await?;
     // Deleting any annual fact invalidates the explicit completeness confirmation.
     sqlx::query(if income {"UPDATE tax_years SET completion_state='incomplete' WHERE year=?"} else {"UPDATE tax_years SET completion_state='incomplete', eligibility_json=json_set(eligibility_json,'$.social_security_confirmed',json('false')) WHERE year=?"})
         .bind(i64::from(year))
-        .execute(&mut *tx)
+        .execute(&mut **tx)
         .await?;
-    bump(&mut tx, year).await?;
-    tx.commit().await?;
+    bump(tx, year).await?;
     Ok(())
 }
 
@@ -405,20 +426,20 @@ pub async fn history(pool: &SqlitePool, year: u16) -> AppResult<Vec<Snapshot>> {
 
 pub async fn delete_all(pool: &SqlitePool) -> AppResult<()> {
     let mut tx = pool.begin_with("BEGIN IMMEDIATE").await?;
+    crate::ledger_sync::pause_for_restore(&mut tx).await?;
     sqlx::query("DELETE FROM tax_years")
         .execute(&mut *tx)
         .await?;
     sqlx::query("DELETE FROM app_settings")
         .execute(&mut *tx)
         .await?;
-    let mut empty = wealth_core::WealthData::default();
-    let current: i64 = sqlx::query_scalar("SELECT revision FROM wealth_meta WHERE id=1")
-        .fetch_one(&mut *tx)
+    sqlx::query("DELETE FROM ledger_entries")
+        .execute(&mut *tx)
         .await?;
-    empty.revision = current
-        .checked_add(1)
-        .ok_or_else(|| AppError::invalid("รุ่นข้อมูลเกินขอบเขตที่รองรับ"))?;
-    crate::wealth_storage::replace_in(&mut tx, &empty).await?;
+    sqlx::query("DELETE FROM ledger_categories")
+        .execute(&mut *tx)
+        .await?;
+    crate::ledger::seed_categories(&mut tx).await?;
     tx.commit().await?;
     Ok(())
 }

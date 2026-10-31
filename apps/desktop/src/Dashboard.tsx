@@ -1,10 +1,12 @@
 import {
   ArrowDownLeft,
-  ArrowRight,
-  ArrowUpRight,
   BookOpen,
-  Check,
-  CircleHelp,
+  ChartColumn,
+  ListChecks,
+  Receipt,
+  Wallet,
+  Calculator,
+  ChevronRight,
   FileCheck2,
   Info,
   Leaf,
@@ -13,6 +15,7 @@ import {
 } from "lucide-react";
 import type { Calculation, Workspace } from "./types";
 import { Button, MoneyValue, Notice, TextLink } from "./components";
+import { EmptyArt, MoneyArt } from "./Art";
 import { incomeKindLabel } from "./Income";
 import { formatMoney, proportion, shortMonths } from "./money";
 
@@ -65,6 +68,7 @@ export default function Dashboard({
   if (workspace.income.length === 0 && partialIncome) {
     return (
       <section className="card empty-state">
+        <EmptyArt className="empty-art" />
         <h1 tabIndex={-1}>เริ่มจากรายได้รายการแรก</h1>
         <p>ยังมีข้อมูลไม่เพียงพอสำหรับประมาณการภาษี การไม่มีรายการไม่ได้หมายความว่าภาษีเป็นศูนย์</p>
         <Button onClick={onAdd}>
@@ -73,6 +77,29 @@ export default function Dashboard({
       </section>
     );
   }
+  const actions = [
+    { label: "เพิ่มรายได้", icon: Plus, onClick: onAdd },
+    { label: "สิทธิ์ลดหย่อน", icon: Leaf, onClick: () => onNavigate("deductions") },
+    { label: "วิธีคำนวณ", icon: Calculator, onClick: () => onNavigate("explanation") },
+    {
+      label: saving ? "กำลังบันทึก…" : "บันทึกผลสรุป",
+      icon: Sparkles,
+      onClick: onSave,
+      disabled: saving,
+    },
+  ];
+  const filingTitle =
+    data.filing === "required"
+      ? "ปีนี้คุณมีหน้าที่ยื่นแบบ"
+      : data.filing === "not_required"
+        ? "ยังไม่เกินเกณฑ์บังคับยื่น"
+        : "ยังต้องตรวจหน้าที่ยื่นแบบ";
+  const filingNote =
+    data.filing === "required"
+      ? "รายได้เงินเดือนจริงเกินเกณฑ์ 120,000 บาทแล้ว"
+      : data.filing === "not_required"
+        ? "ถ้าถูกหักภาษีไว้ ณ ที่จ่าย อาจยื่นขอคืนได้"
+        : "รอข้อมูลจริงครบปี และตรวจกรณีที่ยังไม่รองรับ";
   return (
     <>
       <div className="page-heading">
@@ -82,10 +109,55 @@ export default function Dashboard({
           </h1>
           <p>มาดูว่าปีนี้คุณมาไกลแค่ไหน และมีอะไรให้ค่อย ๆ ตรวจเพิ่ม</p>
         </div>
-        <Button onClick={onAdd}>
-          <Plus size={17} /> เพิ่มรายได้
-        </Button>
       </div>
+      <section className="tax-hero">
+        <div className="hero-body">
+          <div className="hero-top">
+            <span>
+              <span className="status-dot" />{" "}
+              {restricted || partialIncome ? "ภาษีจากข้อมูลพื้นฐานที่มี" : "ภาษีทั้งปีโดยประมาณ"}
+            </span>
+            <span className="hero-year">ปีภาษี {data.year + 543}</span>
+          </div>
+          <MoneyValue value={data.annual_tax} large />
+          <p>
+            {restricted || partialIncome
+              ? "ยังไม่ครอบคลุมข้อมูลหรือสิทธิ์ที่ขาดอยู่"
+              : "จากรายได้ที่บันทึกและคาดการณ์ไว้ทั้งปี"}
+          </p>
+          <div className="hero-comparison">
+            <span className="hero-icon">
+              <ArrowDownLeft size={18} />
+            </span>
+            <span>ภาษีที่ถูกหักแล้วจริง</span>
+            <strong>
+              {formatMoney(data.actual_withholding)} <small>บาท</small>
+            </strong>
+          </div>
+          <div className="hero-note">
+            <Info size={14} />
+            <span>
+              {data.unknown_withholding_count
+                ? "ยังมีภาษีหัก ณ ที่จ่ายที่ไม่ทราบ จึงยังสรุปส่วนต่างไม่ได้"
+                : "ตัวเลขนี้เป็นประมาณการ ยังไม่ใช่ยอดสำหรับชำระหรือขอคืน"}
+            </span>
+          </div>
+          <button className="hero-link" onClick={() => onNavigate("explanation")}>
+            ตัวเลขนี้มาจากไหน <ChevronRight size={15} />
+          </button>
+        </div>
+        <MoneyArt className="hero-art" />
+        <div className="quick-actions">
+          {actions.map((action) => (
+            <button key={action.label} onClick={action.onClick} disabled={action.disabled}>
+              <span className="quick-icon">
+                <action.icon size={22} aria-hidden="true" />
+              </span>
+              {action.label}
+            </button>
+          ))}
+        </div>
+      </section>
       {(restricted || partialIncome) && (
         <Notice tone="warning">
           <strong>ภาพจากข้อมูลพื้นฐานที่มีอยู่ ยังไม่ครบทั้งปี</strong>
@@ -103,58 +175,16 @@ export default function Dashboard({
           )}
         </Notice>
       )}
-      <div className="dashboard-grid">
-        <section className="tax-hero">
-          <div className="hero-top">
-            <span>
-              <span className="status-dot" />{" "}
-              {restricted || partialIncome ? "ภาษีจากข้อมูลพื้นฐานที่มี" : "ภาษีทั้งปีโดยประมาณ"}
-            </span>
-            <span className="hero-year">{data.year + 543}</span>
-          </div>
-          <MoneyValue value={data.annual_tax} large />
-          <p>
-            {restricted || partialIncome
-              ? "ยังไม่ครอบคลุมข้อมูลหรือสิทธิ์ที่ขาดอยู่"
-              : "จากรายได้ที่บันทึกและคาดการณ์ไว้ทั้งปี"}
-          </p>
-          <div className="hero-divider" />
-          <div className="hero-comparison">
-            <div>
-              <span>ภาษีที่ถูกหักแล้วจริง</span>
-              <strong>
-                {formatMoney(data.actual_withholding)} <small>บาท</small>
-              </strong>
-            </div>
-            <span className="hero-icon">
-              <ArrowDownLeft size={25} />
-            </span>
-          </div>
-          <div className="hero-note">
-            <Info size={14} />
-            <span>
-              {data.unknown_withholding_count
-                ? "ยังมีภาษีหัก ณ ที่จ่ายที่ไม่ทราบ จึงยังสรุปส่วนต่างไม่ได้"
-                : "ตัวเลขนี้เป็นประมาณการ ยังไม่ใช่ยอดสำหรับชำระหรือขอคืน"}
-            </span>
-          </div>
-          <button className="hero-link" onClick={() => onNavigate("explanation")}>
-            ตัวเลขนี้มาจากไหน <ArrowUpRight size={17} />
-          </button>
-          <div className="hero-decoration" aria-hidden="true">
-            ✳
-          </div>
-        </section>
-        <section className="card income-summary">
-          <div className="card-heading">
-            <span className="card-label">
-              {restricted || partialIncome ? "รายได้ที่บันทึกและคาดไว้" : "รายได้ทั้งปีที่คาดไว้"}
-            </span>
-            <span className="soft-icon">
-              <ArrowUpRight size={20} />
-            </span>
-          </div>
-          <MoneyValue value={data.gross_income} large />
+      <h2 className="section-title">กระเป๋าภาษีของคุณ</h2>
+      <div className="pockets">
+        <section className="pocket tone-mint income-summary">
+          <span className="pocket-icon">
+            <Wallet size={20} aria-hidden="true" />
+          </span>
+          <span className="pocket-label">
+            {restricted || partialIncome ? "รายได้ที่บันทึกและคาดไว้" : "รายได้ทั้งปีที่คาดไว้"}
+          </span>
+          <MoneyValue value={data.gross_income} />
           <div
             className="income-split"
             role="img"
@@ -163,49 +193,51 @@ export default function Dashboard({
             <span className="actual-segment" style={{ width: `${share}%` }} />
             <span className="forecast-segment" style={{ width: `${100 - share}%` }} />
           </div>
-          <div className="split-legend">
-            <div>
-              <span>
-                <i className="legend-dot actual" /> ยอดจริง
-              </span>
-              <strong>{formatMoney(data.actual_income)}</strong>
-              <small>{actualCount} รายการ</small>
-            </div>
-            <div>
-              <span>
-                <i className="legend-dot forecast" /> คาดการณ์
-              </span>
-              <strong>{formatMoney(data.forecast_income)}</strong>
-              <small>{forecastCount} รายการ</small>
-            </div>
-          </div>
+          <small>
+            ยอดจริง {actualCount} รายการ · คาดการณ์ {forecastCount} รายการ
+          </small>
           <TextLink onClick={() => onNavigate("income")}>ดูรายได้รายเดือน</TextLink>
         </section>
-        <section className="card taxable-summary">
-          <div className="card-heading">
-            <span className="card-label">เงินได้สุทธิที่ใช้คำนวณ</span>
-            <CircleHelp size={17} />
-          </div>
-          <MoneyValue value={data.taxable_income} large />
-          <p>รายได้หลังหักค่าใช้จ่ายและสิทธิ์ที่รองรับ</p>
-          <div className="mini-equation">
-            <span>
-              ค่าใช้จ่ายตามกฎหมาย <b>{formatMoney(data.expenses)}</b>
-            </span>
-            <span>
-              ส่วนตัว + ประกันสังคม{" "}
-              <b>
-                {formatMoney(data.personal_allowance)} + {formatMoney(data.social_security)}
-              </b>
-            </span>
-          </div>
+        <section className="pocket tone-lilac taxable-summary">
+          <span className="pocket-icon">
+            <Receipt size={20} aria-hidden="true" />
+          </span>
+          <span className="pocket-label">เงินได้สุทธิที่ใช้คำนวณ</span>
+          <MoneyValue value={data.taxable_income} />
+          <small>
+            หักค่าใช้จ่าย {formatMoney(data.expenses)} · ส่วนตัว{" "}
+            {formatMoney(data.personal_allowance)} · ประกันสังคม {formatMoney(data.social_security)}
+          </small>
           <TextLink onClick={() => onNavigate("explanation")}>ดูวิธีคิดทีละขั้น</TextLink>
         </section>
+        <section className="pocket tone-peach">
+          <span className="pocket-icon">
+            <Leaf size={20} aria-hidden="true" />
+          </span>
+          <span className="pocket-label">ประกันสังคมช่วยลดภาษี</span>
+          <MoneyValue value={data.social_security_savings} />
+          <small>เงินสมทบที่คุณจ่ายไปแล้ว ช่วยลดภาษีเชิงคำนวณในประมาณการนี้</small>
+          <TextLink onClick={() => onNavigate("deductions")}>ตรวจสิทธิ์ของฉัน</TextLink>
+        </section>
+        <section className="pocket tone-sky">
+          <span className="pocket-icon">
+            <FileCheck2 size={20} aria-hidden="true" />
+          </span>
+          <span className="pocket-label">หน้าที่ยื่นแบบ</span>
+          <strong className="pocket-status">{filingTitle}</strong>
+          <small>{filingNote}</small>
+          <TextLink onClick={() => onNavigate("explanation")}>เข้าใจเรื่องการยื่นแบบ</TextLink>
+        </section>
+      </div>
+      <div className="dashboard-grid">
         <section className="card monthly-card">
           <div className="section-heading">
-            <div>
-              <h2>รายได้ของคุณในแต่ละเดือน</h2>
-            </div>
+            <h2>
+              <span className="card-icon">
+                <ChartColumn size={18} aria-hidden="true" />
+              </span>
+              รายได้แต่ละเดือน
+            </h2>
             <div className="chart-legend">
               <span>
                 <i className="legend-dot actual" /> ยอดจริง
@@ -276,9 +308,12 @@ export default function Dashboard({
         </section>
         <section className="card next-steps">
           <div className="section-heading">
-            <div>
-              <h2>ค่อย ๆ เติมให้ครบ</h2>
-            </div>
+            <h2>
+              <span className="card-icon">
+                <ListChecks size={18} aria-hidden="true" />
+              </span>
+              สิ่งที่ต้องทำ
+            </h2>
             <span className="count-badge">{tasks.length}</span>
           </div>
           {tasks.length ? (
@@ -289,57 +324,17 @@ export default function Dashboard({
                   <strong>{task.label}</strong>
                   <small>{task.description}</small>
                 </span>
-                <ArrowUpRight size={16} />
+                <ChevronRight size={18} aria-hidden="true" />
               </button>
             ))
           ) : (
             <div className="all-complete">
-              <span>
-                <Check size={23} />
-              </span>
+              <EmptyArt className="empty-art" />
               <strong>ข้อมูลพื้นฐานครบแล้ว</strong>
               <p>ยังต้องตรวจชุดกฎและวิธีปัดเศษก่อนนำผลไปใช้ยื่นแบบ</p>
             </div>
           )}
           <TextLink onClick={() => onNavigate("deductions")}>สำรวจสิทธิ์ที่คุณมีอยู่แล้ว</TextLink>
-        </section>
-      </div>
-      <div className="bottom-grid">
-        <section className="deduction-banner">
-          <span className="banner-icon">
-            <Leaf size={25} />
-          </span>
-          <div>
-            <span className="eyebrow">สิทธิ์ที่มีอยู่แล้ว อาจช่วยคุณได้</span>
-            <h2>อย่าลืมเงินสมทบที่คุณจ่ายไป</h2>
-            <p>
-              ประกันสังคมที่บันทึกช่วยลดภาษีเชิงคำนวณ{" "}
-              <strong>{formatMoney(data.social_security_savings)} บาท</strong> ในประมาณการนี้
-            </p>
-          </div>
-          <Button variant="secondary" onClick={() => onNavigate("deductions")}>
-            ตรวจสิทธิ์ของฉัน <ArrowRight size={16} />
-          </Button>
-        </section>
-        <section className="filing-card">
-          <FileCheck2 size={22} />
-          <div>
-            <strong>
-              {data.filing === "required"
-                ? "ปีนี้คุณมีหน้าที่ยื่นแบบ"
-                : data.filing === "not_required"
-                  ? "รายได้จริงยังไม่เกินเกณฑ์บังคับยื่น"
-                  : "หน้าที่ยื่นแบบยังต้องตรวจเพิ่ม"}
-            </strong>
-            <p>
-              {data.filing === "required"
-                ? "รายได้เงินเดือนจริงเกินเกณฑ์ 120,000 บาทแล้ว"
-                : data.filing === "not_required"
-                  ? "ถ้าถูกหักภาษีไว้ ณ ที่จ่าย อาจยื่นขอคืนได้"
-                  : "รอข้อมูลจริงครบปี และตรวจกรณีที่ยังไม่รองรับ"}
-            </p>
-            <TextLink onClick={() => onNavigate("explanation")}>เข้าใจเรื่องการยื่นแบบ</TextLink>
-          </div>
         </section>
       </div>
       {data.unknown_withholding_count > 0 && (
@@ -364,10 +359,6 @@ export default function Dashboard({
           {data.rules_status === "provisional" ? "กฎสำหรับประมาณการ" : "ทบทวนกฎพื้นฐานแล้ว"} ·
           ยังตรวจวิธีปัดเศษ
         </span>
-        <button className="text-link" disabled={saving} onClick={onSave}>
-          <Sparkles size={14} /> {saving ? "กำลังบันทึก…" : "บันทึกผลสรุป"}{" "}
-          <ArrowUpRight size={14} />
-        </button>
       </footer>
     </>
   );

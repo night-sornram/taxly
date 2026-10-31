@@ -1,15 +1,15 @@
-import { Landmark, TrendingUp } from "lucide-react";
+import { Landmark, Wallet } from "lucide-react";
 
 const areas = [
   { id: "tax", label: "ภาษี", name: "ภาษีของฉัน", icon: Landmark },
-  { id: "wealth", label: "ลงทุน", name: "การลงทุนของฉัน", icon: TrendingUp },
+  { id: "ledger", label: "รายรับรายจ่าย", name: "รายรับรายจ่ายของฉัน", icon: Wallet },
 ] as const;
 
 export default function AreaSwitcher({
   area,
   onSwitch,
 }: {
-  area: "tax" | "wealth";
+  area: "tax" | "ledger";
   onSwitch: () => void;
 }) {
   return (

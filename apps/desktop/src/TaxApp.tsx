@@ -1,10 +1,8 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
-  ArrowUpRight,
   BookOpen,
   ChevronDown,
   FileClock,
-  HeartHandshake,
   LayoutDashboard,
   Leaf,
   LockKeyhole,
@@ -39,6 +37,7 @@ import { IncomeEditor, IncomePage, DeductionEditor } from "./Income";
 import { DeductionsPage, Explanation, HistoryPage, ProfileEditor } from "./Details";
 import Privacy from "./Privacy";
 import AreaSwitcher from "./AreaSwitcher";
+import ShellHeader from "./ShellHeader";
 
 type View = "dashboard" | "income" | "deductions" | "explanation" | "history" | "privacy";
 const nav = [
@@ -51,7 +50,14 @@ const additionalNav = [
   { id: "history", label: "ผลสรุปที่บันทึก", icon: FileClock },
 ] as const;
 
-export default function TaxApp({ onInvestments }: { onInvestments: () => void }) {
+export default function TaxApp({
+  onSwitchArea,
+  dataVersion,
+}: {
+  onSwitchArea: () => void;
+  /** Bumped when another area changed tax data (e.g. a linked ledger income). */
+  dataVersion: number;
+}) {
   const [year, setYear] = useState(2026);
   const [preferencesReady, setPreferencesReady] = useState(false);
   const [view, setView] = useState<View>("dashboard");
@@ -133,6 +139,9 @@ export default function TaxApp({ onInvestments }: { onInvestments: () => void })
       generation.current++;
     };
   }, [refresh, preferencesReady]);
+  useEffect(() => {
+    if (dataVersion > 0) void refresh().catch(() => {});
+  }, [dataVersion]);
   useEffect(() => {
     if (!toast) return;
     const timer = setTimeout(() => setToast(""), 5500);
@@ -233,7 +242,7 @@ export default function TaxApp({ onInvestments }: { onInvestments: () => void })
           }}
         />
         <nav className="onboarding-utility" aria-label="ส่วนการใช้งานและปีภาษี">
-          <AreaSwitcher area="tax" onSwitch={onInvestments} />
+          <AreaSwitcher area="tax" onSwitch={onSwitchArea} />
           <label>
             ปีภาษี{" "}
             <select
@@ -251,101 +260,43 @@ export default function TaxApp({ onInvestments }: { onInvestments: () => void })
     );
 
   return (
-    <div className="app-shell">
+    <div className="tx-app">
       <a className="skip-link" href="#main-content">
         ข้ามไปเนื้อหาหลัก
       </a>
-      <aside className="sidebar">
-        <Brand />
-        <AreaSwitcher area="tax" onSwitch={onInvestments} />
-        <div className="sidebar-section-label">จัดการภาษี</div>
-        <nav aria-label="เมนูหลัก">
-          {[...nav, ...additionalNav].map((item) => (
-            <button
-              key={item.id}
-              aria-current={view === item.id ? "page" : undefined}
-              className={view === item.id ? "active" : ""}
-              onClick={() => navigate(item.id)}
-            >
-              <item.icon size={18} />
-              <span>{item.label}</span>
-              {view === item.id && <span className="nav-dot" />}
-            </button>
-          ))}
-        </nav>
-        <div className="sidebar-divider" />
-        <nav aria-label="การตั้งค่าร่วม">
-          <button
-            className={view === "privacy" ? "active" : ""}
-            aria-current={view === "privacy" ? "page" : undefined}
-            onClick={() => navigate("privacy")}
+      <ShellHeader
+        area="tax"
+        onSwitchArea={onSwitchArea}
+        tabs={[...nav, ...additionalNav]}
+        view={view}
+        onNavigate={navigate}
+        label="เมนูหลัก"
+      >
+        <SavedLabel />
+        <label className="year-picker">
+          <span>ปีภาษี</span>
+          <select
+            aria-label="ปีภาษี"
+            value={year}
+            onChange={(e) => switchYear(Number(e.target.value))}
           >
-            <ShieldCheck size={18} /> ข้อมูลของฉัน
-          </button>
-        </nav>
-        <div className="sidebar-bottom">
-          <div className="sidebar-tip">
-            <span className="tip-flower" aria-hidden="true">
-              ✳
-            </span>
-            <h3>เรื่องภาษี ไม่ต้องรีบรู้ทุกเรื่อง</h3>
-            <p>เริ่มจากสิ่งที่รู้ แล้วค่อยเติมให้ครบทีละนิด</p>
-            <button onClick={() => navigate("deductions")}>
-              ตรวจสิทธิ์ของฉัน <ArrowUpRight size={14} />
-            </button>
-          </div>
-          <div className="local-status">
-            <span /> เก็บข้อมูลในเครื่อง <LockKeyhole size={12} />
-          </div>
-          <small>Taxly v0.1.0 · ไม่มีการส่งแบบภาษี</small>
-        </div>
-      </aside>
+            <option value={2026}>2569</option>
+            <option value={2025}>2568</option>
+          </select>
+          <ChevronDown size={14} aria-hidden="true" />
+        </label>
+        <ThemeToggle />
+        <button
+          className={`avatar ${view === "privacy" ? "active" : ""}`}
+          aria-label="ข้อมูลของฉัน"
+          aria-current={view === "privacy" ? "page" : undefined}
+          onClick={() => navigate("privacy")}
+        >
+          <ShieldCheck size={19} />
+        </button>
+      </ShellHeader>
       <div className="main-shell">
-        <header className="topbar">
-          <div className="breadcrumb">
-            ภาษีของฉัน <span>/</span>{" "}
-            <strong>
-              {view === "dashboard"
-                ? "ภาพรวม"
-                : view === "income"
-                  ? "รายได้"
-                  : view === "deductions"
-                    ? "สิทธิ์ลดหย่อน"
-                    : view === "privacy"
-                      ? "ความเป็นส่วนตัว"
-                      : view === "history"
-                        ? "ประวัติ"
-                        : "การคำนวณ"}
-            </strong>
-          </div>
-          <div className="topbar-right">
-            <SavedLabel />
-            <ThemeToggle />
-            <label className="year-picker">
-              <span>ปีภาษี</span>
-              <select
-                aria-label="ปีภาษี"
-                value={year}
-                onChange={(e) => switchYear(Number(e.target.value))}
-              >
-                <option value={2026}>2569</option>
-                <option value={2025}>2568</option>
-              </select>
-              <ChevronDown size={14} />
-            </label>
-            <button
-              className="avatar"
-              aria-label="ข้อมูลของฉัน"
-              onClick={() => navigate("privacy")}
-            >
-              <HeartHandshake size={20} />
-            </button>
-          </div>
-        </header>
-        <nav className="mobile-area-switcher" aria-label="สลับส่วนการใช้งาน">
-          <AreaSwitcher area="tax" onSwitch={onInvestments} />
-        </nav>
-        <main id="main-content" ref={main} className="main-content">
+        <main id="main-content" ref={main} className="tx-main">
           {error && <ErrorNotice message={error} onClose={() => setError("")} />}
           {view === "privacy" ? (
             <Privacy onRestored={refresh} onSuccess={setToast} />
