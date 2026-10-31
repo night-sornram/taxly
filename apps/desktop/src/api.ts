@@ -25,6 +25,10 @@ export async function command<T>(name: string, args?: Record<string, unknown>): 
       "import_ledger_entries",
       "upsert_income",
       "delete_income",
+      "save_onboarding",
+      "save_profile",
+      "upsert_deduction",
+      "delete_deduction",
       "restore_backup",
       "delete_all_data",
     ].includes(name)

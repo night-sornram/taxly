@@ -3,6 +3,8 @@ import { useCallback, useEffect, useState } from "react";
 export type ThemeMode = "system" | "light" | "dark";
 export type ResolvedTheme = "light" | "dark";
 const STORAGE_KEY = "taxly-theme";
+// Each area has its own toggle; this event keeps every toggle on one choice.
+const CHANGED = "taxly-theme-changed";
 const DARK_CANVAS = "#0f1214";
 
 export function readStoredMode(): ThemeMode {
@@ -46,14 +48,21 @@ export function useTheme() {
       applyMode(mode);
     };
     update();
-    if (mode !== "system" || typeof window.matchMedia !== "function") return;
+    const sync = () => setModeState(readStoredMode());
+    window.addEventListener(CHANGED, sync);
+    if (mode !== "system" || typeof window.matchMedia !== "function")
+      return () => window.removeEventListener(CHANGED, sync);
     const query = window.matchMedia("(prefers-color-scheme: dark)");
     query.addEventListener("change", update);
-    return () => query.removeEventListener("change", update);
+    return () => {
+      query.removeEventListener("change", update);
+      window.removeEventListener(CHANGED, sync);
+    };
   }, [mode]);
   const setThemeChoice = useCallback((choice: ResolvedTheme) => {
     localStorage.setItem(STORAGE_KEY, choice);
     setModeState(choice);
+    window.dispatchEvent(new Event(CHANGED));
   }, []);
   return { mode, theme, setTheme: setThemeChoice };
 }

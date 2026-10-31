@@ -140,7 +140,13 @@ export default function TaxApp({
     };
   }, [refresh, preferencesReady]);
   useEffect(() => {
-    if (dataVersion > 0) void refresh().catch(() => {});
+    if (dataVersion === 0) return;
+    // Synced data may bring a year this device has not set up yet.
+    if (!workspace?.profile && isDesktop())
+      void command<number>("get_active_tax_year")
+        .then((next) => (next !== year ? setYear(next) : refresh()))
+        .catch(() => {});
+    else void refresh().catch(() => {});
   }, [dataVersion]);
   useEffect(() => {
     if (!toast) return;

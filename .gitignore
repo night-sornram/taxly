@@ -27,7 +27,7 @@ rustc-ice-*.txt
 node_modules/
 dist/
 *.tsbuildinfo
-apps/desktop/src-tauri/gen/
+apps/desktop/src-tauri/gen/schemas/
 playwright-report/
 test-results/
 *.sqlite3*

@@ -1,4 +1,4 @@
-import { render, screen, fireEvent, act, renderHook } from "@testing-library/react";
+import { render, screen, fireEvent, act, renderHook, within } from "@testing-library/react";
 import { beforeEach, it, expect, vi } from "vitest";
 import { useTheme } from "./theme";
 import { ThemeToggle } from "./components";
@@ -74,5 +74,21 @@ it("toggles between light and dark from the button", () => {
   expect(document.documentElement.dataset.theme).toBe("dark");
   expect(localStorage.getItem("taxly-theme")).toBe("dark");
   fireEvent.click(screen.getByRole("button", { name: "เปิดธีมสว่าง" }));
+  expect(document.documentElement.dataset.theme).toBe("light");
+});
+
+it("keeps the toggle in every area on the same choice", () => {
+  mockMatchMedia(false);
+  const { container } = render(
+    <>
+      <ThemeToggle />
+      <ThemeToggle />
+    </>,
+  );
+  const view = within(container);
+  fireEvent.click(view.getAllByRole("button", { name: "เปิดธีมมืด" })[0]);
+  // The other area's toggle must now offer the way back, not "dark" again.
+  expect(view.getAllByRole("button", { name: "เปิดธีมสว่าง" })).toHaveLength(2);
+  fireEvent.click(view.getAllByRole("button", { name: "เปิดธีมสว่าง" })[1]);
   expect(document.documentElement.dataset.theme).toBe("light");
 });

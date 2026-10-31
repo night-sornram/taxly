@@ -1,0 +1,7 @@
+<resources xmlns:tools="http://schemas.android.com/tools">
+    <!-- Base application theme. -->
+    <style name="Theme.taxly_app" parent="Theme.Material3.DayNight.NoActionBar">
+        <!-- Matches the app canvas behind the status and navigation bars. -->
+        <item name="android:windowBackground">#0F1214</item>
+    </style>
+</resources>
