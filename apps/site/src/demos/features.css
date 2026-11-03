@@ -1,0 +1,398 @@
+/* The features grid: rounded tiles on a gap, copy on top at page size, each
+   picture pinned to its tile's bottom and cropped by the tile. */
+.fx-grid {
+  --fx-pad: 28px;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+}
+.fx-tile--tax {
+  grid-column: span 2;
+}
+
+.fx-tile {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  border-radius: 24px;
+  background: #ffffff;
+  box-shadow: inset 0 0 0 1px #e3e7eb;
+}
+.fx-tile--tax {
+  background: linear-gradient(135deg, #d4f5e2 0%, #e4f1ff 55%, #efe8ff 100%);
+  box-shadow: none;
+}
+
+.fx-copy {
+  margin: 0;
+  padding: var(--fx-pad) var(--fx-pad) 20px;
+  max-width: 34em;
+  color: #5f6870;
+  font-size: 19px;
+  line-height: 1.5;
+  text-wrap: pretty;
+}
+.fx-copy b {
+  color: #1d2329;
+  font-weight: 700;
+}
+
+.fx-picture {
+  width: 100%;
+  margin-top: auto;
+}
+.fx-stage .ss-stage {
+  overflow: hidden;
+}
+
+/* Privacy: the one inverted tile, type only */
+.fx-tile--privacy {
+  min-height: 340px;
+  justify-content: flex-end;
+  gap: 10px;
+  padding: var(--fx-pad);
+  background: #0b4f2d;
+  box-shadow: none;
+  color: #ffffff;
+}
+.fx-privacy-icon {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  margin-bottom: auto;
+  border-radius: 999px;
+  background: #ffffff1f;
+  color: #7fe0ad;
+}
+.fx-statement {
+  margin: 0;
+  & span { white-space: nowrap; }
+  font-size: 40px;
+  font-weight: 700;
+  line-height: 1.2;
+  letter-spacing: -0.01em;
+  text-wrap: balance;
+}
+.fx-statement-sub {
+  margin: 0;
+  color: #ffffffb3;
+  font-size: 17px;
+  line-height: 1.5;
+}
+
+/* ---- Tax ---- */
+.fx-tax {
+  position: absolute;
+  top: 0;
+  left: var(--fx-pad);
+  right: var(--fx-pad);
+  height: 360px;
+  display: grid;
+  gap: 16px;
+  padding: 20px;
+  border-radius: 20px;
+  background: var(--ss-surface);
+  box-shadow: var(--ss-shadow-ground);
+}
+.fx-tax[data-wide] {
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr);
+  align-content: start;
+  gap: 28px;
+}
+.fx-tax:not([data-wide]) {
+  align-content: start;
+  height: 420px;
+}
+.fx-tax-head {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.fx-tax-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--ss-text);
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1.4;
+}
+.fx-year {
+  padding: 1px 8px;
+  border-radius: 999px;
+  background: var(--tx-mint);
+  color: var(--tx-mint-ink);
+  font-size: 11px;
+  font-weight: 600;
+}
+.fx-tax-figure {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  color: var(--ss-accent-text);
+  font-size: 40px;
+  font-weight: 700;
+  line-height: 1.15;
+  letter-spacing: -0.01em;
+}
+.fx-tax:not([data-wide]) .fx-tax-figure {
+  font-size: 34px;
+}
+.fx-tax-note {
+  color: var(--ss-text);
+  font-size: 12px;
+  line-height: 1.4;
+}
+.fx-tax-unit {
+  color: var(--ss-text);
+  font-size: 14px;
+  font-weight: 500;
+  letter-spacing: 0;
+}
+.fx-sums {
+  display: flex;
+  flex-direction: column;
+  margin: 0 -10px;
+}
+.fx-sum {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  height: 34px;
+  padding: 0 10px;
+  border-radius: 10px;
+  font-size: 13px;
+  line-height: 1.4;
+}
+.fx-sum-label {
+  color: var(--ss-text);
+}
+.fx-sum-value {
+  color: var(--ss-text-strong);
+  font-weight: 500;
+}
+.fx-sum--new {
+  background: var(--tx-mint);
+}
+.fx-sum--new .fx-sum-label,
+.fx-sum--new .fx-sum-value {
+  color: var(--tx-mint-ink);
+  font-weight: 600;
+}
+.fx-sum--total {
+  will-change: transform;
+  margin-top: 6px;
+  border-top: 1px solid var(--ss-line);
+  border-radius: 0;
+  height: 40px;
+}
+.fx-sum--total .fx-sum-label,
+.fx-sum--total .fx-sum-value {
+  color: var(--ss-text-strong);
+  font-weight: 700;
+}
+
+/* ---- Phone ---- */
+.fx-phone {
+  position: absolute;
+  top: 0;
+}
+.fx-phone .ss-phone__screen {
+  background: var(--ss-canvas);
+}
+.fx-screen-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 20px 14px;
+}
+.fx-screen-title {
+  color: var(--ss-text-strong);
+  font-size: 28px;
+  font-weight: 700;
+  line-height: 1.3;
+}
+.fx-synced {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 32px;
+  padding: 0 12px;
+  border-radius: 999px;
+  background: var(--ss-surface);
+  box-shadow: inset 0 0 0 1px var(--ss-line);
+  color: var(--ss-text);
+  font-size: 14px;
+  font-weight: 500;
+  transition: color 300ms, background-color 300ms;
+}
+.fx-synced[data-on] {
+  background: var(--tx-mint);
+  box-shadow: none;
+  color: var(--tx-mint-ink);
+}
+.fx-plist {
+  margin: 0 16px;
+  padding: 6px 0;
+  border-radius: 22px;
+  background: var(--ss-surface);
+}
+.fx-prow {
+  display: grid;
+  grid-template-columns: 40px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 14px;
+  padding: 10px 16px;
+}
+.fx-prow .tx-cat {
+  width: 40px;
+  height: 40px;
+}
+.fx-prow-text {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+.fx-prow-text--bars {
+  gap: 11px;
+}
+.fx-prow-title {
+  color: var(--ss-text-strong);
+  font-size: 17px;
+  font-weight: 600;
+  line-height: 1.4;
+}
+.fx-prow-sub {
+  color: var(--ss-text);
+  font-size: 14px;
+  line-height: 1.4;
+}
+.fx-prow-amount {
+  color: var(--ss-text-strong);
+  font-size: 17px;
+  font-weight: 600;
+}
+
+/* ---- Categories ---- */
+.fx-shelf {
+  position: absolute;
+  display: flex;
+  gap: 12px;
+}
+.fx-shelf-icon {
+  width: 42px;
+  height: 42px;
+}
+.fx-newcat {
+  position: absolute;
+  top: 20px;
+  left: var(--fx-pad);
+  right: var(--fx-pad);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.fx-newcat-icon {
+  width: 44px;
+  height: 44px;
+  transition: background-color 200ms, color 200ms;
+}
+.fx-newcat-field {
+  flex: 1;
+  min-width: 0;
+}
+
+/* ---- Import ---- */
+.fx-file {
+  position: absolute;
+  top: 56px;
+  left: var(--fx-pad);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  width: 104px;
+  height: 120px;
+  border-radius: 18px;
+  background: var(--tx-mint);
+  color: var(--tx-mint-ink);
+}
+.fx-file-name {
+  color: var(--tx-mint-ink);
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.4;
+}
+.fx-rows {
+  position: absolute;
+  top: 44px;
+  left: calc(var(--fx-pad) + 104px + 56px);
+  right: var(--fx-pad);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.fx-irow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  height: 44px;
+  overflow: hidden;
+  padding: 0 16px 0 6px;
+  border-radius: 999px;
+  background: var(--ss-surface);
+  box-shadow: var(--ss-shadow-ground);
+  opacity: 0.55;
+  transition: opacity 500ms cubic-bezier(0.25, 0.8, 0.25, 1);
+}
+.fx-irow[data-on] {
+  opacity: 1;
+}
+.fx-irow-end {
+  margin-left: auto;
+}
+.fx-irow-amount {
+  color: var(--tx-mint-ink);
+  font-size: 13px;
+  font-weight: 600;
+}
+.fx-line {
+  --ss-accent: #007a3d;
+}
+
+/* Narrow: the strip and the lead tile stack */
+@media (max-width: 960px) {
+  .fx-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .fx-tile--tax {
+    grid-column: span 2;
+  }
+}
+@media (max-width: 640px) {
+  .fx-grid {
+    --fx-pad: 20px;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 12px;
+  }
+  .fx-tile--tax {
+    grid-column: auto;
+  }
+  .fx-copy {
+    font-size: 17px;
+  }
+  .fx-statement {
+    font-size: 32px;
+  }
+  .fx-tile {
+    min-height: 0;
+  }
+  .fx-tile--privacy {
+    min-height: 240px;
+  }
+}

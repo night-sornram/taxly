@@ -1,0 +1,59 @@
+/* Taxly's look, mapped from apps/desktop/src/styles.css and shell.css onto the
+   kit's tokens. Every stage on the site wears it. */
+.tx-look .ss-stage {
+  --ss-font: "IBM Plex Sans Thai", system-ui, sans-serif;
+  --ss-canvas: #f3f5f7;
+  --ss-surface: #ffffff;
+  --ss-well: #f3f5f7;
+  --ss-line: #e3e7eb;
+  --ss-line-faint: #edf0f2;
+  --ss-text-strong: #1d2329;
+  --ss-text: #5f6870;
+  --ss-text-faint: #8a939b;
+  --ss-icon: #5f6870;
+  --ss-icon-faint: #9aa3ab;
+  --ss-accent: #007a3d;
+  --ss-accent-soft: #d8f5e4;
+  --ss-accent-text: #006633;
+  --ss-success: #007a3d;
+  --ss-success-soft: #dcf5e7;
+  --ss-success-text: #006633;
+  --ss-radius-md: 12px;
+  --ss-radius-lg: 16px;
+  --ss-control: 36px;
+
+  /* Taxly's pastel pockets */
+  --tx-mint: #dcf5e7;
+  --tx-mint-ink: #006633;
+  --tx-peach: #ffe8da;
+  --tx-peach-ink: #a1431a;
+  --tx-lilac: #ebe5ff;
+  --tx-lilac-ink: #5536b8;
+  --tx-sky: #dcecff;
+  --tx-sky-ink: #1c5aa6;
+  --tx-lemon: #fff3c4;
+  --tx-lemon-ink: #7a5a00;
+}
+
+/* A category's round icon, as CategoryIcon draws it */
+.tx-look .tx-cat {
+  display: inline-grid;
+  place-items: center;
+  flex: none;
+  width: 32px;
+  height: 32px;
+  border-radius: 999px;
+  background: var(--cat-bg);
+  color: var(--cat-ink);
+}
+.tx-look .tx-cat[data-tone="mint"] { --cat-bg: var(--tx-mint); --cat-ink: var(--tx-mint-ink); }
+.tx-look .tx-cat[data-tone="peach"] { --cat-bg: var(--tx-peach); --cat-ink: var(--tx-peach-ink); }
+.tx-look .tx-cat[data-tone="lilac"] { --cat-bg: var(--tx-lilac); --cat-ink: var(--tx-lilac-ink); }
+.tx-look .tx-cat[data-tone="sky"] { --cat-bg: var(--tx-sky); --cat-ink: var(--tx-sky-ink); }
+.tx-look .tx-cat[data-tone="lemon"] { --cat-bg: var(--tx-lemon); --cat-ink: var(--tx-lemon-ink); }
+
+/* Amounts sit on tabular digits, as the app sets them */
+.tx-look .tx-num {
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}

@@ -1,0 +1,241 @@
+/* The ledger hero. Corner bleed: the window sits a gutter in from the top and
+   left and runs off the right and bottom; nothing with words is cut. */
+.lh {
+  & .ss-stage {
+    overflow: hidden;
+  }
+
+  .lh-window {
+    position: absolute;
+    left: 40px;
+    top: 40px;
+    width: 840px;
+    height: 520px;
+    box-shadow: var(--ss-shadow-hero);
+  }
+  & .ss-stage[data-layout="compact"] .lh-window {
+    left: 20px;
+    top: 20px;
+    width: 420px;
+  }
+
+  .lh-window .ss-window__body {
+    background: var(--ss-canvas);
+  }
+
+  .lh-side {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    padding: 8px 10px;
+  }
+  .lh-nav {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    height: 32px;
+    padding: 0 10px;
+    border-radius: 10px;
+    color: var(--ss-icon-faint);
+  }
+  .lh-nav[data-active] {
+    background: var(--ss-accent-soft);
+    color: var(--ss-accent-text);
+  }
+
+  .lh-body {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    width: 472px;
+    padding: 16px;
+  }
+  & .ss-stage[data-layout="compact"] .lh-body {
+    width: 342px;
+  }
+
+  .lh-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .lh-month {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    height: 34px;
+    padding: 0 10px;
+    border-radius: 999px;
+    background: var(--ss-surface);
+    box-shadow: inset 0 0 0 1px var(--ss-line);
+    color: var(--ss-icon);
+    font-size: 13px;
+    font-weight: 600;
+  }
+  .lh-month .ss-text {
+    color: var(--ss-text-strong);
+  }
+
+  .lh-btn {
+    display: inline-flex;
+    flex: none;
+    align-items: center;
+    gap: 6px;
+    height: 34px;
+    padding: 0 14px 0 12px;
+    border-radius: 999px;
+    background: var(--ss-surface);
+    box-shadow: inset 0 0 0 1px var(--ss-line);
+    color: var(--ss-text-strong);
+    font-size: 13px;
+    font-weight: 600;
+    line-height: 1.4;
+    transition: background-color 120ms;
+  }
+  .lh-btn--primary {
+    background: var(--ss-accent);
+    box-shadow: none;
+    color: #fff;
+  }
+  .lh-btn--primary[data-hover],
+  .lh-btn--primary[data-open] {
+    background: #006633;
+  }
+  .lh-btn--primary[data-pressed] {
+    background: #005c2e;
+  }
+  .lh-btn--quiet {
+    box-shadow: none;
+    background: transparent;
+    color: var(--ss-text);
+  }
+
+  .lh-pockets {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 8px;
+  }
+  & .ss-stage[data-layout="compact"] .lh-pockets {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .lh-pocket {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    padding: 10px 12px 12px;
+    border-radius: 16px;
+    background: var(--pocket-bg);
+  }
+  .lh-pocket[data-tone="mint"] { --pocket-bg: var(--tx-mint); --pocket-ink: var(--tx-mint-ink); }
+  .lh-pocket[data-tone="peach"] { --pocket-bg: var(--tx-peach); --pocket-ink: var(--tx-peach-ink); }
+  .lh-pocket[data-tone="lilac"] { --pocket-bg: var(--tx-lilac); --pocket-ink: var(--tx-lilac-ink); }
+  .lh-pocket-label {
+    color: var(--pocket-ink);
+    font-size: 12px;
+    font-weight: 500;
+    line-height: 1.3;
+  }
+  .lh-pocket-value {
+    display: flex;
+    align-items: baseline;
+    gap: 4px;
+    color: var(--ss-text-strong);
+    font-size: 19px;
+    font-weight: 700;
+    line-height: 1.15;
+  }
+  .lh-unit {
+    color: var(--ss-text);
+    font-size: 11px;
+    font-weight: 500;
+  }
+
+  .lh-list {
+    display: flex;
+    flex-direction: column;
+    padding: 4px 0;
+    border-radius: 16px;
+    background: var(--ss-surface);
+    box-shadow: inset 0 0 0 1px var(--ss-line);
+  }
+  .lh-row {
+    display: grid;
+    grid-template-columns: 32px minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 12px;
+    padding: 8px 14px;
+  }
+  .lh-row-text {
+    display: flex;
+    flex-direction: column;
+    gap: 9px;
+    min-width: 0;
+  }
+  .lh-row-text:has(.ss-text) {
+    gap: 0;
+  }
+  .lh-row-title {
+    color: var(--ss-text-strong);
+    font-size: 13px;
+    font-weight: 600;
+    line-height: 1.45;
+  }
+  .lh-row-sub {
+    color: var(--ss-text);
+    font-size: 11.5px;
+    line-height: 1.45;
+  }
+  .lh-row-amount {
+    justify-self: end;
+    color: var(--ss-text-strong);
+    font-size: 13px;
+    font-weight: 600;
+  }
+
+  .lh-editor {
+    position: absolute;
+    width: 264px;
+    padding: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    border-radius: 18px;
+    --ss-popover-bg: var(--ss-surface);
+  }
+  & .ss-stage[data-layout="compact"] .lh-editor {
+    width: 248px;
+  }
+  .lh-editor-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+  }
+  .lh-editor-title {
+    color: var(--ss-text-strong);
+    font-size: 14px;
+    font-weight: 700;
+    line-height: 1.4;
+  }
+  .lh-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    height: 26px;
+    padding: 0 10px 0 8px;
+    border-radius: 999px;
+    background: var(--tx-peach);
+    color: var(--tx-peach-ink);
+    font-size: 12px;
+    font-weight: 600;
+  }
+  .lh-editor .ss-field__box {
+    border-radius: 12px;
+  }
+  .lh-editor-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 6px;
+    padding-top: 2px;
+  }
+}
