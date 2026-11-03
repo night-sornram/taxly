@@ -5072,7 +5072,7 @@ dependencies = [
 
 [[package]]
 name = "taxly-app"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "age",
  "chrono",
@@ -5095,7 +5095,7 @@ dependencies = [
 
 [[package]]
 name = "taxly-core"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "proptest",
  "rust_decimal",
