@@ -299,6 +299,11 @@ export function DeductionsPage({
   );
 }
 
+// Engine step ids: which ones subtract from income, and which are running totals.
+const deductionSteps = new Set(["salary_expense", "personal_allowance", "social_security"]);
+const totalSteps = new Set(["taxable_income", "progressive_tax"]);
+const wholeBaht = (value: string) => formatMoney(value).replace(/\.00$/, "");
+
 export function Explanation({
   data,
   sources,
@@ -310,6 +315,9 @@ export function Explanation({
   onSource: (id: string) => void;
   archived?: boolean;
 }) {
+  const sourceTitles = new Map(sources.map((source) => [source.id, source.title]));
+  // Bands fill from the bottom, so the last non-empty one is where net income ends.
+  const topBand = data.bands.filter((band) => Number(band.taxable_amount) > 0).length - 1;
   return (
     <>
       <div className="page-heading">
@@ -336,15 +344,20 @@ export function Explanation({
       <div className="calculation-layout">
         <section className="card steps-card">
           {data.steps.map((step, i) => (
-            <div className="calculation-step" key={step.rule_id}>
+            <div
+              className={`calculation-step${totalSteps.has(step.rule_id) ? " is-total" : ""}`}
+              data-sign={deductionSteps.has(step.rule_id) ? "minus" : undefined}
+              key={step.rule_id}
+            >
               <span className="step-number">{String(i + 1).padStart(2, "0")}</span>
               <div>
                 <h2>{step.label}</h2>
                 <p>{step.formula}</p>
                 <div className="step-sources">
                   {step.source_ids.map((id) => (
-                    <button key={id} onClick={() => onSource(id)}>
-                      <BookOpen size={11} /> แหล่งอ้างอิง
+                    <button key={id} title={sourceTitles.get(id)} onClick={() => onSource(id)}>
+                      <BookOpen size={12} aria-hidden="true" />
+                      <span>{sourceTitles.get(id) ?? "แหล่งอ้างอิง"}</span>
                     </button>
                   ))}
                 </div>
@@ -377,7 +390,7 @@ export function Explanation({
           <span className="fine-print">จำนวนเงินเป็นบาท</span>
         </div>
         <div className="table-scroll">
-          <table>
+          <table className="bands-table">
             <thead>
               <tr>
                 <th>ช่วงเงินได้สุทธิ</th>
@@ -387,11 +400,13 @@ export function Explanation({
               </tr>
             </thead>
             <tbody>
-              {data.bands.map((band) => (
-                <tr key={band.lower}>
+              {data.bands.map((band, i) => (
+                <tr
+                  key={band.lower}
+                  className={i === topBand ? "band-current" : i > topBand ? "band-quiet" : ""}
+                >
                   <td>
-                    {formatMoney(band.lower)}{" "}
-                    {band.upper ? `– ${formatMoney(band.upper)}` : "ขึ้นไป"}
+                    {wholeBaht(band.lower)} {band.upper ? `– ${wholeBaht(band.upper)}` : "ขึ้นไป"}
                   </td>
                   <td>
                     {Number(band.rate) === 0 ? (
@@ -406,10 +421,10 @@ export function Explanation({
                       `${Number(band.rate) * 100}%`
                     )}
                   </td>
-                  <td className="align-right">
+                  <td className="align-right" data-label="เงินได้ในช่วง">
                     <MoneyValue value={band.taxable_amount} currency={false} />
                   </td>
-                  <td className="align-right">
+                  <td className="align-right" data-label="ภาษี">
                     <MoneyValue value={band.tax} currency={false} />
                   </td>
                 </tr>

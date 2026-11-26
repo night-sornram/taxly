@@ -334,8 +334,8 @@ td {
 .tax-hero {
   position: relative;
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 240px;
-  gap: 8px 24px;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr);
+  gap: 16px 36px;
   padding: 28px 32px 12px;
   border-radius: 32px;
   background: var(--tx-hero);
@@ -754,28 +754,36 @@ td {
   background: var(--tx-peach);
   color: var(--tx-peach-ink);
 }
-/* Ledger month summary reads as three pockets. */
+/* Ledger month summary reads as three pockets: the label in the pocket's own ink. */
 .ledger-stats > .card {
-  gap: 10px;
-  padding: 20px;
+  gap: 2px;
+  padding: 14px 18px 16px;
   box-shadow: none;
-  background: var(--tx-mint);
+  border: 0;
+  background: var(--pocket-bg);
 }
-.ledger-stats > .card:nth-child(2) {
-  background: var(--tx-peach);
+.ledger-stats > .card[data-tone="mint"] {
+  --pocket-bg: var(--tx-mint);
+  --pocket-ink: var(--tx-mint-ink);
 }
-.ledger-stats > .card:nth-child(3) {
-  background: var(--tx-lilac);
+.ledger-stats > .card[data-tone="peach"] {
+  --pocket-bg: var(--tx-peach);
+  --pocket-ink: var(--tx-peach-ink);
 }
-.ledger-stats > .card .card-icon {
-  background: var(--paper);
+.ledger-stats > .card[data-tone="lilac"] {
+  --pocket-bg: var(--tx-lilac);
+  --pocket-ink: var(--tx-lilac-ink);
 }
-.ledger-stats > .card:nth-child(3) .card-icon {
-  color: var(--tx-lilac-ink);
+.ledger-stats > .card .card-label {
+  color: var(--pocket-ink);
+  font-size: 13.5px;
+  font-weight: 600;
 }
 .ledger-stats .money {
   font-size: 26px;
   font-weight: 700;
+  line-height: 1.25;
+  white-space: nowrap;
 }
 .art .art-paper {
   fill: var(--paper);
@@ -1258,4 +1266,325 @@ body::before {
   height: env(safe-area-inset-top, 0px);
   background: var(--canvas);
   z-index: 40;
+}
+
+/* ---------- Desktop: a full-height sidebar, as the product page draws it ---------- */
+@media (min-width: 1001px) {
+  .tx-app {
+    display: grid;
+    grid-template-columns: 248px minmax(0, 1fr);
+    align-items: start;
+  }
+  .tx-header {
+    grid-column: 1;
+    grid-row: 1;
+    position: sticky;
+    top: 0;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    padding: 22px 14px 18px;
+    overflow-y: auto;
+    border-bottom: 0;
+    border-right: 1px solid var(--line);
+    background: var(--paper);
+    backdrop-filter: none;
+  }
+  /* The bar's parts join the column, in sidebar order. */
+  .tx-header-bar {
+    display: contents;
+  }
+  .tx-header .brand {
+    order: 1;
+    padding: 0 6px;
+  }
+  .tx-header .area-switcher {
+    order: 2;
+    display: flex;
+  }
+  .tx-header .area-switcher > button {
+    flex: 1;
+    justify-content: center;
+    padding: 6px 8px;
+    font-size: 13.5px;
+    white-space: nowrap;
+  }
+  .tx-header .area-switcher > button > svg {
+    display: none;
+  }
+  .tx-tabs {
+    order: 3;
+    flex-direction: column;
+    gap: 2px;
+    max-width: none;
+    margin: 0;
+    padding: 0;
+    overflow: visible;
+  }
+  .tx-tabs > button {
+    justify-content: flex-start;
+    gap: 12px;
+    min-height: 42px;
+    padding: 0 12px;
+    border-radius: 12px;
+    font-size: 14.5px;
+  }
+  .tx-tabs > button:hover {
+    background: var(--canvas);
+  }
+  .tx-tabs > button.active {
+    background: var(--tx-mint);
+    color: var(--tx-mint-ink);
+  }
+  .tx-tools {
+    order: 4;
+    flex-wrap: wrap;
+    margin: auto 0 0;
+    gap: 8px;
+    padding: 14px 4px 0;
+    border-top: 1px solid var(--line);
+  }
+  .tx-tools .saved-label {
+    order: -1;
+    width: 100%;
+  }
+  .main-shell {
+    grid-column: 2;
+    grid-row: 1;
+    min-height: 100vh;
+  }
+  .tx-main,
+  .app-footer {
+    max-width: 1120px;
+    padding-left: 40px;
+    padding-right: 40px;
+  }
+  .tx-main {
+    padding-top: 36px;
+  }
+  .toast {
+    left: calc(50% + 124px);
+  }
+}
+
+/* The tax card's sums, as the product page shows them: each step to net income. */
+.hero-sums {
+  align-self: start;
+  margin: 0;
+  padding: 10px;
+  border-radius: 22px;
+  background: var(--paper);
+}
+.hero-sums > div {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-height: 40px;
+  padding: 0 12px;
+  border-radius: 12px;
+  font-size: 14px;
+}
+.hero-sums dt {
+  color: var(--muted);
+}
+.hero-sums dd {
+  margin: 0;
+  color: var(--ink);
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.hero-sums .hero-sum-total {
+  margin-top: 6px;
+  border-top: 1px solid var(--line);
+  border-radius: 0;
+  min-height: 46px;
+}
+.hero-sums .hero-sum-total dt,
+.hero-sums .hero-sum-total dd {
+  color: var(--ink);
+  font-weight: 700;
+}
+.tax-hero .money.large {
+  color: var(--tx-mint-ink);
+}
+@media (max-width: 900px) {
+  .tax-hero {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+/* Phones: tables fit without sideways scrolling. Income rows stack into
+   cards so the amount, withheld tax and actions stay in view. */
+@media (max-width: 700px) {
+  th,
+  td {
+    padding-left: 12px;
+    padding-right: 12px;
+  }
+  .row-actions {
+    gap: 0;
+  }
+  .income-table thead,
+  .bands-table thead {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+  }
+  .income-table tr {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) auto auto;
+    align-items: center;
+    gap: 4px 10px;
+    padding: 14px 8px 14px 16px;
+    border-top: 1px solid var(--line);
+  }
+  .income-table td,
+  .bands-table td {
+    padding: 0;
+    border: 0;
+    white-space: normal;
+  }
+  .bands-table tr {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 2px 12px;
+    padding: 12px 16px;
+    border-top: 1px solid var(--line);
+  }
+  .bands-table td:nth-child(1) {
+    grid-area: 1 / 1;
+    font-weight: 600;
+  }
+  .bands-table td:nth-child(2) {
+    grid-area: 2 / 1;
+    font-size: 12.5px;
+  }
+  .bands-table td:nth-child(3) {
+    grid-area: 2 / 2;
+  }
+  .bands-table td:nth-child(4) {
+    grid-area: 1 / 2;
+  }
+  .bands-table td[data-label]::before {
+    content: attr(data-label) " ";
+    color: var(--muted);
+    font-size: 12px;
+  }
+  .bands-table td:nth-child(3) .money {
+    font-size: 12.5px;
+  }
+  .income-table td:nth-child(1) {
+    grid-area: 1 / 1 / 2 / 3;
+  }
+  .income-table td:nth-child(2) {
+    grid-area: 2 / 1;
+    color: var(--muted);
+    font-size: 12.5px;
+  }
+  .income-table td:nth-child(3) {
+    grid-area: 2 / 2;
+  }
+  .income-table td:nth-child(4) {
+    grid-area: 1 / 3;
+  }
+  .income-table td:nth-child(4) .money {
+    font-weight: 600;
+    color: var(--ink);
+  }
+  .income-table td:nth-child(5) {
+    grid-area: 2 / 3;
+    font-size: 12.5px;
+  }
+  .income-table td:nth-child(5)::before {
+    content: attr(data-label) " ";
+    color: var(--muted);
+  }
+  .income-table td:nth-child(5) .money {
+    font-size: 12.5px;
+  }
+  .income-table .note-cell {
+    grid-area: 3 / 1 / 4 / 4;
+    color: var(--muted);
+    font-size: 12.5px;
+  }
+  .income-table .note-cell.is-empty {
+    display: none;
+  }
+  .income-table td:nth-child(7) {
+    grid-area: 1 / 4 / 3 / 5;
+  }
+}
+@media (max-width: 700px) {
+  .table-toolbar {
+    flex-wrap: wrap;
+    padding: 16px;
+  }
+  .table-toolbar > .ledger-month {
+    flex: 1 1 100%;
+    justify-content: space-between;
+  }
+  .segmented button {
+    white-space: nowrap;
+  }
+}
+
+/* Explanation: deductions read as subtractions, running totals stand out,
+   and each source chip names the document it opens. */
+.calculation-step > .money {
+  color: var(--ink);
+  white-space: nowrap;
+}
+.calculation-step[data-sign="minus"] > .money::before {
+  content: "−";
+}
+.calculation-step.is-total {
+  background: var(--tx-mint);
+}
+.calculation-step.is-total h2,
+.calculation-step.is-total > .money {
+  color: var(--tx-mint-ink);
+  font-weight: 700;
+}
+.calculation-step.is-total .step-number {
+  border-color: transparent;
+  background: var(--paper);
+}
+.step-sources button {
+  max-width: 100%;
+  min-height: 28px;
+  padding: 3px 10px 3px 8px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--paper);
+  color: var(--muted);
+}
+.step-sources button > svg {
+  flex-shrink: 0;
+}
+.step-sources button > span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.step-sources button:hover {
+  border-color: var(--forest);
+  color: var(--ink);
+  text-decoration: none;
+}
+.bands-table .band-quiet td,
+.bands-table .band-quiet td .money {
+  color: var(--muted);
+}
+.bands-table .band-current {
+  background: var(--tx-mint);
+}
+.bands-table .band-current td,
+.bands-table .band-current td .money {
+  color: var(--tx-mint-ink);
+  font-weight: 600;
 }

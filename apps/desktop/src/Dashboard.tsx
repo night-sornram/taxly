@@ -15,7 +15,7 @@ import {
 } from "lucide-react";
 import type { Calculation, Workspace } from "./types";
 import { Button, MoneyValue, Notice, TextLink } from "./components";
-import { EmptyArt, MoneyArt } from "./Art";
+import { EmptyArt } from "./Art";
 import { incomeKindLabel } from "./Income";
 import { formatMoney, proportion, shortMonths } from "./money";
 
@@ -146,7 +146,28 @@ export default function Dashboard({
             ตัวเลขนี้มาจากไหน <ChevronRight size={15} />
           </button>
         </div>
-        <MoneyArt className="hero-art" />
+        <dl className="hero-sums" aria-label="ที่มาของเงินได้สุทธิ">
+          <div>
+            <dt>เงินได้ทั้งปี</dt>
+            <dd>{formatMoney(data.gross_income)}</dd>
+          </div>
+          <div>
+            <dt>หักค่าใช้จ่าย</dt>
+            <dd>−{formatMoney(data.expenses)}</dd>
+          </div>
+          <div>
+            <dt>ลดหย่อนส่วนตัว</dt>
+            <dd>−{formatMoney(data.personal_allowance)}</dd>
+          </div>
+          <div>
+            <dt>ประกันสังคม</dt>
+            <dd>−{formatMoney(data.social_security)}</dd>
+          </div>
+          <div className="hero-sum-total">
+            <dt>เงินได้สุทธิ</dt>
+            <dd>{formatMoney(data.taxable_income)}</dd>
+          </div>
+        </dl>
         <div className="quick-actions">
           {actions.map((action) => (
             <button key={action.label} onClick={action.onClick} disabled={action.disabled}>

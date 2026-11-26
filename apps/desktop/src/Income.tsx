@@ -261,7 +261,7 @@ export function IncomePage({
           </label>
         </div>
         <div className="table-scroll">
-          <table>
+          <table className="income-table">
             <thead>
               <tr>
                 <th>เดือน / นายจ้าง</th>
@@ -291,14 +291,16 @@ export function IncomePage({
                   <td className="align-right">
                     <MoneyValue value={entry.gross} currency={false} />
                   </td>
-                  <td className="align-right">
+                  <td className="align-right" data-label="ภาษีที่หัก">
                     {entry.withholding === null ? (
                       <span className="unknown">ยังไม่ทราบ</span>
                     ) : (
                       <MoneyValue value={entry.withholding} currency={false} />
                     )}
                   </td>
-                  <td>{entry.note || "—"}</td>
+                  <td className={entry.note ? "note-cell" : "note-cell is-empty"}>
+                    {entry.note || "—"}
+                  </td>
                   <td>
                     <div className="row-actions">
                       <button

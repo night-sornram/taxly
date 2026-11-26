@@ -189,7 +189,7 @@ test("phone syncs live with another device and keeps offline writes through relo
   await login(b);
   await entries(b);
   await addExpense(a, "กาแฟจากโทรศัพท์", "65.50");
-  await expect(b.getByRole("cell", { name: "กาแฟจากโทรศัพท์", exact: true })).toBeVisible({
+  await expect(b.getByRole("listitem").filter({ hasText: "กาแฟจากโทรศัพท์" })).toBeVisible({
     timeout: 5000,
   });
   await phone.setOffline(true);
@@ -200,22 +200,24 @@ test("phone syncs live with another device and keeps offline writes through relo
   await phone.route("https://taxly-e2e.supabase.co/rest/**", (route) => route.abort());
   await a.reload();
   await entries(a);
-  await expect(a.getByRole("cell", { name: "บันทึกออฟไลน์", exact: true })).toBeVisible();
+  await expect(a.getByRole("listitem").filter({ hasText: "บันทึกออฟไลน์" })).toBeVisible();
   expect(cloud.snapshot.entries).toHaveLength(1);
   await phone.unroute("https://taxly-e2e.supabase.co/rest/**");
   await a.evaluate(() => window.dispatchEvent(new Event("online")));
-  await expect(b.getByRole("cell", { name: "บันทึกออฟไลน์", exact: true })).toBeVisible({
+  await expect(b.getByRole("listitem").filter({ hasText: "บันทึกออฟไลน์" })).toBeVisible({
     timeout: 5000,
   });
   // Edit/delete on the phone must also propagate via websocket, without a reload.
-  const row = a.getByRole("row").filter({ hasText: "กาแฟจากโทรศัพท์" });
+  const row = a.getByRole("listitem").filter({ hasText: "กาแฟจากโทรศัพท์" });
   await row.getByRole("button", { name: /แก้ไข/ }).click();
   await a.getByRole("dialog").getByLabel("จำนวนเงิน (บาท)").fill("70.50");
   await a.getByRole("dialog").getByRole("button", { name: "บันทึกรายการ" }).click();
-  await expect(b.getByRole("row").filter({ hasText: "กาแฟจากโทรศัพท์" })).toContainText("70.50");
+  await expect(b.getByRole("listitem").filter({ hasText: "กาแฟจากโทรศัพท์" })).toContainText(
+    "70.50",
+  );
   await row.getByRole("button", { name: /ลบ/ }).click();
   await a.getByRole("dialog").getByRole("button", { name: "ลบรายการ", exact: true }).click();
-  await expect(b.getByRole("cell", { name: "กาแฟจากโทรศัพท์", exact: true })).toHaveCount(0);
+  await expect(b.getByRole("listitem").filter({ hasText: "กาแฟจากโทรศัพท์" })).toHaveCount(0);
   await phone.close();
   await desktop.close();
 });
@@ -278,7 +280,7 @@ test("installed phone app opens offline and uploads saved entries on reconnect",
   await page.reload();
   await entries(page);
   await expect(
-    page.getByRole("cell", { name: "ออฟไลน์หลังเปิดแอปใหม่", exact: true }),
+    page.getByRole("listitem").filter({ hasText: "ออฟไลน์หลังเปิดแอปใหม่" }),
   ).toBeVisible();
   expect(cloud.snapshot.entries).toHaveLength(0);
   await context.setOffline(false);

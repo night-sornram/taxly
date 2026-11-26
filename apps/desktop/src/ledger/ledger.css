@@ -49,12 +49,7 @@
   margin-bottom: 18px;
 }
 .ledger-stats > .card {
-  padding: 18px 20px;
   display: grid;
-  gap: 6px;
-}
-.ledger-stats .money {
-  font-size: 22px;
 }
 .ledger-grid {
   display: grid;
@@ -120,10 +115,179 @@
   display: grid;
   gap: 10px;
 }
+.ledger-year {
+  grid-column: 1 / -1;
+}
+.ledger-year tfoot th {
+  background: transparent;
+}
+.ledger-year tfoot th,
+.ledger-year tfoot td {
+  border-top: 1px solid var(--line);
+  font-weight: 600;
+  color: var(--ink);
+}
+.ledger-quiet td,
+.ledger-quiet td .money {
+  color: var(--muted);
+}
+.ledger-month-link {
+  padding: 0;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+}
+.ledger-month-link:hover {
+  color: var(--forest);
+  text-decoration: underline;
+}
+.ledger-current td {
+  background: var(--tx-mint);
+}
+
+/* Entries page: one block per day, newest first. */
+.entry-day + .entry-day {
+  margin-top: 6px;
+}
+.entry-day-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  margin: 0;
+  padding: 10px 22px 6px;
+  color: var(--muted);
+  font-size: 12.5px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+.entry-day-head .money {
+  font-size: inherit;
+  color: inherit;
+}
+
+/* Entries as rows: icon, note over category and date, signed amount. */
+.entry-list {
+  list-style: none;
+  margin: 0 -8px;
+  padding: 0;
+}
+.entry-row {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 14px;
+  padding: 10px 8px;
+}
+.entry-row:has(.row-actions) {
+  grid-template-columns: auto minmax(0, 1fr) auto auto;
+}
+.entry-row + .entry-row {
+  border-top: 1px solid var(--line);
+}
+.entry-row .cat-icon {
+  width: 40px;
+  height: 40px;
+}
+.entry-text {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+.entry-title {
+  overflow: hidden;
+  color: var(--ink);
+  font-size: 15px;
+  font-weight: 600;
+  line-height: 1.45;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.entry-sub {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 6px;
+  color: var(--muted);
+  font-size: 12.5px;
+  line-height: 1.45;
+}
+.entry-amount {
+  font-size: 15px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.entry-amount.ledger-expense {
+  color: var(--ink);
+}
+.entry-list--all {
+  margin: 0;
+  padding: 4px 12px 0;
+}
+.entry-list--all .entry-row {
+  padding: 12px 10px;
+}
+.entry-row .row-actions {
+  display: flex;
+  gap: 2px;
+}
+.ledger-tax-badge {
+  margin-left: 2px;
+}
+
 @media (max-width: 760px) {
-  .ledger-stats,
   .ledger-grid {
     grid-template-columns: minmax(0, 1fr);
+  }
+  .ledger-stats {
+    gap: 8px;
+  }
+  .ledger-stats > .card {
+    padding: 10px 12px 12px;
+    border-radius: 16px;
+  }
+  .ledger-app .ledger-stats > .card .card-label {
+    font-size: 12px;
+  }
+  .ledger-app .ledger-stats .money {
+    font-size: 15.5px;
+    letter-spacing: -0.01em;
+  }
+  .ledger-app .ledger-stats .money .currency {
+    display: none;
+  }
+  .ledger-actions {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .ledger-actions > .ledger-month {
+    grid-column: 1 / -1;
+    justify-content: space-between;
+  }
+  .ledger-actions > button {
+    justify-content: center;
+  }
+  .entry-list--all {
+    padding: 0 6px;
+  }
+  .ledger-year .table-scroll {
+    margin: 0 -20px;
+  }
+  .ledger-year th,
+  .ledger-year td {
+    padding: 11px 8px;
+    font-size: 13px;
+  }
+  .ledger-year th:first-child,
+  .ledger-year td:first-child {
+    padding-left: 20px;
+  }
+  .ledger-year th:last-child,
+  .ledger-year td:last-child {
+    padding-right: 20px;
+  }
+  .ledger-year td .money {
+    font-size: 13px;
   }
 }
 @media (max-width: 700px) {

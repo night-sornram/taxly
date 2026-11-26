@@ -22,11 +22,11 @@ type View = "overview" | "entries" | "categories" | "import" | "privacy" | "sync
 const Privacy = lazy(() => import("../Privacy"));
 const ImportPage = lazy(() => import("./ImportPage"));
 const nav = [
-  { id: "overview", label: "สรุปรายเดือน", icon: LayoutDashboard },
-  { id: "entries", label: "รายการ", icon: ListOrdered },
-  { id: "categories", label: "หมวดหมู่", icon: Tags },
-  { id: "import", label: "นำเข้า CSV", icon: FileSpreadsheet },
-  { id: "sync", label: "บัญชีและซิงก์", icon: Cloud },
+  { id: "overview", label: "สรุปรายเดือน", short: "สรุป", icon: LayoutDashboard },
+  { id: "entries", label: "รายการ", short: "รายการ", icon: ListOrdered },
+  { id: "categories", label: "หมวดหมู่", short: "หมวดหมู่", icon: Tags },
+  { id: "import", label: "นำเข้า CSV", short: "นำเข้า", icon: FileSpreadsheet },
+  { id: "sync", label: "บัญชีและซิงก์", short: "ซิงก์", icon: Cloud },
 ] as const;
 
 export default function LedgerApp({
@@ -195,10 +195,11 @@ export default function LedgerApp({
             key={item.id}
             className={view === item.id ? "active" : ""}
             aria-current={view === item.id ? "page" : undefined}
+            aria-label={item.label}
             onClick={() => navigate(item.id)}
           >
             <item.icon size={19} />
-            {item.label}
+            {item.short}
           </button>
         ))}
         <button aria-label="เพิ่มรายจ่าย" onClick={() => add("expense")}>

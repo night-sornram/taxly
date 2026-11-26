@@ -1,14 +1,12 @@
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 import {
   ChevronLeft,
   ChevronRight,
-  ArrowDownLeft,
-  ArrowUpRight,
   CalendarDays,
   ChartPie,
   Landmark,
+  ListOrdered,
   Pencil,
-  PiggyBank,
   Plus,
   Trash2,
 } from "lucide-react";
@@ -17,7 +15,7 @@ import CategoryIcon from "./CategoryIcon";
 import { command, errorMessage } from "../api";
 import { Button, ErrorNotice, Field, Modal, MoneyValue } from "../components";
 import { months, shortMonths } from "../money";
-import { categoryTotals, fromSatang, kindOf, monthlyTotals } from "./ledger";
+import { categoryTotals, fromSatang, kindOf, monthlyTotals, toSatang } from "./ledger";
 import type { Ledger, LedgerCategory, LedgerEntry, LedgerKind } from "./types";
 
 const thaiDate = (iso: string) =>
@@ -81,6 +79,44 @@ function Signed({ value }: { value: bigint }) {
   );
 }
 
+/** One ledger entry as a list row: category icon, note, category and date, signed amount. */
+function EntryRow({
+  entry,
+  category,
+  kind,
+  showDate = true,
+  children,
+}: {
+  entry: LedgerEntry;
+  category: LedgerCategory | undefined;
+  kind: LedgerKind;
+  showDate?: boolean;
+  children?: ReactNode;
+}) {
+  return (
+    <li className="entry-row">
+      {category && <CategoryIcon category={category} size={18} />}
+      <span className="entry-text">
+        <span className="entry-title">{entry.note || category?.name}</span>
+        <span className="entry-sub">
+          {category?.name}
+          {showDate && ` · ${thaiDate(entry.date)}`}
+          {entry.tax_income_id && (
+            <span className="badge neutral ledger-tax-badge">
+              <Landmark size={12} aria-hidden="true" /> นับภาษี
+            </span>
+          )}
+        </span>
+      </span>
+      <span className={`entry-amount ledger-${kind}`}>
+        {kind === "income" ? "+" : "−"}
+        <MoneyValue value={entry.amount} currency={false} />
+      </span>
+      {children}
+    </li>
+  );
+}
+
 export function OverviewPage({
   ledger,
   month,
@@ -99,6 +135,12 @@ export function OverviewPage({
   const largest = expenses[0]?.total ?? 0n;
   const yearIncome = totals.reduce((sum, t) => sum + t.income, 0n);
   const yearExpense = totals.reduce((sum, t) => sum + t.expense, 0n);
+  const kind = kindOf(ledger.categories);
+  const categories = new Map(ledger.categories.map((c) => [c.id, c]));
+  const recent = ledger.entries
+    .filter((e) => e.date.startsWith(month))
+    .sort((a, b) => b.date.localeCompare(a.date))
+    .slice(0, 5);
   return (
     <>
       <div className="page-heading">
@@ -117,35 +159,45 @@ export function OverviewPage({
         </div>
       </div>
       <section className="ledger-stats" aria-label={`สรุป${monthLabel(month)}`}>
-        <div className="card">
-          <span className="card-label">
-            <span className="card-icon">
-              <ArrowDownLeft size={18} aria-hidden="true" />
-            </span>
-            รายรับ
-          </span>
+        <div className="card" data-tone="mint">
+          <span className="card-label">รายรับ</span>
           <MoneyValue value={fromSatang(selected.income)} />
         </div>
-        <div className="card">
-          <span className="card-label">
-            <span className="card-icon expense">
-              <ArrowUpRight size={18} aria-hidden="true" />
-            </span>
-            รายจ่าย
-          </span>
+        <div className="card" data-tone="peach">
+          <span className="card-label">รายจ่าย</span>
           <MoneyValue value={fromSatang(selected.expense)} />
         </div>
-        <div className="card">
-          <span className="card-label">
-            <span className="card-icon">
-              <PiggyBank size={18} aria-hidden="true" />
-            </span>
-            คงเหลือ
-          </span>
+        <div className="card" data-tone="lilac">
+          <span className="card-label">คงเหลือ</span>
           <Signed value={selected.income - selected.expense} />
         </div>
       </section>
       <div className="ledger-grid">
+        <section className="card ledger-panel">
+          <h2>
+            <span className="card-icon">
+              <ListOrdered size={18} aria-hidden="true" />
+            </span>
+            รายการล่าสุด
+          </h2>
+          {recent.length === 0 ? (
+            <div className="panel-empty">
+              <EmptyArt className="empty-art" />
+              <p className="fine-print">ยังไม่มีรายการในเดือนนี้</p>
+            </div>
+          ) : (
+            <ul className="entry-list">
+              {recent.map((entry) => (
+                <EntryRow
+                  key={entry.id}
+                  entry={entry}
+                  category={categories.get(entry.category_id)}
+                  kind={kind(entry)}
+                />
+              ))}
+            </ul>
+          )}
+        </section>
         <section className="card ledger-panel">
           <h2>
             <span className="card-icon">
@@ -177,7 +229,7 @@ export function OverviewPage({
             </ul>
           )}
         </section>
-        <section className="card table-card ledger-panel">
+        <section className="card table-card ledger-panel ledger-year">
           <h2>
             <span className="card-icon">
               <CalendarDays size={18} aria-hidden="true" />
@@ -203,9 +255,24 @@ export function OverviewPage({
                 {totals.map((t, i) => (
                   <tr
                     key={i}
-                    className={i === Number(month.slice(5, 7)) - 1 ? "ledger-current" : ""}
+                    className={
+                      i === Number(month.slice(5, 7)) - 1
+                        ? "ledger-current"
+                        : t.income === 0n && t.expense === 0n
+                          ? "ledger-quiet"
+                          : ""
+                    }
                   >
-                    <td>{months[i]}</td>
+                    <td>
+                      <button
+                        type="button"
+                        className="ledger-month-link"
+                        aria-current={i === Number(month.slice(5, 7)) - 1 ? "date" : undefined}
+                        onClick={() => onMonth(`${year}-${String(i + 1).padStart(2, "0")}`)}
+                      >
+                        {months[i]}
+                      </button>
+                    </td>
                     <td className="align-right">
                       <MoneyValue value={fromSatang(t.income)} currency={false} />
                     </td>
@@ -261,9 +328,15 @@ export function EntriesPage({
   const [error, setError] = useState("");
   const kind = kindOf(ledger.categories);
   const categories = new Map(ledger.categories.map((c) => [c.id, c]));
-  const rows = ledger.entries.filter(
-    (e) => e.date.startsWith(month) && (filter === "all" || kind(e) === filter),
-  );
+  const rows = ledger.entries
+    .filter((e) => e.date.startsWith(month) && (filter === "all" || kind(e) === filter))
+    .sort((a, b) => b.date.localeCompare(a.date));
+  const days: [string, LedgerEntry[]][] = [];
+  for (const entry of rows) {
+    const last = days.at(-1);
+    if (last?.[0] === entry.date) last[1].push(entry);
+    else days.push([entry.date, [entry]]);
+  }
   const remove = async () => {
     if (!removing) return;
     setBusy(true);
@@ -311,48 +384,30 @@ export function EntriesPage({
           </div>
           <MonthPicker value={month} onChange={onMonth} />
         </div>
-        <div
-          className="table-scroll"
-          tabIndex={0}
-          role="region"
-          aria-label="ตารางรายการรายรับรายจ่าย"
-        >
-          <table>
-            <thead>
-              <tr>
-                <th>วันที่</th>
-                <th>หมวดหมู่</th>
-                <th>บันทึก</th>
-                <th className="align-right">จำนวนเงิน</th>
-                <th>
-                  <span className="sr-only">จัดการ</span>
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              {rows.map((entry) => (
-                <tr key={entry.id}>
-                  <td>{thaiDate(entry.date)}</td>
-                  <td>
-                    <span className="cat-name">
-                      {categories.has(entry.category_id) && (
-                        <CategoryIcon category={categories.get(entry.category_id)!} size={16} />
-                      )}
-                      {categories.get(entry.category_id)?.name}
-                    </span>
-                    {entry.tax_income_id && (
-                      <span className="badge neutral ledger-tax-badge">
-                        <Landmark size={12} aria-hidden="true" /> นับภาษี
-                      </span>
-                    )}
-                  </td>
-                  <td>{entry.note || "—"}</td>
-                  <td className={`align-right ledger-${kind(entry)}`}>
-                    {kind(entry) === "income" ? "+" : "−"}
-                    <MoneyValue value={entry.amount} currency={false} />
-                  </td>
-                  <td>
-                    <div className="row-actions">
+        {days.map(([date, list]) => {
+          const net = list.reduce(
+            (sum, e) => sum + (kind(e) === "income" ? 1n : -1n) * toSatang(e.amount),
+            0n,
+          );
+          return (
+            <section key={date} className="entry-day" aria-label={thaiDate(date)}>
+              <h3 className="entry-day-head">
+                <span>{thaiDate(date)}</span>
+                <span className={net < 0n ? "ledger-expense" : "ledger-income"}>
+                  {net < 0n ? "−" : "+"}
+                  <MoneyValue value={fromSatang(net < 0n ? -net : net)} currency={false} />
+                </span>
+              </h3>
+              <ul className="entry-list entry-list--all">
+                {list.map((entry) => (
+                  <EntryRow
+                    key={entry.id}
+                    entry={entry}
+                    category={categories.get(entry.category_id)}
+                    kind={kind(entry)}
+                    showDate={false}
+                  >
+                    <span className="row-actions">
                       <button
                         className="icon-button"
                         aria-label={`แก้ไข ${categories.get(entry.category_id)?.name} ${thaiDate(entry.date)}`}
@@ -367,20 +422,20 @@ export function EntriesPage({
                       >
                         <Trash2 size={15} />
                       </button>
-                    </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-          {rows.length === 0 && (
-            <div className="empty-state">
-              <EmptyArt className="empty-art" />
-              <h3>ยังไม่มีรายการใน{monthLabel(month)}</h3>
-              <p>เพิ่มรายการเอง หรือนำเข้าจากไฟล์ CSV ของธนาคาร</p>
-            </div>
-          )}
-        </div>
+                    </span>
+                  </EntryRow>
+                ))}
+              </ul>
+            </section>
+          );
+        })}
+        {rows.length === 0 && (
+          <div className="empty-state">
+            <EmptyArt className="empty-art" />
+            <h3>ยังไม่มีรายการใน{monthLabel(month)}</h3>
+            <p>เพิ่มรายการเอง หรือนำเข้าจากไฟล์ CSV ของธนาคาร</p>
+          </div>
+        )}
         <footer className="table-footer">{rows.length} รายการ · จำนวนเงินเป็นบาท</footer>
       </div>
       {removing && (

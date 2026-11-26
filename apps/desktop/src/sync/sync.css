@@ -20,6 +20,47 @@
   gap: 18px;
   margin-top: 20px;
 }
+/* The form's gap already spaces fields; the modal footer style doesn't fit a card. */
+.sync-panel form .field {
+  margin: 0;
+}
+.sync-panel .modal-actions {
+  position: static;
+  margin: 4px 0 0;
+  padding: 0;
+  border: 0;
+  background: none;
+}
+.sync-steps {
+  display: grid;
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  counter-reset: sync-step;
+}
+.sync-steps li {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  color: var(--ink);
+  font-size: 14px;
+  line-height: 1.6;
+  counter-increment: sync-step;
+}
+.sync-steps li::before {
+  content: counter(sync-step);
+  display: grid;
+  flex-shrink: 0;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: var(--tx-mint);
+  color: var(--tx-mint-ink);
+  font-size: 13px;
+  font-weight: 700;
+}
 .sync-panel h2 {
   display: flex;
   align-items: center;

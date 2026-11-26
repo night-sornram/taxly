@@ -41,9 +41,9 @@ import ShellHeader from "./ShellHeader";
 
 type View = "dashboard" | "income" | "deductions" | "explanation" | "history" | "privacy";
 const nav = [
-  { id: "dashboard", label: "ภาพรวมภาษี", icon: LayoutDashboard },
-  { id: "income", label: "รายได้ของฉัน", icon: Wallet },
-  { id: "deductions", label: "สิทธิ์ลดหย่อน", icon: Leaf },
+  { id: "dashboard", label: "ภาพรวมภาษี", short: "ภาพรวม", icon: LayoutDashboard },
+  { id: "income", label: "รายได้ของฉัน", short: "รายได้", icon: Wallet },
+  { id: "deductions", label: "สิทธิ์ลดหย่อน", short: "ลดหย่อน", icon: Leaf },
 ] as const;
 const additionalNav = [
   { id: "explanation", label: "เข้าใจการคำนวณ", icon: BookOpen },
@@ -416,19 +416,22 @@ export default function TaxApp({
             key={item.id}
             className={view === item.id ? "active" : ""}
             aria-current={view === item.id ? "page" : undefined}
+            aria-label={item.label}
             onClick={() => navigate(item.id)}
           >
             <item.icon size={19} />
-            {item.label}
+            {item.short}
           </button>
         ))}
+        {/* Privacy already sits in the header on phones; history had no other way in. */}
         <button
-          className={view === "privacy" ? "active" : ""}
-          aria-current={view === "privacy" ? "page" : undefined}
-          onClick={() => navigate("privacy")}
+          className={view === "history" ? "active" : ""}
+          aria-current={view === "history" ? "page" : undefined}
+          aria-label="ผลสรุปที่บันทึก"
+          onClick={() => navigate("history")}
         >
-          <ShieldCheck size={19} />
-          ข้อมูลของฉัน
+          <FileClock size={19} />
+          ผลสรุป
         </button>
         <button aria-label="เพิ่มรายได้" onClick={() => setIncomeEditor(null)}>
           <Plus size={20} />

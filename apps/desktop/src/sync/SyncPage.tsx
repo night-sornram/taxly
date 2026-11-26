@@ -188,6 +188,11 @@ export default function SyncPage({ standalone = false }: { standalone?: boolean 
             ตั้งค่า Supabase โปรเจกต์ของคุณครั้งเดียว
             ข้อมูลรายรับรายจ่ายและข้อมูลภาษีจะซิงก์เฉพาะบัญชีที่เข้าใช้
           </p>
+          <ol className="sync-steps">
+            <li>สร้างโปรเจกต์ Supabase และตารางซิงก์ ตามเอกสาร Mobile sync ของโปรเจกต์</li>
+            <li>วาง Project URL และ publishable key ด้านล่าง แล้วบันทึก</li>
+            <li>เข้าสู่ระบบหรือสร้างบัญชี แล้วเริ่มซิงก์</li>
+          </ol>
           <form
             onSubmit={(e) => {
               e.preventDefault();
@@ -221,9 +226,6 @@ export default function SyncPage({ standalone = false }: { standalone?: boolean 
               value={webUrl}
               onChange={(e) => setWebUrl(e.target.value)}
             />
-            <Notice>
-              ต้องสร้างตารางซิงก์ใน Supabase ก่อนใช้งาน ดูขั้นตอนในเอกสาร Mobile sync ของโปรเจกต์
-            </Notice>
             <div className="modal-actions">
               {cloud.config && (
                 <Button variant="secondary" onClick={() => setConfigure(false)}>

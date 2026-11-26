@@ -35,7 +35,7 @@ test("records an expense and summarizes the month", async ({ page }) => {
     .getByLabel("เดือน", { exact: true })
     .selectOption("3");
   await expect(page.getByRole("region", { name: "สรุปมีนาคม 2569" })).toContainText("1,250.50");
-  await expect(page.getByText("อาหารและเครื่องดื่ม")).toBeVisible();
+  await expect(page.locator(".ledger-bars").getByText("อาหารและเครื่องดื่ม")).toBeVisible();
 });
 
 test("linked income sends its tax details", async ({ page }) => {
