@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   ArrowLeft,
   ArrowRight,
@@ -158,6 +158,10 @@ export default function Onboarding({
       setBusy(false);
     }
   };
+  // Each step starts at its top; on phones the Next button stays pinned below.
+  useEffect(() => {
+    window.scrollTo({ top: 0 });
+  }, [data.step]);
   const outside = [
     data.facts.single,
     data.facts.under_65,

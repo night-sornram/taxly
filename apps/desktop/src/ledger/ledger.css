@@ -65,6 +65,9 @@
   font-size: 15px;
   margin-bottom: 14px;
 }
+.ledger-panel .card-heading h2 {
+  margin: 0;
+}
 .ledger-bars,
 .ledger-category-list {
   list-style: none;

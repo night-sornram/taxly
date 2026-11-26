@@ -287,11 +287,20 @@
 .field > textarea {
   border-radius: 14px;
 }
+/* Same look as the area switch, so the chosen option reads clearly in both themes. */
 .segmented {
   border-radius: 999px;
+  background: var(--line);
 }
 .segmented > button {
   border-radius: 999px;
+  color: var(--ink);
+}
+.segmented > button.active {
+  background: var(--paper);
+  color: var(--ink);
+  font-weight: 600;
+  box-shadow: 0 1px 4px #1d23291f;
 }
 .compact-select {
   min-height: 44px;
@@ -1587,4 +1596,17 @@ body::before {
 .bands-table .band-current td .money {
   color: var(--tx-mint-ink);
   font-weight: 600;
+}
+
+/* Phones: onboarding's Back/Next bar stays in reach while a step scrolls. */
+@media (max-width: 700px) {
+  .wizard-actions {
+    position: sticky;
+    bottom: 0;
+    z-index: 2;
+    margin: 24px -20px -24px;
+    padding: 14px 20px calc(16px + env(safe-area-inset-bottom, 0px));
+    border-radius: 0 0 32px 32px;
+    background: var(--paper);
+  }
 }

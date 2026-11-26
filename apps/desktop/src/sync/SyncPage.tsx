@@ -356,10 +356,9 @@ export default function SyncPage({ standalone = false }: { standalone?: boolean 
                           ? "รอตรวจรายการแก้ไขชนกัน"
                           : "กำลังเชื่อมต่อ"}{" "}
                   · รอส่ง {cloud.status.pending} รายการ
+                  {cloud.status.lastSynced &&
+                    ` · อัปเดต ${new Date(cloud.status.lastSynced).toLocaleTimeString("th-TH")}`}
                 </p>
-                {cloud.status.lastSynced && (
-                  <p>อัปเดต {new Date(cloud.status.lastSynced).toLocaleTimeString("th-TH")}</p>
-                )}
                 <div className="sync-links">
                   <Button disabled={busy || cloud.status.phase === "syncing"} onClick={cloud.sync}>
                     <RefreshCw size={15} />
