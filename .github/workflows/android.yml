@@ -1,0 +1,54 @@
+name: Android build
+on:
+  workflow_dispatch:
+  push:
+    tags: ['v*']
+permissions:
+  contents: read
+jobs:
+  apk:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    env:
+      NDK_VERSION: 30.0.16248370
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version: '24'
+          cache: npm
+          cache-dependency-path: apps/desktop/package-lock.json
+      - uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: android-actions/setup-android@v4
+      - name: Android NDK and Rust target
+        run: |
+          sdkmanager --install "ndk;$NDK_VERSION"
+          echo "NDK_HOME=$ANDROID_HOME/ndk/$NDK_VERSION" >> "$GITHUB_ENV"
+          rustup target add aarch64-linux-android
+      # Same key as local releases, so the APK installs over an existing Taxly.
+      - name: Signing key
+        env:
+          KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+        run: |
+          if [ -z "$KEYSTORE_BASE64" ] || [ -z "$KEY_PASSWORD" ] || [ -z "$KEY_ALIAS" ]; then
+            echo "::error::Set ANDROID_KEYSTORE_BASE64, ANDROID_KEY_PASSWORD and ANDROID_KEY_ALIAS secrets; without them the APK would be unsigned."
+            exit 1
+          fi
+          echo "$KEYSTORE_BASE64" | base64 -d > "$RUNNER_TEMP/taxly-release.jks"
+          printf 'keyAlias=%s\npassword=%s\nstoreFile=%s\n' "$KEY_ALIAS" "$KEY_PASSWORD" "$RUNNER_TEMP/taxly-release.jks" \
+            > apps/desktop/src-tauri/gen/android/keystore.properties
+      - name: Build APK
+        working-directory: apps/desktop
+        run: |
+          npm ci
+          npm run tauri android build -- --apk --target aarch64
+      - uses: actions/upload-artifact@v7
+        with:
+          name: taxly-android
+          path: apps/desktop/src-tauri/gen/android/app/build/outputs/apk/**/*.apk
+          if-no-files-found: error
